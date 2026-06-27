@@ -1,5 +1,5 @@
-// Seed file for Last Unique Touch — Phase 1
-// Uses @/ aliases (works with bun + tsconfig paths)
+// Seed file for Last Unique Touch — Phase 3
+// 15 products across 3 categories with model3dUrl and one out-of-stock item
 
 import { PrismaClient } from '@prisma/client'
 
@@ -44,8 +44,9 @@ async function main() {
 
   console.log('✅ Categories created:', [chairs, tables, lighting].length)
 
-  // 2. Create sample products (2 per category)
+  // 2. Create 15 products (5 per category)
   const products = [
+    // ===== CHAIRS (5) =====
     {
       slug: 'louis-ghost-chair',
       brand: 'LUT' as const,
@@ -59,6 +60,7 @@ async function main() {
         'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=800',
         'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
       ]),
+      model3dUrl: 'https://example.com/models/louis-ghost-chair.glb',
       stock: 50,
       categoryId: chairs.id,
     },
@@ -77,6 +79,54 @@ async function main() {
       stock: 100,
       categoryId: chairs.id,
     },
+    {
+      slug: 'tiffany-chair-crystal',
+      brand: 'LUT' as const,
+      nameAr: 'كرسي تيفاني كريستال',
+      nameEn: 'Tiffany Chair Crystal',
+      descriptionAr: 'كرسي تيفاني شفاف بإطار فولاذي مقاوم للصدأ، أناقة عصرية',
+      descriptionEn: 'Transparent Tiffany chair with stainless steel frame, modern elegance',
+      rentalPricePerDay: 4.0,
+      securityDeposit: 12.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800',
+      ]),
+      model3dUrl: 'https://example.com/models/tiffany-chair.glb',
+      stock: 80,
+      categoryId: chairs.id,
+    },
+    {
+      slug: 'monet-armchair',
+      brand: 'LUT' as const,
+      nameAr: 'كرسي منته بذراعين',
+      nameEn: 'Monet Armchair',
+      descriptionAr: 'كرسي بذراعين بتصميم كلاسيكي وتنجيد فاخر بلون كريمي',
+      descriptionEn: 'Classic armchair with luxury cream upholstery and elegant design',
+      rentalPricePerDay: 6.5,
+      securityDeposit: 20.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
+      ]),
+      stock: 30,
+      categoryId: chairs.id,
+    },
+    {
+      slug: 'bombon-chair-velvet',
+      brand: 'LUT' as const,
+      nameAr: 'كرسي بومبون مخمل',
+      nameEn: 'Bombon Velvet Chair',
+      descriptionAr: 'كرسي بومبون بقماش مخمل فاخر متوفر بألوان متعددة',
+      descriptionEn: 'Bombon chair with luxury velvet fabric available in multiple colors',
+      rentalPricePerDay: 5.5,
+      securityDeposit: 18.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800',
+      ]),
+      stock: 0, // Out of stock — for testing badge
+      categoryId: chairs.id,
+    },
+
+    // ===== TABLES (5) =====
     {
       slug: 'round-banquet-table',
       brand: 'LUT' as const,
@@ -108,6 +158,54 @@ async function main() {
       categoryId: tables.id,
     },
     {
+      slug: 'marble-coffee-table',
+      brand: 'LUT' as const,
+      nameAr: 'طاولة قهوة رخامية',
+      nameEn: 'Marble Coffee Table',
+      descriptionAr: 'طاولة قهوة بسطح رخامي فاخر وقاعدة ذهبية، لمسة من الفخامة',
+      descriptionEn: 'Coffee table with luxury marble top and gold base, a touch of elegance',
+      rentalPricePerDay: 7.0,
+      securityDeposit: 22.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=800',
+      ]),
+      model3dUrl: 'https://example.com/models/marble-coffee-table.glb',
+      stock: 15,
+      categoryId: tables.id,
+    },
+    {
+      slug: 'dining-table-12-seater',
+      brand: 'LUT' as const,
+      nameAr: 'طاولة طعام 12 شخص',
+      nameEn: 'Dining Table 12 Seater',
+      descriptionAr: 'طاولة طعام طويلة تتسع لـ 12 شخصاً، مثالية للعزائم الكبيرة',
+      descriptionEn: 'Long dining table seating 12, perfect for large gatherings',
+      rentalPricePerDay: 12.0,
+      securityDeposit: 35.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=800',
+      ]),
+      stock: 10,
+      categoryId: tables.id,
+    },
+    {
+      slug: 'gold-side-table',
+      brand: 'LUT' as const,
+      nameAr: 'طاولة جانبية ذهبية',
+      nameEn: 'Gold Side Table',
+      descriptionAr: 'طاولة جانبية صغيرة بإطار ذهبي لامع، قطعة ديكور أنيقة',
+      descriptionEn: 'Small side table with shiny gold frame, an elegant decor piece',
+      rentalPricePerDay: 3.5,
+      securityDeposit: 10.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1532372576444-dda954194ad0?w=800',
+      ]),
+      stock: 25,
+      categoryId: tables.id,
+    },
+
+    // ===== LIGHTING (5) =====
+    {
       slug: 'crystal-chandelier',
       brand: 'LUT' as const,
       nameAr: 'ثريا كريستال',
@@ -119,6 +217,7 @@ async function main() {
       images: JSON.stringify([
         'https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=800',
       ]),
+      model3dUrl: 'https://example.com/models/crystal-chandelier.glb',
       stock: 8,
       categoryId: lighting.id,
     },
@@ -137,12 +236,62 @@ async function main() {
       stock: 60,
       categoryId: lighting.id,
     },
+    {
+      slug: 'industrial-pendant-light',
+      brand: 'LUT' as const,
+      nameAr: 'إنارة معلقة صناعية',
+      nameEn: 'Industrial Pendant Light',
+      descriptionAr: 'إنارة معلقة بتصميم صناعي عصري، مثالية للمساحات المفتوحة',
+      descriptionEn: 'Pendant light with modern industrial design, perfect for open spaces',
+      rentalPricePerDay: 4.5,
+      securityDeposit: 14.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800',
+      ]),
+      stock: 35,
+      categoryId: lighting.id,
+    },
+    {
+      slug: 'brass-lantern',
+      brand: 'LUT' as const,
+      nameAr: 'فانوس نحاسي',
+      nameEn: 'Brass Lantern',
+      descriptionAr: 'فانوس نحاسي كلاسيكي بلمسة تراثية، مثالي للفعاليات الرمضانية والأعراس',
+      descriptionEn: 'Classic brass lantern with heritage touch, ideal for Ramadan events and weddings',
+      rentalPricePerDay: 6.0,
+      securityDeposit: 18.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800',
+      ]),
+      stock: 45,
+      categoryId: lighting.id,
+    },
+    {
+      slug: 'gold-floor-lamp',
+      brand: 'LUT' as const,
+      nameAr: 'أباجورة ذهبية أرضية',
+      nameEn: 'Gold Floor Lamp',
+      descriptionAr: 'أباجورة أرضية بقاعدة ذهبية وإضاءة دافئة، لمسة فخامة لأي ركن',
+      descriptionEn: 'Floor lamp with gold base and warm light, a touch of luxury for any corner',
+      rentalPricePerDay: 5.0,
+      securityDeposit: 16.0,
+      images: JSON.stringify([
+        'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800',
+      ]),
+      model3dUrl: 'https://example.com/models/gold-floor-lamp.glb',
+      stock: 18,
+      categoryId: lighting.id,
+    },
   ]
 
   for (const product of products) {
     await prisma.product.upsert({
       where: { slug: product.slug },
-      update: {},
+      update: {
+        ...product,
+        images: product.images,
+        model3dUrl: product.model3dUrl ?? null,
+      },
       create: product,
     })
   }

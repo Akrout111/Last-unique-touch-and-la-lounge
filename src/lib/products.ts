@@ -1,3 +1,4 @@
+import { Prisma, type Brand, type Category, type Product } from '@prisma/client'
 import { db } from './db'
 
 /**
@@ -83,3 +84,137 @@ export async function getFeaturedProducts(limit = 4): Promise<ProductWithImages[
     images: parseImages(p.images),
   }))
 }
+
+/**
+ * Get all categories for a brand (for filter sidebar).
+ */
+export async function getCategoriesByBrand(brand: Brand = 'LUT'): Promise<Category[]> {
+  return db.category.findMany({
+    where: { brand },
+    orderBy: { nameEn: 'asc' },
+  })
+}
+
+/**
+ * Product list query parameters.
+ */
+export interface ProductListParams {
+  brand?: Brand
+  categorySlug?: string
+  search?: string
+  sort?: 'newest' | 'price-asc' | 'price-desc'
+  page?: number
+  pageSize?: number
+}
+
+/**
+ * Sort options type.
+ */
+export type ProductSort = 'newest' | 'price-asc' | 'price-desc'
+
+/**
+ * Result of getProducts query.
+ */
+export interface ProductListResult {
+  products: ProductWithImages[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+/**
+ * Get paginated, filtered, sorted product list.
+ */
+export async function getProducts(params: ProductListParams = {}): Promise<ProductListResult> {
+  const {
+    brand = 'LUT',
+    categorySlug,
+    search,
+    sort = 'newest',
+    page = 1,
+    pageSize = 12,
+  } = params
+
+  const where: Prisma.ProductWhereInput = {
+    brand,
+    isActive: true,
+  }
+
+  // Category filter
+  if (categorySlug) {
+    where.category = { slug: categorySlug }
+  }
+
+  // Text search (SQLite-friendly: case-insensitive contains)
+  if (search && search.trim()) {
+    const q = search.trim()
+    where.OR = [
+      { nameAr: { contains: q } },
+      { nameEn: { contains: q } },
+      { descriptionAr: { contains: q } },
+      { descriptionEn: { contains: q } },
+    ]
+  }
+
+  // Sort
+  const orderBy: Prisma.ProductOrderByWithRelationInput =
+    sort === 'price-asc' ? { rentalPricePerDay: 'asc' } :
+    sort === 'price-desc' ? { rentalPricePerDay: 'desc' } :
+    { createdAt: 'desc' }
+
+  const [products, total] = await Promise.all([
+    db.product.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
+      },
+    }),
+    db.product.count({ where }),
+  ])
+
+  return {
+    products: products.map((p) => ({
+      ...p,
+      images: parseImages(p.images),
+    })),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  }
+}
+
+/**
+ * Get a single product by slug (for product detail page — Phase 4).
+ */
+export async function getProductBySlug(slug: string): Promise<ProductWithImages | null> {
+  const product = await db.product.findFirst({
+    where: {
+      OR: [{ slug }, { id: slug }],
+      isActive: true,
+    },
+    include: {
+      category: {
+        select: { id: true, nameAr: true, nameEn: true, slug: true },
+      },
+    },
+  })
+
+  if (!product) return null
+
+  return {
+    ...product,
+    images: parseImages(product.images),
+  }
+}
+
+/**
+ * Type for raw Product from Prisma (before image parsing).
+ */
+export type RawProduct = Product

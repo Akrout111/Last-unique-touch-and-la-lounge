@@ -92,6 +92,27 @@
   },
   "products": {
     "title": "Products",
+    "subtitle": "Discover our luxury collection of furniture and event equipment",
+    "searchPlaceholder": "Search for a product...",
+    "allCategories": "All Categories",
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest",
+      "price-asc": "Price: Low to High",
+      "price-desc": "Price: High to Low"
+    },
+    "resultCount": "{count, plural, =0 {No products} =1 {1 product} other {# products}}",
+    "perDay": "KWD / day",
+    "badge3d": "3D Preview",
+    "outOfStock": "Out of stock",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "empty": {
+      "title": "No matching products found",
+      "subtitle": "Try adjusting filters or searching for something else",
+      "clearFilters": "Clear Filters"
+    },
     "comingPhase": "Phase 3"
   },
   "admin": {

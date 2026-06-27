@@ -16,6 +16,7 @@ export function ProductCard({ product }: { product: ProductWithImages }) {
     product.category.nameEn,
     locale
   )
+  const isOutOfStock = product.stock === 0
 
   return (
     <Link
@@ -39,11 +40,28 @@ export function ProductCard({ product }: { product: ProductWithImages }) {
             </div>
           )}
 
-          {/* 3D badge */}
+          {/* Category badge (top-start) */}
+          <Badge
+            variant="outline"
+            className="absolute top-2 start-2 bg-white/80 backdrop-blur-sm text-foreground border-white/60 text-xs"
+          >
+            {categoryName}
+          </Badge>
+
+          {/* 3D badge (top-end) */}
           {product.model3dUrl && (
             <Badge className="absolute top-2 end-2 bg-lut text-white text-xs border-0">
               3D
             </Badge>
+          )}
+
+          {/* Out of stock overlay */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <span className="px-3 py-1.5 rounded-full bg-white/95 text-foreground text-xs font-semibold">
+                {t('products.outOfStock')}
+              </span>
+            </div>
           )}
         </div>
 
@@ -55,7 +73,7 @@ export function ProductCard({ product }: { product: ProductWithImages }) {
           <h3 className="font-semibold text-foreground mb-2 line-clamp-1">
             {productName}
           </h3>
-          <p className="text-lut font-bold text-sm">
+          <p className={`font-bold text-sm ${isOutOfStock ? 'text-muted-foreground' : 'text-lut'}`}>
             {product.rentalPricePerDay} {t('featured.perDay')}
           </p>
         </div>
