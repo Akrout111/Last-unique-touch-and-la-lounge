@@ -102,7 +102,7 @@ export default async function ProductPage({ params }: PageProps) {
                 productName={product.nameAr}
               />
               {product.model3dUrl && (
-                <Product3DViewer modelUrl={product.model3dUrl} />
+                <Product3DViewer modelUrl={product.model3dUrl} productSlug={product.slug} />
               )}
             </div>
 

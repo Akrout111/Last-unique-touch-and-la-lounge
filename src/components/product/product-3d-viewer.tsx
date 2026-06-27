@@ -18,15 +18,12 @@ const ModelCanvas = dynamic(
   }
 )
 
-// Sample GLB model for demo (since model3dUrl in DB is example.com placeholder)
-const SAMPLE_MODEL_URL =
-  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb'
-
 interface Product3DViewerProps {
   modelUrl: string
+  productSlug: string
 }
 
-export function Product3DViewer({ modelUrl: _modelUrl }: Product3DViewerProps) {
+export function Product3DViewer({ modelUrl: _modelUrl, productSlug }: Product3DViewerProps) {
   const t = useTranslations()
   const [enabled, setEnabled] = useState(false)
 
@@ -34,7 +31,7 @@ export function Product3DViewer({ modelUrl: _modelUrl }: Product3DViewerProps) {
     return (
       <button
         onClick={() => setEnabled(true)}
-        className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 border border-gold/50 rounded-xl text-gold hover:bg-gold/10 transition-colors"
+        className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 border border-gold/50 rounded-lg text-gold hover:bg-gold/10 transition-colors"
       >
         <Box className="w-5 h-5" />
         {t('product.3d.enable')}
@@ -57,7 +54,14 @@ export function Product3DViewer({ modelUrl: _modelUrl }: Product3DViewerProps) {
           {t('product.3d.disable')}
         </button>
       </div>
-      <div className="h-[400px] bg-gradient-to-br from-muted to-muted/50 rounded-xl overflow-hidden border border-border">
+      <div className="h-[400px] bg-gradient-to-br from-muted to-muted/50 rounded-xl overflow-hidden border border-border relative">
+        {/* Ambient glow background */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.08) 0%, transparent 70%)',
+          }}
+        />
         <Suspense
           fallback={
             <div className="flex items-center justify-center h-full">
@@ -65,7 +69,7 @@ export function Product3DViewer({ modelUrl: _modelUrl }: Product3DViewerProps) {
             </div>
           }
         >
-          <ModelCanvas modelUrl={SAMPLE_MODEL_URL} />
+          <ModelCanvas modelUrl="" productSlug={productSlug} />
         </Suspense>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
