@@ -10,10 +10,16 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
+  allowedDevOrigins: [
+    'http://21.0.5.120:81',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ],
 }
 
 export default withNextIntl(nextConfig)

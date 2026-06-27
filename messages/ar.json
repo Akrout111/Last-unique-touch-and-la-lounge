@@ -10,9 +10,76 @@
     "lalounge": "La Lounge",
     "birthday": "Your Birthday"
   },
-  "landing": {
+  "hero": {
+    "title": "أناقة تُلهم",
+    "titleAccent": "أحداثك",
+    "subtitle": "منصة فاخرة لتأجير الأثاث ومعدات الأيفنتات في الكويت",
+    "ctaPrimary": "تصفّح المنتجات",
+    "ctaSecondary": "تعرّف علينا",
+    "stat": "+500 منتج فاخر"
+  },
+  "brandSelector": {
     "title": "اختر تجربتك",
-    "subtitle": "ثلاث علامات، رحلة واحدة"
+    "subtitle": "ثلاث علامات، رحلة واحدة",
+    "lut": {
+      "name": "Last Unique Touch",
+      "desc": "تأجير الأثاث ومعدات الأيفنتات"
+    },
+    "lalounge": {
+      "name": "La Lounge",
+      "desc": "المعارض، التأجير والصناعة",
+      "comingSoon": "قريباً"
+    },
+    "birthday": {
+      "name": "Your Birthday",
+      "desc": "حفلات أعياد الميلاد",
+      "comingSoon": "قريباً"
+    }
+  },
+  "featured": {
+    "title": "منتجات مختارة",
+    "viewAll": "عرض الكل",
+    "perDay": "د.ك / يوم"
+  },
+  "whyUs": {
+    "title": "لماذا Last Unique Touch؟",
+    "items": {
+      "luxury": {
+        "title": "تشكيلة فاخرة",
+        "desc": "أكثر من 500 منتج فاخر بعناية منتقى"
+      },
+      "flexible": {
+        "title": "حجز مرن",
+        "desc": "احجز باليوم أو بالأسبوع حسب احتياجك"
+      },
+      "delivery": {
+        "title": "توصيل سريع",
+        "desc": "توصيل وتركيب احترافي لبعض المواقع"
+      },
+      "3d": {
+        "title": "عرض ثلاثي الأبعاد",
+        "desc": "شاهد المنتجات من كل الزوايا قبل الحجز"
+      }
+    }
+  },
+  "cta": {
+    "title": "جاهز لتجهيز حدثك القادم؟",
+    "subtitle": "تصفّح مجموعتنا الفاخرة وابدأ الحجز الآن",
+    "primary": "ابدأ الآن",
+    "secondary": "تواصل معنا"
+  },
+  "footer": {
+    "tagline": "منصة تأجير الأثاث ومعدات الأيفنتات الفاخرة",
+    "quickLinks": "روابط سريعة",
+    "sisterBrands": "العلامات الشقيقة",
+    "contact": "تواصل",
+    "phone": "+965 1234 5678",
+    "email": "info@lastuniquetouch.com",
+    "address": "الكويت",
+    "rights": "© 2026 Last Unique Touch. جميع الحقوق محفوظة.",
+    "terms": "الشروط والأحكام",
+    "privacy": "سياسة الخصوصية",
+    "refund": "سياسة الاسترجاع"
   },
   "common": {
     "loading": "جارٍ التحميل...",
@@ -20,7 +87,8 @@
     "retry": "إعادة المحاولة",
     "notFound": "الصفحة غير موجودة",
     "comingSoon": "قريباً",
-    "phaseLabel": "المرحلة {phase} — التأسيس مكتمل"
+    "phaseLabel": "المرحلة {phase} — التأسيس مكتمل",
+    "noImage": "لا توجد صورة"
   },
   "products": {
     "title": "المنتجات",

@@ -36,10 +36,7 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <NextIntlClientProvider>
-          <main className="flex-1">{children}</main>
-          <footer className="mt-auto border-t border-border bg-card py-4 text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Last Unique Touch. {locale === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
-          </footer>
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

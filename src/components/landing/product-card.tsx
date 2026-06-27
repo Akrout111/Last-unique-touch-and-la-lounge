@@ -1,0 +1,65 @@
+import Image from 'next/image'
+import { useTranslations, useLocale } from 'next-intl'
+import { Link } from '@/i18n/routing'
+import { Badge } from '@/components/ui/badge'
+import { localizedName } from '@/lib/products'
+import type { ProductWithImages } from '@/lib/products'
+
+export function ProductCard({ product }: { product: ProductWithImages }) {
+  const t = useTranslations()
+  const locale = useLocale()
+
+  const firstImage = product.images[0]
+  const productName = localizedName(product.nameAr, product.nameEn, locale)
+  const categoryName = localizedName(
+    product.category.nameAr,
+    product.category.nameEn,
+    locale
+  )
+
+  return (
+    <Link
+      href={`/products/${product.slug}`}
+      className="group block"
+    >
+      <div className="rounded-xl overflow-hidden bg-card border border-border transition-shadow hover:shadow-lg">
+        {/* Image */}
+        <div className="relative aspect-square overflow-hidden">
+          {firstImage ? (
+            <Image
+              src={firstImage}
+              alt={productName}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-sm">
+              {t('common.noImage')}
+            </div>
+          )}
+
+          {/* 3D badge */}
+          {product.model3dUrl && (
+            <Badge className="absolute top-2 end-2 bg-lut text-white text-xs border-0">
+              3D
+            </Badge>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="p-4">
+          <p className="text-xs text-muted-foreground mb-1">
+            {categoryName}
+          </p>
+          <h3 className="font-semibold text-foreground mb-2 line-clamp-1">
+            {productName}
+          </h3>
+          <p className="text-lut font-bold text-sm">
+            {product.rentalPricePerDay} {t('featured.perDay')}
+          </p>
+        </div>
+      </div>
+    </Link>
+  )
+}

@@ -10,9 +10,76 @@
     "lalounge": "La Lounge",
     "birthday": "Your Birthday"
   },
-  "landing": {
+  "hero": {
+    "title": "Elegance that",
+    "titleAccent": "inspires",
+    "subtitle": "A luxury platform for furniture and event equipment rental in Kuwait",
+    "ctaPrimary": "Browse Products",
+    "ctaSecondary": "About Us",
+    "stat": "+500 luxury items"
+  },
+  "brandSelector": {
     "title": "Choose Your Experience",
-    "subtitle": "Three brands, one journey"
+    "subtitle": "Three brands, one journey",
+    "lut": {
+      "name": "Last Unique Touch",
+      "desc": "Furniture & event equipment rental"
+    },
+    "lalounge": {
+      "name": "La Lounge",
+      "desc": "Exhibitions, rental & manufacturing",
+      "comingSoon": "Coming soon"
+    },
+    "birthday": {
+      "name": "Your Birthday",
+      "desc": "Birthday celebrations",
+      "comingSoon": "Coming soon"
+    }
+  },
+  "featured": {
+    "title": "Featured Products",
+    "viewAll": "View All",
+    "perDay": "KWD / day"
+  },
+  "whyUs": {
+    "title": "Why Last Unique Touch?",
+    "items": {
+      "luxury": {
+        "title": "Luxury Selection",
+        "desc": "500+ carefully curated luxury items"
+      },
+      "flexible": {
+        "title": "Flexible Booking",
+        "desc": "Book by day or week as you need"
+      },
+      "delivery": {
+        "title": "Fast Delivery",
+        "desc": "Professional delivery and setup"
+      },
+      "3d": {
+        "title": "3D Preview",
+        "desc": "View products from every angle before booking"
+      }
+    }
+  },
+  "cta": {
+    "title": "Ready for your next event?",
+    "subtitle": "Browse our luxury collection and book now",
+    "primary": "Get Started",
+    "secondary": "Contact Us"
+  },
+  "footer": {
+    "tagline": "A luxury platform for furniture and event equipment rental",
+    "quickLinks": "Quick Links",
+    "sisterBrands": "Sister Brands",
+    "contact": "Contact",
+    "phone": "+965 1234 5678",
+    "email": "info@lastuniquetouch.com",
+    "address": "Kuwait",
+    "rights": "© 2026 Last Unique Touch. All rights reserved.",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy"
   },
   "common": {
     "loading": "Loading...",
@@ -20,7 +87,8 @@
     "retry": "Try again",
     "notFound": "Page not found",
     "comingSoon": "Coming soon",
-    "phaseLabel": "Phase {phase} — Foundation complete"
+    "phaseLabel": "Phase {phase} — Foundation complete",
+    "noImage": "No image"
   },
   "products": {
     "title": "Products",
