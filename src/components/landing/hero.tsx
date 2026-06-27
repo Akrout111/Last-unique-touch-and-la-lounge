@@ -61,22 +61,32 @@ export function Hero() {
       ref={ref}
       className="relative min-h-screen w-full overflow-hidden bg-ink flex flex-col"
     >
-      {/* === Background texture === */}
+      {/* === Background texture — brand identity === */}
       <div
-        className="absolute inset-0 z-0 opacity-20"
+        className="absolute inset-0 z-0"
         style={{
           backgroundImage: 'url(/hero-bg-texture.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
+          opacity: 0.35,
         }}
       />
-      {/* Warm gradient overlay */}
+      {/* Red gradient mesh — brand glow */}
       <div
         className="absolute inset-0 z-0"
         style={{
           background:
-            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(230, 33, 41, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 50% 100%, rgba(230, 33, 41, 0.04) 0%, transparent 50%)',
+            'radial-gradient(ellipse 70% 50% at 30% 30%, rgba(230, 33, 41, 0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 70% 70%, rgba(230, 33, 41, 0.08) 0%, transparent 50%), radial-gradient(ellipse 100% 60% at 50% 100%, rgba(10, 10, 10, 0.6) 0%, transparent 60%)',
+        }}
+      />
+      {/* Subtle grid overlay */}
+      <div
+        className="absolute inset-0 z-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #FFFFFF 1px, transparent 1px), linear-gradient(to bottom, #FFFFFF 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
         }}
       />
       {/* === Top: Brand logo + tagline === */}

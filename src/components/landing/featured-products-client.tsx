@@ -16,7 +16,16 @@ export function FeaturedProductsClient({ products }: { products: ProductWithImag
 
   return (
     <section className="relative py-32 bg-paper overflow-hidden">
-      {/* Warm texture overlay */}
+      {/* Subtle dark texture overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: 'url(/section-bg-light.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      {/* Red accent glow */}
       <div
         className="absolute inset-0 opacity-[0.015] pointer-events-none"
         style={{

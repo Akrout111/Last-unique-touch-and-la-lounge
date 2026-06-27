@@ -17,9 +17,18 @@ export function WhyUs() {
 
   return (
     <section className="relative py-32 bg-ink overflow-hidden">
-      {/* Ambient warm glow */}
+      {/* Dark texture background */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-[0.15]"
+        style={{
+          backgroundImage: 'url(/section-bg-dark.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      {/* Red ambient glow */}
+      <div
+        className="absolute inset-0 opacity-30"
         style={{
           background:
             'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(230, 33, 41, 0.12) 0%, transparent 70%)',
