@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
-import { Button } from '@/components/ui/button'
 import { Menu, X, Globe, ShoppingCart } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useCart } from '@/components/providers/cart-provider'
+import { MagneticButton } from '@/components/ui-premium/magnetic-button'
 
 export function Navbar() {
   const t = useTranslations()
@@ -17,7 +18,7 @@ export function Navbar() {
   const { count, hydrated } = useCart()
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
+    const onScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -35,103 +36,154 @@ export function Navbar() {
   ]
 
   return (
-    <nav
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-bg-dark/95 backdrop-blur-md shadow-lg'
-          : 'bg-bg-dark'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-xl font-bold text-lut">
-              {t('brand.lut')}
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-          </Link>
-
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-sm font-medium transition-colors hover:text-lut ${
-                  pathname === link.href
-                    ? 'text-lut'
-                    : 'text-white/80'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Right side: cart + lang switch + mobile menu */}
-          <div className="flex items-center gap-3">
-            {/* Cart icon with badge */}
-            <Link
-              href="/cart"
-              className="relative p-2 text-white/80 hover:text-lut transition-colors"
-              aria-label="Cart"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {hydrated && count > 0 && (
-                <span className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-lut text-white text-[10px] font-bold">
-                  {count}
-                </span>
-              )}
+    <>
+      <motion.nav
+        initial={{ y: -80 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? 'glass-dark py-3'
+            : 'bg-transparent py-5'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 shrink-0 group">
+              <span className={`font-display text-2xl font-semibold transition-colors ${
+                scrolled ? 'text-paper' : 'text-paper'
+              }`}>
+                {t('brand.lut')}
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-gold group-hover:scale-150 transition-transform duration-300" />
             </Link>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={switchLocale}
-              className="text-white/80 hover:text-lut hover:bg-white/10 gap-1.5"
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-xs font-medium hidden sm:inline">
-                {locale === 'ar' ? 'EN' : 'عربي'}
-              </span>
-            </Button>
+            {/* Desktop nav */}
+            <div className="hidden md:flex items-center gap-10">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative text-sm font-medium tracking-wide transition-colors duration-300 group ${
+                    pathname === link.href
+                      ? 'text-gold'
+                      : scrolled ? 'text-paper/70 hover:text-paper' : 'text-paper/70 hover:text-paper'
+                  }`}
+                >
+                  {link.label}
+                  <span
+                    className={`absolute -bottom-1.5 left-0 h-px bg-gold transition-all duration-300 ${
+                      pathname === link.href ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
+                  />
+                </Link>
+              ))}
+            </div>
 
-            {/* Mobile hamburger */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden text-white/80 hover:text-lut hover:bg-white/10"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden bg-bg-dark/98 backdrop-blur-md border-t border-white/10">
-          <div className="px-4 py-4 space-y-3">
-            {navLinks.map((link) => (
+            {/* Right side */}
+            <div className="flex items-center gap-4">
+              {/* Cart */}
               <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`block text-sm font-medium py-2 transition-colors hover:text-lut ${
-                  pathname === link.href
-                    ? 'text-lut'
-                    : 'text-white/80'
+                href="/cart"
+                className={`relative p-2 transition-colors ${
+                  scrolled ? 'text-paper/70 hover:text-gold' : 'text-paper/70 hover:text-gold'
                 }`}
+                aria-label="Cart"
               >
-                {link.label}
+                <ShoppingCart className="w-5 h-5" strokeWidth={1.3} />
+                {hydrated && count > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-lut text-paper text-[10px] font-bold tabular-nums"
+                  >
+                    {count}
+                  </motion.span>
+                )}
               </Link>
-            ))}
+
+              {/* Language switcher */}
+              <MagneticButton strength={0.2}>
+                <button
+                  onClick={switchLocale}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
+                    scrolled
+                      ? 'text-paper/70 hover:text-gold'
+                      : 'text-paper/70 hover:text-gold'
+                  }`}
+                >
+                  <Globe className="w-4 h-4" strokeWidth={1.3} />
+                  <span>{locale === 'ar' ? 'EN' : 'عربي'}</span>
+                </button>
+              </MagneticButton>
+
+              {/* Mobile menu button */}
+              <button
+                className="md:hidden text-paper p-2"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label="Menu"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
-      )}
-    </nav>
+      </motion.nav>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-ink/80 backdrop-blur-sm md:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed top-0 end-0 bottom-0 z-50 w-80 max-w-[85vw] bg-ink md:hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-paper/10 flex items-center justify-between">
+                <span className="font-display text-xl text-paper">
+                  {t('brand.lut')}
+                </span>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="text-paper/60 hover:text-paper"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 p-6 space-y-2">
+                {navLinks.map((link, idx) => (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.08 }}
+                  >
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`block py-3 text-lg font-display ${
+                        pathname === link.href ? 'text-gold' : 'text-paper/70'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

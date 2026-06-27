@@ -1,82 +1,188 @@
-import { useTranslations } from 'next-intl'
+'use client'
+
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
-import { Badge } from '@/components/ui/badge'
+import { ArrowRight, ArrowLeft, Plus } from 'lucide-react'
+import { TiltCard } from '@/components/ui-premium/tilt-card'
 
 const brands = [
   {
     key: 'lut' as const,
     href: '/products',
-    bgClass: 'bg-lut',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&q=80',
+    accent: 'var(--c-lut)',
     active: true,
+    tag: 'HERITAGE',
   },
   {
     key: 'lalounge' as const,
     href: null,
-    bgClass: 'bg-lalounge',
+    image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1200&q=80',
+    accent: 'var(--c-lalounge)',
     active: false,
+    tag: 'MODERN',
   },
   {
     key: 'birthday' as const,
     href: null,
-    bgClass: 'bg-birthday',
+    image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&q=80',
+    accent: 'var(--c-birthday)',
     active: false,
+    tag: 'ATELIER',
   },
 ]
 
 export function BrandSelector() {
   const t = useTranslations()
+  const locale = useLocale()
+  const ref = useRef<HTMLElement>(null)
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  })
+
+  const headerY = useTransform(scrollYProgress, [0, 0.3], [40, 0])
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1])
+
+  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   return (
-    <section className="py-20 sm:py-28 bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
-        <div className="text-center mb-14">
-          <span className="inline-block w-2 h-2 rounded-full bg-gold mb-4" />
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
-            {t('brandSelector.title')}
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            {t('brandSelector.subtitle')}
-          </p>
+    <section ref={ref} className="relative py-32 bg-paper overflow-hidden">
+      {/* Section header */}
+      <motion.div
+        style={{ y: headerY, opacity: headerOpacity }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 text-center"
+      >
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <span className="w-8 h-px bg-gold" />
+          <span className="eyebrow text-gold">
+            {locale === 'ar' ? 'ثلاث علامات · رحلة واحدة' : 'Three Brands · One Journey'}
+          </span>
+          <span className="w-8 h-px bg-gold" />
         </div>
+        <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-ink leading-tight max-w-3xl mx-auto">
+          {t('brandSelector.title')}
+        </h2>
+        <p className="text-stone text-lg mt-4 max-w-xl mx-auto">
+          {t('brandSelector.subtitle')}
+        </p>
+      </motion.div>
 
-        {/* Brand cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {brands.map((brand) => {
+      {/* Brand cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          {brands.map((brand, idx) => {
             const card = (
-              <div
+              <motion.div
                 key={brand.key}
-                className={`relative rounded-2xl h-64 sm:h-72 flex flex-col items-center justify-center p-8 text-white overflow-hidden transition-all duration-300 ${
-                  brand.active
-                    ? `${brand.bgClass} hover:scale-[1.02] hover:shadow-2xl cursor-pointer`
-                    : `${brand.bgClass} opacity-70 cursor-not-allowed`
-                }`}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{
+                  duration: 0.9,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: idx * 0.12,
+                }}
               >
-                {/* Coming soon badge for inactive brands */}
-                {!brand.active && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute top-4 start-4 bg-white/20 text-white border-0 text-xs"
+                <TiltCard
+                  maxTilt={brand.active ? 6 : 4}
+                  glare={brand.active}
+                  className="h-[70vh] min-h-[500px] cursor-pointer group"
+                >
+                  <div
+                    className="relative h-full w-full overflow-hidden"
+                    style={{
+                      borderRadius: '2px',
+                      transformStyle: 'preserve-3d',
+                    }}
                   >
-                    {t(`brandSelector.${brand.key}.comingSoon`)}
-                  </Badge>
-                )}
+                    {/* Background image */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <img
+                        src={brand.image}
+                        alt={t(`brandSelector.${brand.key}.name`)}
+                        className={`w-full h-full object-cover transition-transform duration-700 ${
+                          brand.active ? 'group-hover:scale-110' : ''
+                        }`}
+                      />
+                      {/* Dark overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-ink/20" />
+                      {/* Inactive overlay */}
+                      {!brand.active && (
+                        <div className="absolute inset-0 bg-ink/50" />
+                      )}
+                    </div>
 
-                {/* Overlay for inactive brands */}
-                {!brand.active && (
-                  <div className="absolute inset-0 bg-black/40" />
-                )}
+                    {/* Accent line at top */}
+                    <div
+                      className="absolute top-0 inset-x-0 h-1"
+                      style={{ backgroundColor: brand.accent }}
+                    />
 
-                {/* Content */}
-                <div className="relative z-10 text-center">
-                  <h3 className="text-2xl font-bold mb-3">
-                    {t(`brandSelector.${brand.key}.name`)}
-                  </h3>
-                  <p className="text-white/80 text-sm max-w-[200px]">
-                    {t(`brandSelector.${brand.key}.desc`)}
-                  </p>
-                </div>
-              </div>
+                    {/* Tag */}
+                    <div className="absolute top-6 start-6 z-10">
+                      <span
+                        className="eyebrow text-paper px-3 py-1.5"
+                        style={{
+                          backgroundColor: 'rgba(14, 13, 11, 0.6)',
+                          backdropFilter: 'blur(10px)',
+                          color: brand.accent,
+                        }}
+                      >
+                        {brand.tag}
+                      </span>
+                    </div>
+
+                    {/* Coming soon badge */}
+                    {!brand.active && (
+                      <div className="absolute top-6 end-6 z-10">
+                        <span className="eyebrow text-paper/60 px-3 py-1.5 border border-paper/20 bg-ink/40 backdrop-blur-sm">
+                          {t(`brandSelector.${brand.key}.comingSoon`)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Content */}
+                    <div
+                      className="absolute bottom-0 inset-x-0 p-8 z-10"
+                      style={{ transform: 'translateZ(40px)' }}
+                    >
+                      {/* Accent dot */}
+                      <div
+                        className="w-3 h-3 rounded-full mb-4"
+                        style={{ backgroundColor: brand.accent }}
+                      />
+
+                      <h3 className="font-display text-3xl sm:text-4xl text-paper mb-3">
+                        {t(`brandSelector.${brand.key}.name`)}
+                      </h3>
+
+                      <p className="text-paper/60 text-sm leading-relaxed mb-6 max-w-xs">
+                        {t(`brandSelector.${brand.key}.desc`)}
+                      </p>
+
+                      {brand.active ? (
+                        <div className="flex items-center gap-2 text-paper group-hover:gap-4 transition-all duration-300">
+                          <span className="eyebrow" style={{ color: brand.accent }}>
+                            {locale === 'ar' ? 'استكشف' : 'Explore'}
+                          </span>
+                          <ArrowIcon className="w-4 h-4" style={{ color: brand.accent }} />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-paper/40">
+                          <Plus className="w-4 h-4" />
+                          <span className="eyebrow">
+                            {locale === 'ar' ? 'قريباً' : 'Coming Soon'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TiltCard>
+              </motion.div>
             )
 
             if (brand.active && brand.href) {
@@ -86,7 +192,6 @@ export function BrandSelector() {
                 </Link>
               )
             }
-
             return <div key={brand.key}>{card}</div>
           })}
         </div>

@@ -1,8 +1,9 @@
-import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
-import { Button } from '@/components/ui/button'
+'use client'
+
+import { motion } from 'framer-motion'
+import { useTranslations, useLocale } from 'next-intl'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { useLocale } from 'next-intl'
+import { MagneticButton } from '@/components/ui-premium/magnetic-button'
 
 export function CTASection() {
   const t = useTranslations()
@@ -10,53 +11,66 @@ export function CTASection() {
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   return (
-    <section className="relative py-20 sm:py-28 bg-bg-dark overflow-hidden">
-      {/* Top gold line */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gold/30" />
-
-      {/* Radial glow */}
+    <section className="relative py-40 bg-ink overflow-hidden">
+      {/* Radial gold glow */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 50% 60% at 50% 50%, rgba(230,33,41,0.06) 0%, transparent 70%)',
+            'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201, 162, 39, 0.08) 0%, transparent 70%)',
         }}
       />
 
-      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 text-center">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-5">
-          {t('cta.title')}
-        </h2>
-        <p className="text-lg text-white/60 mb-10 max-w-xl mx-auto">
-          {t('cta.subtitle')}
-        </p>
+      {/* Top hairline */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button
-            asChild
-            size="lg"
-            className="bg-lut hover:bg-lut/90 text-white px-8 py-3 text-base font-semibold rounded-lg"
-          >
-            <Link href="/products">
-              {t('cta.primary')}
-              <ArrowIcon className="w-4 h-4 ms-2" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="border-gold/50 text-gold hover:bg-gold/10 px-8 py-3 text-base font-semibold rounded-lg"
-          >
-            <Link href="/contact">
-              {t('cta.secondary')}
-            </Link>
-          </Button>
-        </div>
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Eyebrow */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className="w-8 h-px bg-gold" />
+            <span className="eyebrow text-gold">
+              {locale === 'ar' ? 'ابدأ الآن' : 'Get Started'}
+            </span>
+            <span className="w-8 h-px bg-gold" />
+          </div>
+
+          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-paper leading-tight mb-8">
+            {t('cta.title')}
+          </h2>
+
+          <p className="text-lg text-paper/50 max-w-xl mx-auto mb-12">
+            {t('cta.subtitle')}
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <MagneticButton href={`/${locale}/products`}>
+              <span className="group inline-flex items-center gap-3 px-10 py-4 bg-lut text-paper rounded-none hover:bg-lut/90 transition-colors duration-300">
+                <span className="text-sm font-medium tracking-wide">
+                  {t('cta.primary')}
+                </span>
+                <ArrowIcon className="w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+              </span>
+            </MagneticButton>
+
+            <MagneticButton href={`/${locale}/contact`}>
+              <span className="group inline-flex items-center gap-3 px-10 py-4 border border-gold/40 text-gold hover:bg-gold/10 transition-colors duration-300">
+                <span className="text-sm font-medium tracking-wide">
+                  {t('cta.secondary')}
+                </span>
+              </span>
+            </MagneticButton>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Bottom gold line */}
-      <div className="absolute bottom-0 inset-x-0 h-px bg-gold/30" />
+      {/* Bottom hairline */}
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
     </section>
   )
 }

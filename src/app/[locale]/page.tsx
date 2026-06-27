@@ -7,6 +7,7 @@ import { WhyUs } from '@/components/landing/why-us'
 import { CTASection } from '@/components/landing/cta-section'
 import { Footer } from '@/components/layout/footer'
 import { JsonLd } from '@/components/seo/json-ld'
+import { CustomCursor } from '@/components/ui-premium/custom-cursor'
 import { buildMetadata } from '@/lib/seo'
 
 export async function generateMetadata({
@@ -39,8 +40,9 @@ const organizationLd = {
 
 export default function HomePage() {
   return (
-    <>
+    <div className="grain-overlay">
       <JsonLd data={organizationLd} />
+      <CustomCursor />
       <Navbar />
       <main id="main-content">
         <Hero />
@@ -50,6 +52,6 @@ export default function HomePage() {
         <CTASection />
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

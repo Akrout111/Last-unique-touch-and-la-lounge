@@ -1,24 +1,30 @@
-import { useTranslations } from 'next-intl'
+'use client'
+
+import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
-import { Instagram, Phone, Mail, MapPin } from 'lucide-react'
+import { Instagram, Phone } from 'lucide-react'
 
 export function Footer() {
   const t = useTranslations()
+  const locale = useLocale()
 
   return (
-    <footer className="bg-bg-dark text-white/80">
-      {/* Main footer content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Column 1: Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl font-bold text-lut">
+    <footer className="bg-ink text-paper/60 relative overflow-hidden">
+      {/* Gold hairline at top */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        {/* Top section */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+          {/* Brand */}
+          <div className="md:col-span-5">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="font-display text-3xl text-paper">
                 {t('brand.lut')}
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span className="w-2 h-2 rounded-full bg-gold" />
             </div>
-            <p className="text-sm text-white/60 leading-relaxed mb-6">
+            <p className="text-sm leading-relaxed mb-8 max-w-sm">
               {t('footer.tagline')}
             </p>
             <div className="flex items-center gap-4">
@@ -26,29 +32,29 @@ export function Footer() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/50 hover:text-gold transition-colors"
+                className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-4 h-4" strokeWidth={1.3} />
               </a>
               <a
                 href="https://wa.me/96512345678"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/50 hover:text-gold transition-colors"
+                className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
                 aria-label="WhatsApp"
               >
-                <Phone className="w-5 h-5" />
+                <Phone className="w-4 h-4" strokeWidth={1.3} />
               </a>
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div>
-            <h4 className="font-semibold text-white mb-4">
+          {/* Quick Links */}
+          <div className="md:col-span-3">
+            <h4 className="eyebrow text-gold mb-6">
               {t('footer.quickLinks')}
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {[
                 { href: '/' as const, label: t('nav.home') },
                 { href: '/products' as const, label: t('nav.products') },
@@ -58,8 +64,9 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/50 hover:text-lut transition-colors"
+                    className="text-sm hover:text-gold transition-colors duration-300 inline-flex items-center gap-2 group"
                   >
+                    <span className="w-0 h-px bg-gold group-hover:w-3 transition-all duration-300" />
                     {link.label}
                   </Link>
                 </li>
@@ -67,71 +74,54 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Sister Brands */}
-          <div>
-            <h4 className="font-semibold text-white mb-4">
-              {t('footer.sisterBrands')}
+          {/* Legal */}
+          <div className="md:col-span-2">
+            <h4 className="eyebrow text-gold mb-6">
+              {locale === 'ar' ? 'قانوني' : 'Legal'}
             </h4>
-            <ul className="space-y-2.5">
-              <li>
-                <Link
-                  href="/products"
-                  className="text-sm text-lut hover:text-lut/80 transition-colors"
-                >
-                  {t('brandSelector.lut.name')}
-                </Link>
-              </li>
-              <li className="text-sm text-white/40">
-                {t('brandSelector.lalounge.name')}{' '}
-                <span className="text-xs">({t('brandSelector.lalounge.comingSoon')})</span>
-              </li>
-              <li className="text-sm text-white/40">
-                {t('brandSelector.birthday.name')}{' '}
-                <span className="text-xs">({t('brandSelector.birthday.comingSoon')})</span>
-              </li>
+            <ul className="space-y-3">
+              {[
+                { href: '/terms' as const, label: t('footer.terms') },
+                { href: '/privacy' as const, label: t('footer.privacy') },
+                { href: '/refund' as const, label: t('footer.refund') },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm hover:text-gold transition-colors duration-300 inline-flex items-center gap-2 group"
+                  >
+                    <span className="w-0 h-px bg-gold group-hover:w-3 transition-all duration-300" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Column 4: Contact */}
-          <div>
-            <h4 className="font-semibold text-white mb-4">
+          {/* Contact */}
+          <div className="md:col-span-2">
+            <h4 className="eyebrow text-gold mb-6">
               {t('footer.contact')}
             </h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2.5 text-sm text-white/50">
-                <Phone className="w-4 h-4 shrink-0" />
-                <span dir="ltr">{t('footer.phone')}</span>
-              </li>
-              <li className="flex items-center gap-2.5 text-sm text-white/50">
-                <Mail className="w-4 h-4 shrink-0" />
-                <span>{t('footer.email')}</span>
-              </li>
-              <li className="flex items-center gap-2.5 text-sm text-white/50">
-                <MapPin className="w-4 h-4 shrink-0" />
-                <span>{t('footer.address')}</span>
-              </li>
+            <ul className="space-y-3 text-sm">
+              <li dir="ltr" className="text-start">{t('footer.phone')}</li>
+              <li>{t('footer.email')}</li>
+              <li>{t('footer.address')}</li>
             </ul>
           </div>
         </div>
-      </div>
 
-      {/* Bottom bar */}
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-white/40">
+        {/* Divider */}
+        <div className="h-px bg-paper/10 mb-8" />
+
+        {/* Bottom bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-paper/40">
             {t('footer.rights')}
           </p>
-          <div className="flex items-center gap-5">
-            <Link href="/terms" className="text-xs text-white/30 hover:text-white/50 transition-colors">
-              {t('footer.terms')}
-            </Link>
-            <Link href="/privacy" className="text-xs text-white/30 hover:text-white/50 transition-colors">
-              {t('footer.privacy')}
-            </Link>
-            <Link href="/refund" className="text-xs text-white/30 hover:text-white/50 transition-colors">
-              {t('footer.refund')}
-            </Link>
-          </div>
+          <p className="eyebrow text-paper/30">
+            {locale === 'ar' ? 'صُنع بشغف في الكويت' : 'Crafted with passion in Kuwait'}
+          </p>
         </div>
       </div>
     </footer>
