@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma Schema — Last Unique Touch (Phase 1: Foundation)
+// SQLite for local dev — will migrate to PostgreSQL in Phase 10
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,88 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ===== Multi-tenant: Brands =====
+// Note: SQLite doesn't support native enums — Prisma stores these as Strings
+enum Brand {
+  LUT
+  LA_LOUNGE
+  YOUR_BIRTHDAY
 }
 
-model Post {
+// ===== Categories =====
+model Category {
+  id        String    @id @default(cuid())
+  brand     Brand     @default(LUT)
+  slug      String    @unique
+  nameAr    String
+  nameEn    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@index([brand, slug])
+}
+
+// ===== Products (Rental only — no sales) =====
+model Product {
+  id                String    @id @default(cuid())
+  brand             Brand     @default(LUT)
+  slug              String    @unique
+  nameAr            String
+  nameEn            String
+  descriptionAr     String
+  descriptionEn     String
+  rentalPricePerDay Float
+  securityDeposit   Float
+  images            String    // JSON array of URLs — SQLite doesn't support String[]
+  model3dUrl        String?
+  stock             Int       @default(1)
+  isActive          Boolean   @default(true)
+  categoryId        String
+  category          Category  @relation(fields: [categoryId], references: [id])
+  bookings          Booking[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([brand, categoryId])
+  @@index([brand, isActive])
+}
+
+// ===== Bookings =====
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  productId     String
+  product       Product       @relation(fields: [productId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  status        BookingStatus @default(PENDING)
+  customerName  String
+  customerPhone String
+  customerEmail String
+  totalAmount   Float
+  currency      String        @default("KWD")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([productId, startDate, endDate])
+  @@index([status])
+}
+
+// ===== Security Event Log =====
+model SecurityLog {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  event     String
+  ip        String?
+  userId    String?
+  details   String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([event, createdAt])
 }
