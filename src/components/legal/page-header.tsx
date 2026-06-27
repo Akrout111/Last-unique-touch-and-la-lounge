@@ -1,0 +1,60 @@
+import { Navbar } from '@/components/layout/navbar'
+import { Footer } from '@/components/layout/footer'
+
+interface PageHeaderProps {
+  title: string
+  subtitle?: string
+  lastUpdated?: string
+}
+
+export function PageHeader({ title, subtitle, lastUpdated }: PageHeaderProps) {
+  return (
+    <>
+      <Navbar />
+      <div className="bg-bg-light pt-32 pb-12 border-b border-border">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground mb-2">{lastUpdated}</p>
+          )}
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 text-foreground">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              {subtitle}
+            </p>
+          )}
+          <div className="h-1 bg-gold mt-6" style={{ width: '60px' }} />
+        </div>
+      </div>
+    </>
+  )
+}
+
+interface LegalPageWrapperProps {
+  title: string
+  subtitle?: string
+  lastUpdated?: string
+  children: React.ReactNode
+}
+
+export function LegalPageWrapper({
+  title,
+  subtitle,
+  lastUpdated,
+  children,
+}: LegalPageWrapperProps) {
+  return (
+    <>
+      <PageHeader title={title} subtitle={subtitle} lastUpdated={lastUpdated} />
+      <main className="min-h-screen bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-3xl">
+            {children}
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
+  )
+}

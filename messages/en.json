@@ -262,5 +262,80 @@
       "order_not_found": "Order not found"
     },
     "backToCart": "Back to Cart"
+  },
+  "about": {
+    "title": "About Us",
+    "subtitle": "Meet Last Unique Touch — our passion for luxury events",
+    "values": {
+      "title": "Our Vision & Values",
+      "quality": {
+        "title": "Quality First",
+        "desc": "We carefully curate every piece"
+      },
+      "transparency": {
+        "title": "Full Transparency",
+        "desc": "Clear prices, no surprises"
+      },
+      "speed": {
+        "title": "Speed & Flexibility",
+        "desc": "Quick booking, flexible rental"
+      },
+      "luxury": {
+        "title": "Modern Luxury",
+        "desc": "Modern designs with a luxurious touch"
+      }
+    },
+    "stats": {
+      "title": "Numbers That Speak",
+      "products": "+500 Luxury Products",
+      "clients": "+1000 Happy Clients",
+      "events": "+2000 Successful Events",
+      "years": "5 Years of Experience"
+    },
+    "cta": {
+      "title": "Ready for your next event?",
+      "button": "Browse Products"
+    }
+  },
+  "terms": {
+    "title": "Terms & Conditions",
+    "subtitle": "Please read these terms carefully before using our services",
+    "lastUpdated": "Last updated: June 2026"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "We are committed to protecting your privacy and personal data",
+    "lastUpdated": "Last updated: June 2026"
+  },
+  "refund": {
+    "title": "Refund Policy",
+    "subtitle": "Details of cancellation, refund, and deposit terms",
+    "lastUpdated": "Last updated: June 2026"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We're here to help — reach out anytime",
+    "form": {
+      "name": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number (optional)",
+      "subject": "Subject",
+      "message": "Message",
+      "submit": "Send",
+      "submitting": "Sending...",
+      "success": "Your message has been sent! We'll reply soon."
+    },
+    "info": {
+      "address": "Address",
+      "addressValue": "Kuwait - Kuwait",
+      "phone": "Phone",
+      "phoneValue": "+965 1234 5678",
+      "email": "Email",
+      "emailValue": "info@lastuniquetouch.com",
+      "hours": "Working Hours",
+      "hoursValue": "Sat - Thu: 9 AM - 9 PM",
+      "whatsapp": "WhatsApp",
+      "instagram": "Instagram"
+    }
   }
 }

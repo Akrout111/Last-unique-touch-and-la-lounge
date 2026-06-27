@@ -122,15 +122,15 @@ export function Footer() {
             {t('footer.rights')}
           </p>
           <div className="flex items-center gap-5">
-            <span className="text-xs text-white/30 hover:text-white/50 cursor-pointer transition-colors">
+            <Link href="/terms" className="text-xs text-white/30 hover:text-white/50 transition-colors">
               {t('footer.terms')}
-            </span>
-            <span className="text-xs text-white/30 hover:text-white/50 cursor-pointer transition-colors">
+            </Link>
+            <Link href="/privacy" className="text-xs text-white/30 hover:text-white/50 transition-colors">
               {t('footer.privacy')}
-            </span>
-            <span className="text-xs text-white/30 hover:text-white/50 cursor-pointer transition-colors">
+            </Link>
+            <Link href="/refund" className="text-xs text-white/30 hover:text-white/50 transition-colors">
               {t('footer.refund')}
-            </span>
+            </Link>
           </div>
         </div>
       </div>
