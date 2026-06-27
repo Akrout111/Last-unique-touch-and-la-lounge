@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "brand": {
+    "lut": "Last Unique Touch",
+    "lalounge": "La Lounge",
+    "birthday": "Your Birthday"
+  },
+  "landing": {
+    "title": "Choose Your Experience",
+    "subtitle": "Three brands, one journey"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again",
+    "notFound": "Page not found",
+    "comingSoon": "Coming soon",
+    "phaseLabel": "Phase {phase} — Foundation complete"
+  },
+  "products": {
+    "title": "Products",
+    "comingPhase": "Phase 3"
+  },
+  "admin": {
+    "title": "Dashboard",
+    "comingPhase": "Phase 8"
+  }
+}

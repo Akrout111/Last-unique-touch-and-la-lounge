@@ -1,0 +1,33 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "products": "المنتجات",
+    "about": "من نحن",
+    "contact": "تواصل"
+  },
+  "brand": {
+    "lut": "Last Unique Touch",
+    "lalounge": "La Lounge",
+    "birthday": "Your Birthday"
+  },
+  "landing": {
+    "title": "اختر تجربتك",
+    "subtitle": "ثلاث علامات، رحلة واحدة"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ",
+    "retry": "إعادة المحاولة",
+    "notFound": "الصفحة غير موجودة",
+    "comingSoon": "قريباً",
+    "phaseLabel": "المرحلة {phase} — التأسيس مكتمل"
+  },
+  "products": {
+    "title": "المنتجات",
+    "comingPhase": "المرحلة 3"
+  },
+  "admin": {
+    "title": "لوحة التحكم",
+    "comingPhase": "المرحلة 8"
+  }
+}
