@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Navbar } from '@/components/layout/navbar'
 import { Hero } from '@/components/landing/hero'
-import { BrandSelector } from '@/components/landing/brand-selector'
 import { FeaturedProducts } from '@/components/landing/featured-products'
 import { WhyUs } from '@/components/landing/why-us'
 import { CTASection } from '@/components/landing/cta-section'
@@ -45,8 +44,8 @@ export default function HomePage() {
       <CustomCursor />
       <Navbar />
       <main id="main-content">
+        {/* Hero now includes the 3 brand selector cards — visible immediately, no scroll */}
         <Hero />
-        <BrandSelector />
         <FeaturedProducts />
         <WhyUs />
         <CTASection />

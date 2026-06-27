@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Armchair, CalendarDays, Truck, Box } from 'lucide-react'
 
 const features = [
@@ -13,10 +13,20 @@ const features = [
 
 export function WhyUs() {
   const t = useTranslations()
+  const locale = useLocale()
 
   return (
-    <section className="relative py-32 bg-paper overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative py-32 bg-ink overflow-hidden">
+      {/* Ambient warm glow */}
+      <div
+        className="absolute inset-0 opacity-20"
+        style={{
+          background:
+            'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(176, 141, 87, 0.15) 0%, transparent 70%)',
+        }}
+      />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -28,17 +38,17 @@ export function WhyUs() {
           <div className="flex items-center justify-center gap-3 mb-6">
             <span className="w-8 h-px bg-gold" />
             <span className="eyebrow text-gold">
-              {t('whyUs.title')}
+              {locale === 'ar' ? 'لماذا نحن' : 'Why Us'}
             </span>
             <span className="w-8 h-px bg-gold" />
           </div>
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-ink max-w-3xl mx-auto leading-tight">
+          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-paper max-w-3xl mx-auto leading-tight">
             {t('whyUs.title')}
           </h2>
         </motion.div>
 
         {/* Features grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-paper/10">
           {features.map((feature, idx) => {
             const Icon = feature.icon
             return (
@@ -52,23 +62,23 @@ export function WhyUs() {
                   ease: [0.16, 1, 0.3, 1],
                   delay: idx * 0.1,
                 }}
-                className="group relative bg-paper p-10 hover:bg-paper-warm transition-colors duration-500 cursor-default"
+                className="group relative bg-ink p-10 hover:bg-stone/10 transition-colors duration-500 cursor-default"
               >
                 {/* Number */}
-                <span className="absolute top-6 end-6 font-mono text-xs text-taupe/50 tabular-nums">
+                <span className="absolute top-6 end-6 font-mono text-xs text-paper/20 tabular-nums">
                   0{idx + 1}
                 </span>
 
                 {/* Icon */}
-                <div className="w-14 h-14 mb-8 flex items-center justify-center border border-gold/30 rounded-none group-hover:border-gold transition-colors duration-500">
+                <div className="w-14 h-14 mb-8 flex items-center justify-center border border-gold/30 hover:border-gold transition-colors duration-500">
                   <Icon className="w-6 h-6 text-gold" strokeWidth={1.2} />
                 </div>
 
                 {/* Content */}
-                <h3 className="font-display text-2xl text-ink mb-3">
+                <h3 className="font-display text-2xl text-paper mb-3">
                   {t(`whyUs.items.${feature.key}.title`)}
                 </h3>
-                <p className="text-stone text-sm leading-relaxed">
+                <p className="text-paper/40 text-sm leading-relaxed">
                   {t(`whyUs.items.${feature.key}.desc`)}
                 </p>
 

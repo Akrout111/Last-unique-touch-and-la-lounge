@@ -1,220 +1,303 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { MagneticButton } from '@/components/ui-premium/magnetic-button'
+import { Link } from '@/i18n/routing'
+import { ArrowLeft, ArrowRight, Plus } from 'lucide-react'
+
+interface Brand {
+  key: 'lut' | 'lalounge' | 'birthday'
+  image: string
+  accent: string
+  active: boolean
+  tag: string
+}
+
+const brands: Brand[] = [
+  {
+    key: 'lut',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1600&q=85',
+    accent: '#C9A227',
+    active: true,
+    tag: 'HERITAGE',
+  },
+  {
+    key: 'lalounge',
+    image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1600&q=85',
+    accent: '#9D174D',
+    active: false,
+    tag: 'MODERN',
+  },
+  {
+    key: 'birthday',
+    image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1600&q=85',
+    accent: '#D4A574',
+    active: false,
+    tag: 'ATELIER',
+  },
+]
 
 export function Hero() {
   const t = useTranslations()
   const locale = useLocale()
   const ref = useRef<HTMLElement>(null)
+  const [hoveredBrand, setHoveredBrand] = useState<number | null>(null)
 
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end start'],
   })
 
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '40%'])
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1])
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
 
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   return (
     <section
       ref={ref}
-      className="relative min-h-[100vh] flex items-center overflow-hidden bg-ink"
-      style={{ perspective: '1200px' }}
+      className="relative h-screen min-h-[700px] w-full overflow-hidden bg-ink"
     >
-      {/* Background gradient mesh */}
-      <motion.div
-        style={{ y, scale }}
-        className="absolute inset-0 z-0"
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 80% 60% at 20% 40%, rgba(201, 162, 39, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 60%, rgba(185, 28, 28, 0.06) 0%, transparent 50%)',
-          }}
-        />
-      </motion.div>
-
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 z-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, #F4EFE6 1px, transparent 1px), linear-gradient(to bottom, #F4EFE6 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
-        }}
-      />
-
-      <motion.div
-        style={{ opacity }}
-        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-24 pb-16"
-      >
-        {/* Left: Editorial headline */}
-        <div className="lg:col-span-7 text-center lg:text-start">
-          {/* Eyebrow */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center justify-center lg:justify-start gap-3 mb-8"
+      {/* === Background: 3 brand images in triptych === */}
+      <div className="absolute inset-0 flex">
+        {brands.map((brand, idx) => (
+          <div
+            key={brand.key}
+            className="relative flex-1 overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            style={{
+              flex: hoveredBrand === idx ? 1.5 : hoveredBrand === null ? 1 : 0.7,
+            }}
           >
-            <span className="w-8 h-px bg-gold" />
-            <span className="eyebrow text-gold">
-              {locale === 'ar' ? 'كويت · تأجير فاخر' : 'Kuwait · Luxury Rental'}
-            </span>
-          </motion.div>
-
-          {/* Headline */}
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-paper leading-[0.95] mb-8">
-            <motion.span
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-              className="block"
-            >
-              {t('hero.title')}
-            </motion.span>
-            <motion.span
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
-              className="block italic text-gold-gradient"
-            >
-              {t('hero.titleAccent')}
-            </motion.span>
-          </h1>
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
-            className="text-lg sm:text-xl text-paper/50 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed"
-          >
-            {t('hero.subtitle')}
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.55 }}
-            className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
-          >
-            <MagneticButton href={`/${locale}/products`}>
-              <span className="group inline-flex items-center gap-3 px-8 py-4 bg-lut text-paper rounded-none hover:bg-lut/90 transition-colors duration-300 relative overflow-hidden">
-                <span className="relative z-10 text-sm font-medium tracking-wide">
-                  {t('hero.ctaPrimary')}
-                </span>
-                <ArrowIcon className="w-4 h-4 relative z-10 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
-              </span>
-            </MagneticButton>
-
-            <MagneticButton href={`/${locale}/about`}>
-              <span className="group inline-flex items-center gap-3 px-8 py-4 border border-gold/40 text-gold hover:bg-gold/10 transition-colors duration-300">
-                <span className="text-sm font-medium tracking-wide">
-                  {t('hero.ctaSecondary')}
-                </span>
-              </span>
-            </MagneticButton>
-          </motion.div>
-
-          {/* Stats row */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.7 }}
-            className="mt-16 flex items-center gap-8 justify-center lg:justify-start"
-          >
-            {[
-              { value: '500+', label: locale === 'ar' ? 'منتج' : 'Products' },
-              { value: '2000+', label: locale === 'ar' ? 'حدث' : 'Events' },
-              { value: '5', label: locale === 'ar' ? 'سنوات' : 'Years' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center lg:text-start">
-                <div className="font-display text-3xl text-gold tabular-nums">{stat.value}</div>
-                <div className="eyebrow text-paper/40 mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Right: Floating 3D-ish visual */}
-        <div className="lg:col-span-5 hidden lg:block">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, rotateY: 20 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-            className="relative aspect-[3/4]"
-          >
-            {/* Main image card */}
+            {/* Brand background image */}
             <motion.div
-              animate={{ y: [0, -15, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
               className="absolute inset-0"
-            >
-              <div
-                className="relative w-full h-full overflow-hidden"
-                style={{
-                  clipPath: 'polygon(0 0, 100% 0, 100% 85%, 85% 100%, 0 100%)',
-                }}
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=800&q=80"
-                  alt="Luxury furniture"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
-              </div>
-            </motion.div>
-
-            {/* Floating accent card */}
-            <motion.div
-              animate={{ y: [0, 20, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-              className="absolute -bottom-8 -start-8 w-40 h-52 overflow-hidden shadow-luxury"
-              style={{ borderRadius: '2px' }}
+              animate={{
+                scale: hoveredBrand === idx ? 1.1 : 1,
+              }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             >
               <img
-                src="https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=400&q=80"
-                alt="Accent"
+                src={brand.image}
+                alt={t(`brandSelector.${brand.key}.name`)}
                 className="w-full h-full object-cover"
               />
             </motion.div>
 
-            {/* Gold ring decoration */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-              className="absolute -top-12 -end-12 w-32 h-32 rounded-full border border-gold/20"
-            >
-              <div className="absolute top-0 left-1/2 w-2 h-2 bg-gold rounded-full -translate-x-1/2 -translate-y-1/2" />
-            </motion.div>
-          </motion.div>
+            {/* Gradient overlay */}
+            <div
+              className="absolute inset-0 transition-opacity duration-500"
+              style={{
+                background:
+                  hoveredBrand === idx
+                    ? 'linear-gradient(to top, rgba(14,13,11,0.95) 0%, rgba(14,13,11,0.4) 50%, rgba(14,13,11,0.2) 100%)'
+                    : 'linear-gradient(to top, rgba(14,13,11,0.85) 0%, rgba(14,13,11,0.5) 50%, rgba(14,13,11,0.3) 100%)',
+              }}
+            />
+
+            {/* Inactive dark overlay */}
+            {!brand.active && (
+              <div className="absolute inset-0 bg-ink/40" />
+            )}
+
+            {/* Divider line */}
+            {idx < brands.length - 1 && (
+              <div className="absolute top-0 end-0 bottom-0 w-px bg-paper/10 z-10" />
+            )}
+
+            {/* Accent top line */}
+            <div
+              className="absolute top-0 inset-x-0 h-1 transition-opacity duration-500"
+              style={{
+                backgroundColor: brand.accent,
+                opacity: hoveredBrand === idx ? 1 : 0.3,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* === Top: Brand logo + nav spacer === */}
+      <motion.div
+        style={{ opacity }}
+        className="absolute top-0 inset-x-0 z-30 pt-24 pb-8 text-center pointer-events-none"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+          className="flex items-center justify-center gap-3 mb-3"
+        >
+          <span className="w-8 h-px bg-gold/50" />
+          <span className="eyebrow text-gold/80">
+            {locale === 'ar' ? 'منصة تأجير فاخرة · الكويت' : 'Luxury Rental Platform · Kuwait'}
+          </span>
+          <span className="w-8 h-px bg-gold/50" />
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+          className="font-display text-3xl sm:text-4xl md:text-5xl text-paper"
+        >
+          {t('brand.lut')}
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="text-sm text-paper/40 mt-2"
+        >
+          {locale === 'ar' ? 'اختر تجربتك' : 'Choose Your Experience'}
+        </motion.p>
+      </motion.div>
+
+      {/* === Center: Interactive brand cards === */}
+      <div className="absolute inset-0 z-20 flex items-end md:items-center">
+        <div className="w-full px-4 sm:px-6 lg:px-8 pb-32 md:pb-0">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {brands.map((brand, idx) => {
+              const card = (
+                <motion.div
+                  key={brand.key}
+                  initial={{ opacity: 0, y: 60 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.9,
+                    ease: [0.16, 1, 0.3, 1],
+                    delay: 0.6 + idx * 0.12,
+                  }}
+                  onMouseEnter={() => setHoveredBrand(idx)}
+                  onMouseLeave={() => setHoveredBrand(null)}
+                  className="group relative cursor-pointer"
+                >
+                  {/* Tag */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <span
+                      className="w-2 h-2 rounded-full transition-all duration-300"
+                      style={{
+                        backgroundColor: brand.accent,
+                        scale: hoveredBrand === idx ? 1.5 : 1,
+                      }}
+                    />
+                    <span
+                      className="eyebrow transition-colors duration-300"
+                      style={{ color: hoveredBrand === idx ? brand.accent : 'rgba(244, 239, 230, 0.4)' }}
+                    >
+                      {brand.tag}
+                    </span>
+                  </div>
+
+                  {/* Brand name */}
+                  <h2
+                    className="font-display text-3xl sm:text-4xl md:text-5xl text-paper leading-tight mb-3 transition-all duration-300"
+                    style={{
+                      transform: hoveredBrand === idx ? 'translateY(-4px)' : 'translateY(0)',
+                    }}
+                  >
+                    {t(`brandSelector.${brand.key}.name`)}
+                  </h2>
+
+                  {/* Description */}
+                  <p
+                    className="text-sm text-paper/50 leading-relaxed mb-6 max-w-xs transition-all duration-300 overflow-hidden"
+                    style={{
+                      maxHeight: hoveredBrand === idx ? '60px' : '40px',
+                      opacity: hoveredBrand === idx ? 1 : 0.6,
+                    }}
+                  >
+                    {t(`brandSelector.${brand.key}.desc`)}
+                  </p>
+
+                  {/* CTA / Badge */}
+                  <div className="flex items-center gap-2">
+                    {brand.active ? (
+                      <span
+                        className="inline-flex items-center gap-2 text-sm font-medium transition-all duration-300 group-hover:gap-3"
+                        style={{ color: brand.accent }}
+                      >
+                        <span className="eyebrow">
+                          {locale === 'ar' ? 'استكشف' : 'Explore'}
+                        </span>
+                        <ArrowIcon className="w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 text-paper/40">
+                        <Plus className="w-4 h-4" />
+                        <span className="eyebrow">
+                          {t(`brandSelector.${brand.key}.comingSoon`)}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Gold underline that grows on hover */}
+                  <div
+                    className="h-px mt-6 transition-all duration-500"
+                    style={{
+                      backgroundColor: brand.accent,
+                      width: hoveredBrand === idx ? '100%' : '40px',
+                      opacity: hoveredBrand === idx ? 1 : 0.4,
+                    }}
+                  />
+                </motion.div>
+              )
+
+              if (brand.active) {
+                return (
+                  <Link key={brand.key} href="/products" className="block">
+                    {card}
+                  </Link>
+                )
+              }
+              return <div key={brand.key}>{card}</div>
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* === Bottom: Stats bar === */}
+      <motion.div
+        style={{ opacity }}
+        className="absolute bottom-0 inset-x-0 z-30 pb-8"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center gap-8 sm:gap-16">
+            {[
+              { value: '500+', label: locale === 'ar' ? 'منتج فاخر' : 'Luxury Items' },
+              { value: '2000+', label: locale === 'ar' ? 'حدث ناجح' : 'Events' },
+              { value: '5', label: locale === 'ar' ? 'سنوات خبرة' : 'Years' },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.0 + i * 0.1 }}
+                className="text-center"
+              >
+                <div className="font-display text-2xl sm:text-3xl text-gold tabular-nums">
+                  {stat.value}
+                </div>
+                <div className="eyebrow text-paper/40 mt-1 text-[10px]">
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </motion.div>
 
-      {/* Scroll indicator */}
+      {/* Scroll hint */}
       <motion.div
         style={{ opacity }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 hidden md:block"
       >
         <motion.div
-          animate={{ y: [0, 8, 0] }}
+          animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          className="flex flex-col items-center gap-2"
         >
-          <span className="eyebrow text-paper/30">
-            {locale === 'ar' ? 'اسحب للأسفل' : 'Scroll'}
-          </span>
-          <div className="w-px h-12 bg-gradient-to-b from-gold/50 to-transparent" />
+          <div className="w-px h-8 bg-gradient-to-b from-gold/40 to-transparent" />
         </motion.div>
       </motion.div>
     </section>
