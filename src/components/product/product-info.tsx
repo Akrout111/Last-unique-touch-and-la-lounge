@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Minus, Plus, ShoppingCart, Check, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { localizedName, calculateRentalTotal } from '@/lib/products'
 import type { ProductWithImages } from '@/lib/products'
-import { addToCart } from '@/lib/cart'
+import { useCart } from '@/components/providers/cart-provider'
 
 interface ProductInfoProps {
   product: ProductWithImages
@@ -19,6 +19,7 @@ type AvailabilityState = 'idle' | 'checking' | 'available' | 'unavailable' | 'er
 export function ProductInfo({ product }: ProductInfoProps) {
   const t = useTranslations()
   const locale = useLocale()
+  const { addItem } = useCart()
 
   const isOutOfStock = product.stock === 0
   const today = new Date().toISOString().split('T')[0]
@@ -102,7 +103,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
     const firstImage = product.images[0] ?? ''
 
-    addToCart({
+    addItem({
       productId: product.id,
       slug: product.slug,
       nameAr: product.nameAr,

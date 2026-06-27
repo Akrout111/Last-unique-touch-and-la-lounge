@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
+import { CartProvider } from '@/components/providers/cart-provider'
 
 export const metadata: Metadata = {
   title: 'Last Unique Touch',
@@ -36,7 +37,7 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <NextIntlClientProvider>
-          {children}
+          <CartProvider>{children}</CartProvider>
         </NextIntlClientProvider>
       </body>
     </html>

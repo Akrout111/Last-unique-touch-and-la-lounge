@@ -167,5 +167,69 @@
   "admin": {
     "title": "Dashboard",
     "comingPhase": "Phase 8"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": {
+      "title": "Your cart is empty",
+      "subtitle": "Start adding your favorite products",
+      "cta": "Browse Products"
+    },
+    "item": {
+      "period": "From {start} to {end} ({days} days)",
+      "perDay": "KWD / day",
+      "remove": "Remove",
+      "quantity": "Quantity"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "rental": "Rental Total",
+      "deposit": "Deposit Total",
+      "total": "Grand Total"
+    },
+    "continueShopping": "Continue Shopping",
+    "checkout": "Checkout"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "form": {
+      "customerInfo": "Customer Information",
+      "name": "Full Name",
+      "phone": "Phone Number",
+      "email": "Email Address",
+      "address": "Address",
+      "city": "City",
+      "notes": "Notes (optional)",
+      "submit": "Confirm Order",
+      "submitting": "Confirming order..."
+    },
+    "summary": {
+      "title": "Your Order Summary",
+      "availabilityNote": "Availability will be confirmed before processing",
+      "total": "Total"
+    },
+    "errors": {
+      "invalid_input": "Invalid input data",
+      "duplicate_request": "This order has already been received",
+      "invalid_products": "Some products are invalid",
+      "price_mismatch": "Product prices have changed — please update your cart",
+      "insufficient_stock": "Insufficient stock for one of the products",
+      "not_available": "One of the products is no longer available for the selected period",
+      "internal_error": "An error occurred — please try again later"
+    },
+    "empty": "Cannot checkout with an empty cart",
+    "success": {
+      "title": "Your order has been received!",
+      "orderId": "Order ID: #{id}",
+      "subtitle": "We will contact you soon via phone or email to confirm the details",
+      "nextSteps": {
+        "title": "What happens next?",
+        "step1": "We receive and review your order",
+        "step2": "We call you to confirm details and payment",
+        "step3": "We prepare your products for delivery on time"
+      },
+      "goHome": "Back to Home",
+      "browseMore": "Browse More Products"
+    }
   }
 }

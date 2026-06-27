@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Menu, X, Globe, ShoppingCart } from 'lucide-react'
-import { getCartCount } from '@/lib/cart'
+import { useCart } from '@/components/providers/cart-provider'
 
 export function Navbar() {
   const t = useTranslations()
@@ -14,20 +14,12 @@ export function Navbar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [cartCount, setCartCount] = useState(0)
+  const { count, hydrated } = useCart()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  // Update cart count on mount and when cart-updated event fires
-  useEffect(() => {
-    const updateCount = () => setCartCount(getCartCount())
-    updateCount()
-    window.addEventListener('cart-updated', updateCount)
-    return () => window.removeEventListener('cart-updated', updateCount)
   }, [])
 
   const switchLocale = () => {
@@ -86,9 +78,9 @@ export function Navbar() {
               aria-label="Cart"
             >
               <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && (
+              {hydrated && count > 0 && (
                 <span className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-lut text-white text-[10px] font-bold">
-                  {cartCount}
+                  {count}
                 </span>
               )}
             </Link>
