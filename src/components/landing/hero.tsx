@@ -61,6 +61,24 @@ export function Hero() {
       ref={ref}
       className="relative min-h-screen w-full overflow-hidden bg-ink flex flex-col"
     >
+      {/* === Background texture === */}
+      <div
+        className="absolute inset-0 z-0 opacity-20"
+        style={{
+          backgroundImage: 'url(/hero-bg-texture.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      {/* Warm gradient overlay */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201, 162, 39, 0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 50% 100%, rgba(176, 141, 87, 0.04) 0%, transparent 50%)',
+        }}
+      />
       {/* === Top: Brand logo + tagline === */}
       <motion.div
         style={{ opacity }}
@@ -180,6 +198,20 @@ export function Hero() {
                     </span>
                   </div>
 
+                  {/* Brand logo */}
+                  <div className="mb-4 transition-all duration-300">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={brand.logo}
+                      alt={t(`brandSelector.${brand.key}.name`)}
+                      className="h-16 w-auto object-contain rounded-sm"
+                      style={{
+                        opacity: hoveredBrand === idx ? 1 : 0.7,
+                        filter: hoveredBrand === idx ? 'drop-shadow(0 0 10px rgba(201, 162, 39, 0.3))' : 'none',
+                      }}
+                    />
+                  </div>
+
                   {/* Brand name */}
                   <h2
                     className="font-display text-2xl sm:text-3xl lg:text-4xl text-paper leading-tight mb-2 transition-all duration-300"
@@ -284,6 +316,16 @@ export function Hero() {
 
                   {/* Content */}
                   <div className="relative p-5 pt-16 flex flex-col justify-end min-h-[200px]">
+                    {/* Brand logo */}
+                    <div className="mb-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={brand.logo}
+                        alt={t(`brandSelector.${brand.key}.name`)}
+                        className="h-12 w-auto object-contain rounded-sm"
+                      />
+                    </div>
+
                     {/* Tag */}
                     <div className="flex items-center gap-2 mb-2">
                       <span

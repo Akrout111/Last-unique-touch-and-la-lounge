@@ -1,5 +1,5 @@
 // Seed file for Last Unique Touch — Phase 3
-// 15 products across 3 categories with model3dUrl and one out-of-stock item
+// 15 products with AI-generated images matching each product
 
 import { PrismaClient } from '@prisma/client'
 
@@ -44,7 +44,7 @@ async function main() {
 
   console.log('✅ Categories created:', [chairs, tables, lighting].length)
 
-  // 2. Create 15 products (5 per category)
+  // 2. Create 15 products with AI-generated images
   const products = [
     // ===== CHAIRS (5) =====
     {
@@ -56,11 +56,8 @@ async function main() {
       descriptionEn: 'Elegant transparent chair designed by Philippe Starck, perfect for luxury events',
       rentalPricePerDay: 5.0,
       securityDeposit: 15.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=800',
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
-      ]),
-      model3dUrl: 'https://example.com/models/louis-ghost-chair.glb',
+      images: JSON.stringify(['/products/louis-ghost-chair.png']),
+      model3dUrl: 'procedural-chair',
       stock: 50,
       categoryId: chairs.id,
     },
@@ -73,9 +70,7 @@ async function main() {
       descriptionEn: 'Classic gold Chivari chair for formal events and weddings',
       rentalPricePerDay: 3.5,
       securityDeposit: 10.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1519947486511-4614b4c5e4c2?w=800',
-      ]),
+      images: JSON.stringify(['/products/chivari-chair-gold.png']),
       stock: 100,
       categoryId: chairs.id,
     },
@@ -88,10 +83,8 @@ async function main() {
       descriptionEn: 'Transparent Tiffany chair with stainless steel frame, modern elegance',
       rentalPricePerDay: 4.0,
       securityDeposit: 12.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800',
-      ]),
-      model3dUrl: 'https://example.com/models/tiffany-chair.glb',
+      images: JSON.stringify(['/products/tiffany-chair-crystal.png']),
+      model3dUrl: 'procedural-chair',
       stock: 80,
       categoryId: chairs.id,
     },
@@ -104,9 +97,7 @@ async function main() {
       descriptionEn: 'Classic armchair with luxury cream upholstery and elegant design',
       rentalPricePerDay: 6.5,
       securityDeposit: 20.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
-      ]),
+      images: JSON.stringify(['/products/monet-armchair.png']),
       stock: 30,
       categoryId: chairs.id,
     },
@@ -119,10 +110,8 @@ async function main() {
       descriptionEn: 'Bombon chair with luxury velvet fabric available in multiple colors',
       rentalPricePerDay: 5.5,
       securityDeposit: 18.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1592078615290-033ee584e267?w=800',
-      ]),
-      stock: 0, // Out of stock — for testing badge
+      images: JSON.stringify(['/products/bombon-chair-velvet.png']),
+      stock: 0,
       categoryId: chairs.id,
     },
 
@@ -136,9 +125,7 @@ async function main() {
       descriptionEn: 'Large round table seating 10, ideal for formal dinners',
       rentalPricePerDay: 8.0,
       securityDeposit: 25.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1517164850305-99a3e65bb47e?w=800',
-      ]),
+      images: JSON.stringify(['/products/round-banquet-table.png']),
       stock: 20,
       categoryId: tables.id,
     },
@@ -151,9 +138,7 @@ async function main() {
       descriptionEn: 'Elegant cocktail highboy table for parties and receptions',
       rentalPricePerDay: 4.0,
       securityDeposit: 12.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800',
-      ]),
+      images: JSON.stringify(['/products/cocktail-highboy-table.png']),
       stock: 40,
       categoryId: tables.id,
     },
@@ -166,10 +151,8 @@ async function main() {
       descriptionEn: 'Coffee table with luxury marble top and gold base, a touch of elegance',
       rentalPricePerDay: 7.0,
       securityDeposit: 22.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=800',
-      ]),
-      model3dUrl: 'https://example.com/models/marble-coffee-table.glb',
+      images: JSON.stringify(['/products/marble-coffee-table.png']),
+      model3dUrl: 'procedural-table',
       stock: 15,
       categoryId: tables.id,
     },
@@ -182,9 +165,7 @@ async function main() {
       descriptionEn: 'Long dining table seating 12, perfect for large gatherings',
       rentalPricePerDay: 12.0,
       securityDeposit: 35.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=800',
-      ]),
+      images: JSON.stringify(['/products/dining-table-12-seater.png']),
       stock: 10,
       categoryId: tables.id,
     },
@@ -197,9 +178,7 @@ async function main() {
       descriptionEn: 'Small side table with shiny gold frame, an elegant decor piece',
       rentalPricePerDay: 3.5,
       securityDeposit: 10.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1532372576444-dda954194ad0?w=800',
-      ]),
+      images: JSON.stringify(['/products/gold-side-table.png']),
       stock: 25,
       categoryId: tables.id,
     },
@@ -214,10 +193,8 @@ async function main() {
       descriptionEn: 'Luxury crystal chandelier adding a royal touch to any event',
       rentalPricePerDay: 15.0,
       securityDeposit: 50.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=800',
-      ]),
-      model3dUrl: 'https://example.com/models/crystal-chandelier.glb',
+      images: JSON.stringify(['/products/crystal-chandelier.png']),
+      model3dUrl: 'procedural-chandelier',
       stock: 8,
       categoryId: lighting.id,
     },
@@ -230,9 +207,7 @@ async function main() {
       descriptionEn: 'Remote-controlled color LED uplighter for ambient lighting',
       rentalPricePerDay: 3.0,
       securityDeposit: 8.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=800',
-      ]),
+      images: JSON.stringify(['/products/led-uplighter.png']),
       stock: 60,
       categoryId: lighting.id,
     },
@@ -245,9 +220,7 @@ async function main() {
       descriptionEn: 'Pendant light with modern industrial design, perfect for open spaces',
       rentalPricePerDay: 4.5,
       securityDeposit: 14.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800',
-      ]),
+      images: JSON.stringify(['/products/industrial-pendant-light.png']),
       stock: 35,
       categoryId: lighting.id,
     },
@@ -260,9 +233,7 @@ async function main() {
       descriptionEn: 'Classic brass lantern with heritage touch, ideal for Ramadan events and weddings',
       rentalPricePerDay: 6.0,
       securityDeposit: 18.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800',
-      ]),
+      images: JSON.stringify(['/products/brass-lantern.png']),
       stock: 45,
       categoryId: lighting.id,
     },
@@ -275,10 +246,8 @@ async function main() {
       descriptionEn: 'Floor lamp with gold base and warm light, a touch of luxury for any corner',
       rentalPricePerDay: 5.0,
       securityDeposit: 16.0,
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800',
-      ]),
-      model3dUrl: 'https://example.com/models/gold-floor-lamp.glb',
+      images: JSON.stringify(['/products/gold-floor-lamp.png']),
+      model3dUrl: 'procedural-lamp',
       stock: 18,
       categoryId: lighting.id,
     },
