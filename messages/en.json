@@ -226,10 +226,41 @@
         "title": "What happens next?",
         "step1": "We receive and review your order",
         "step2": "We call you to confirm details and payment",
-        "step3": "We prepare your products for delivery on time"
+        "step3": "We prepare your products for delivery on time",
+        "step4": "An email with your invoice has been sent",
+        "step5": "A reminder for your event date has been added to our calendar"
       },
       "goHome": "Back to Home",
       "browseMore": "Browse More Products"
     }
+  },
+  "payment": {
+    "title": "Secure Payment",
+    "orderSummary": "Order Summary",
+    "orderId": "Order ID: #{id}",
+    "total": "Total: {amount} KWD",
+    "displayNote": "This is a display interface — you will be redirected to the official payment gateway",
+    "form": {
+      "cardNumber": "Card Number",
+      "cardName": "Name on Card",
+      "expiry": "Expiry Date",
+      "cvv": "CVV",
+      "saveCard": "Save card for future use",
+      "submit": "Pay {amount} KWD",
+      "processing": "Processing payment..."
+    },
+    "trust": {
+      "ssl": "SSL Secure Payment",
+      "fraud": "Fraud Protection",
+      "cards": "Visa / Mastercard Accepted"
+    },
+    "errors": {
+      "invalid_card": "Invalid card number",
+      "invalid_expiry": "Invalid expiry date",
+      "invalid_cvv": "Invalid CVV",
+      "payment_failed": "Payment failed — please try again",
+      "order_not_found": "Order not found"
+    },
+    "backToCart": "Back to Cart"
   }
 }

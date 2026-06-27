@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, ArrowLeft, Phone, Package, Truck, CheckCheck } from 'lucide-react'
+import { CheckCircle2, ArrowLeft, Phone, Package, Truck, CheckCheck, Mail, CalendarPlus } from 'lucide-react'
 
 interface SuccessViewProps {
   orderId?: string
@@ -9,6 +9,14 @@ interface SuccessViewProps {
 
 export function SuccessView({ orderId }: SuccessViewProps) {
   const t = useTranslations()
+
+  const steps = [
+    { icon: Package, key: 'step1' as const },
+    { icon: Phone, key: 'step2' as const },
+    { icon: Truck, key: 'step3' as const },
+    { icon: Mail, key: 'step4' as const },
+    { icon: CalendarPlus, key: 'step5' as const },
+  ]
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16 text-center">
@@ -24,7 +32,7 @@ export function SuccessView({ orderId }: SuccessViewProps) {
 
       {/* Order ID */}
       {orderId && (
-        <p className="text-sm text-muted-foreground mb-2">
+        <p className="text-sm font-medium text-muted-foreground mb-2">
           {t('checkout.success.orderId', { id: orderId })}
         </p>
       )}
@@ -41,41 +49,21 @@ export function SuccessView({ orderId }: SuccessViewProps) {
         </h2>
 
         <div className="space-y-4">
-          {/* Step 1 */}
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-lut/10 flex items-center justify-center shrink-0">
-              <Package className="w-4 h-4 text-lut" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {t('checkout.success.nextSteps.step1')}
-              </p>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-lut/10 flex items-center justify-center shrink-0">
-              <Phone className="w-4 h-4 text-lut" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {t('checkout.success.nextSteps.step2')}
-              </p>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-lut/10 flex items-center justify-center shrink-0">
-              <Truck className="w-4 h-4 text-lut" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {t('checkout.success.nextSteps.step3')}
-              </p>
-            </div>
-          </div>
+          {steps.map((step, idx) => {
+            const Icon = step.icon
+            return (
+              <div key={idx} className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-lut/10 flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-lut" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {t(`checkout.success.nextSteps.${step.key}`)}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

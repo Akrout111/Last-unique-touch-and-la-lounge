@@ -30,7 +30,7 @@ export function CheckoutView() {
   const t = useTranslations()
   const locale = useLocale()
   const router = useRouter()
-  const { items, hydrated, total, rentalTotal, depositTotal, clear } = useCart()
+  const { items, hydrated, total, rentalTotal, depositTotal } = useCart()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -105,10 +105,9 @@ export function CheckoutView() {
         return
       }
 
-      // Success — clear cart and redirect
-      clear()
+      // Success — redirect to payment page (cart cleared after payment)
       const orderId = result.orderId as string
-      router.push(`/checkout/success?order=${orderId}`)
+      router.push(`/checkout/payment?order=${orderId}`)
     } catch {
       setErrorMessage(t('checkout.errors.internal_error'))
       setSubmitting(false)
