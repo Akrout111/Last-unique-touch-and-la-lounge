@@ -3,6 +3,7 @@ import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import { CartProvider } from '@/components/providers/cart-provider'
+import { ToastProvider } from '@/components/providers/toast-provider'
 
 export const metadata: Metadata = {
   title: 'Last Unique Touch',
@@ -37,7 +38,9 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <NextIntlClientProvider>
-          <CartProvider>{children}</CartProvider>
+          <CartProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </CartProvider>
         </NextIntlClientProvider>
       </body>
     </html>

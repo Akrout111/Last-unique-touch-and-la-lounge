@@ -300,3 +300,24 @@ export function calculateRentalTotal(
  * Type for raw Product from Prisma (before image parsing).
  */
 export type RawProduct = Product
+
+/**
+ * Get a single product by ID (for admin edit page).
+ */
+export async function getProductById(id: string): Promise<ProductWithImages | null> {
+  const product = await db.product.findUnique({
+    where: { id },
+    include: {
+      category: {
+        select: { id: true, nameAr: true, nameEn: true, slug: true },
+      },
+    },
+  })
+
+  if (!product) return null
+
+  return {
+    ...product,
+    images: parseImages(product.images),
+  }
+}

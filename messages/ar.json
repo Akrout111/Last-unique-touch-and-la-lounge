@@ -166,7 +166,146 @@
   },
   "admin": {
     "title": "لوحة التحكم",
-    "comingPhase": "المرحلة 8"
+    "comingPhase": "المرحلة 8",
+    "login": {
+      "title": "تسجيل الدخول",
+      "password": "كلمة المرور",
+      "submit": "دخول",
+      "invalid": "كلمة المرور غير صحيحة",
+      "devHint": "في التطوير، استخدم كلمة المرور \"dev\""
+    },
+    "nav": {
+      "dashboard": "لوحة القيادة",
+      "products": "المنتجات",
+      "categories": "الفئات",
+      "bookings": "الحجوزات",
+      "logout": "تسجيل الخروج",
+      "viewSite": "عرض الموقع"
+    },
+    "dashboard": {
+      "title": "لوحة القيادة",
+      "stats": {
+        "totalProducts": "إجمالي المنتجات",
+        "pendingBookings": "حجوزات معلّقة",
+        "confirmedBookings": "حجوزات مؤكدة",
+        "monthlyRevenue": "الإيرادات (هذا الشهر)"
+      },
+      "recentBookings": "أحدث الحجوزات",
+      "lowStock": "منتجات منخفضة المخزون",
+      "viewAll": "عرض الكل"
+    },
+    "products": {
+      "title": "المنتجات",
+      "add": "إضافة منتج",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "search": "بحث...",
+      "filterCategory": "كل الفئات",
+      "filterStatus": "كل الحالات",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "stock": "المخزون",
+      "price": "السعر/يوم",
+      "actions": "إجراءات",
+      "form": {
+        "titleNew": "إضافة منتج جديد",
+        "titleEdit": "تعديل المنتج",
+        "nameAr": "الاسم (عربي)",
+        "nameEn": "الاسم (إنجليزي)",
+        "descriptionAr": "الوصف (عربي)",
+        "descriptionEn": "الوصف (إنجليزي)",
+        "category": "الفئة",
+        "rentalPrice": "سعر الإيجار/اليوم",
+        "securityDeposit": "التأمين",
+        "stock": "المخزون",
+        "images": "صور (URLs)",
+        "addImage": "إضافة صورة",
+        "model3dUrl": "URL نموذج 3D (اختياري)",
+        "isActive": "نشط",
+        "slug": "Slug",
+        "submit": "حفظ",
+        "cancel": "إلغاء"
+      },
+      "deleted": "تم حذف المنتج",
+      "saved": "تم حفظ المنتج",
+      "confirmDelete": "هل أنت متأكد من حذف \"{name}\"؟"
+    },
+    "categories": {
+      "title": "الفئات",
+      "add": "إضافة فئة",
+      "nameAr": "الاسم (عربي)",
+      "nameEn": "الاسم (إنجليزي)",
+      "slug": "Slug",
+      "productCount": "عدد المنتجات",
+      "actions": "إجراءات",
+      "cannotDelete": "لا يمكن حذف فئة تحتوي على منتجات",
+      "saved": "تم حفظ الفئة",
+      "deleted": "تم حذف الفئة"
+    },
+    "bookings": {
+      "title": "الحجوزات",
+      "filterStatus": {
+        "all": "الكل",
+        "PENDING": "معلّق",
+        "CONFIRMED": "مؤكد",
+        "CANCELLED": "ملغي",
+        "COMPLETED": "مكتمل"
+      },
+      "table": {
+        "id": "رقم الحجز",
+        "customer": "الزبون",
+        "product": "المنتج",
+        "period": "فترة الإيجار",
+        "total": "الإجمالي",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "detail": {
+        "title": "تفاصيل الحجز",
+        "customerInfo": "بيانات الزبون",
+        "name": "الاسم",
+        "phone": "الهاتف",
+        "email": "البريد",
+        "address": "العنوان",
+        "city": "المدينة",
+        "notes": "ملاحظات",
+        "productInfo": "بيانات المنتج",
+        "product": "المنتج",
+        "rentalInfo": "بيانات الإيجار",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
+        "days": "عدد الأيام",
+        "financialSummary": "الملخص المالي",
+        "rental": "الإيجار",
+        "deposit": "التأمين",
+        "total": "الإجمالي",
+        "changeStatus": "تغيير الحالة",
+        "confirm": "تأكيد",
+        "cancel": "إلغاء",
+        "complete": "إكمال"
+      },
+      "statusChanged": "تم تغيير حالة الحجز",
+      "invalidTransition": "لا يمكن تغيير الحالة بهذا الشكل"
+    },
+    "common": {
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "delete": "حذف",
+      "edit": "تعديل",
+      "view": "عرض",
+      "confirm": "تأكيد",
+      "back": "رجوع",
+      "loading": "جارٍ التحميل...",
+      "noData": "لا توجد بيانات",
+      "error": "حدث خطأ"
+    },
+    "errors": {
+      "invalid_input": "بيانات غير صالحة",
+      "slug_exists": "الـ Slug مستخدم مسبقاً",
+      "not_found": "غير موجود",
+      "internal_error": "حدث خطأ — يرجى المحاولة لاحقاً",
+      "unauthorized": "غير مصرّح"
+    }
   },
   "cart": {
     "title": "سلة التسوق",

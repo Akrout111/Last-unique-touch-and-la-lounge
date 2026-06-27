@@ -1,0 +1,1078 @@
+     1→
+     2→---
+     3→
+     4→# 🚀 البرومبت الثامن — لوحة التحكم للأدمن
+     5→
+     6→انسخ البرومبت التالي وأرسله للـ Full Stack Agent:
+     7→
+     8→---
+     9→
+    10→````markdown
+    11→# مهمة: لوحة التحكم للأدمن — المرحلة 8
+    12→
+    13→## 📖 السياق والمراجع الإلزامية
+    14→
+    15→### طبيعة هذه المرحلة
+    16→أنت في **المرحلة 8 من 10**. المرحلة 7 (الصفحات القانونية) اكتملت بنجاح. الآن نبني **لوحة تحكم الأدمن** — حيث يدير صاحب العمل المنتجات والحجوزات والفئات. هذه اللوحة محمية بـ **مصادقة بسيطة (mock auth)** لأن Clerk سيُضاف في المرحلة 10.
+    17→
+    18→### ⚠️ قيود بيئية (مهمة)
+    19→1. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع
+    20→2. **SQLite فقط**
+    21→3. **🚨 لا تستخدم Clerk** — سنستخدم mock auth بسيط (cookie-based)
+    22→4. **لا رفع صور فعلي** — استخدم URL input (سنضيف رفع الصور في المرحلة 10 مع Supabase Storage)
+    23→5. **استخدم Server Actions** للتغييرات في DB (أنظف من API routes للوحة التحكم)
+    24→
+    25→### المراجع الإلزامية (اقرأها قبل البدء)
+    26→1. ملف `GLM-5.2-FullStack-Build-Reference.md`
+    27→2. ملف `GLM-5.2-Assistant-Operations-Reference.md` — **خصوصاً الأخطاء الأمنية #7, #9, #10, #14, #15, #16**
+    28→3. **اقرأ الكود الحالي قبل البدء**:
+    29→   - `prisma/schema.prisma` — خصوصاً `Product`, `Category`, `Booking`, `BookingStatus`
+    30→   - `src/lib/products.ts` — الـ helpers الحالية
+    31→   - `src/lib/cart.ts` — خصوصاً `parseImages`, `stringifyImages`
+    32→   - `src/app/[locale]/admin/page.tsx` — placeholder حالياً
+    33→   - `messages/ar.json` و `messages/en.json`
+    34→
+    35→### البنية المستهدفة
+    36→```
+    37→/admin/login                   → صفحة تسجيل الدخول (mock auth)
+    38→/admin                         → Dashboard (إحصائيات + أحدث الحجوزات)
+    39→/admin/products                → قائمة المنتجات + بحث + فلترة
+    40→/admin/products/new            → إضافة منتج جديد
+    41→/admin/products/[id]/edit      → تعديل منتج
+    42→/admin/categories              → إدارة الفئات
+    43→/admin/bookings                → قائمة الحجوزات + فلترة بالحالة
+    44→/admin/bookings/[id]           → تفاصيل حجز + تغيير الحالة
+    45→```
+    46→
+    47→---
+    48→
+    49→## 🎯 هدف هذه المهمة
+    50→
+    51→بناء **لوحة تحكم كاملة** لصاحب العمل تشمل:
+    52→1. Mock auth (cookie-based) — حماية `/admin/*`
+    53→2. صفحة Dashboard بإحصائيات (عدد المنتجات، الحجوزات، الإيرادات)
+    54→3. CRUD كامل للمنتجات (Create, Read, Update, Delete)
+    55→4. CRUD للفئات
+    56→5. إدارة الحجوزات (عرض، فلترة، تغيير الحالة)
+    57→6. UI احترافي مع sidebar navigation
+    58→7. تأكيدات الحذف (modal)
+    59→8. Toast notifications للنجاح/الفشل
+    60→
+    61→---
+    62→
+    63→## 🔧 المهام المطلوبة (بالترتيب)
+    64→
+    65→### 1️⃣ Mock Auth Library
+    66→- [ ] أنشئ `src/lib/auth.ts`:
+    67→
+    68→```typescript
+    69→import { cookies } from 'next/headers';
+    70→import { createHmac } from 'crypto';
+    71→
+    72→const SESSION_COOKIE = 'lut_admin_session';
+    73→const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+    74→
+    75→/**
+    76→ * Verify admin password against env var.
+    77→ * In production (Phase 10), this will be replaced by Clerk.
+    78→ */
+    79→function getAdminPassword(): string | null {
+    80→  return process.env.ADMIN_PASSWORD || null;
+    81→}
+    82→
+    83→function createSessionToken(): string {
+    84→  const secret = process.env.ADMIN_PASSWORD || 'fallback-secret';
+    85→  const timestamp = Date.now().toString();
+    86→  const signature = createHmac('sha256', secret).update(timestamp).digest('hex');
+    87→  return `${timestamp}.${signature}`;
+    88→}
+    89→
+    90→function verifySessionToken(token: string): boolean {
+    91→  if (!token || !token.includes('.')) return false;
+    92→  const [timestamp, signature] = token.split('.');
+    93→  const secret = process.env.ADMIN_PASSWORD || 'fallback-secret';
+    94→  const expectedSignature = createHmac('sha256', secret).update(timestamp).digest('hex');
+    95→  
+    96→  // Check signature
+    97→  if (signature !== expectedSignature) return false;
+    98→  
+    99→  // Check expiry
+   100→  const age = Date.now() - parseInt(timestamp, 10);
+   101→  if (age > SESSION_MAX_AGE * 1000) return false;
+   102→  
+   103→  return true;
+   104→}
+   105→
+   106→export async function login(password: string): Promise<boolean> {
+   107→  const adminPassword = getAdminPassword();
+   108→  if (!adminPassword) {
+   109→    // In development without ADMIN_PASSWORD set, allow "dev" as password
+   110→    if (process.env.NODE_ENV === 'development' && password === 'dev') {
+   111→      const cookieStore = await cookies();
+   112→      cookieStore.set(SESSION_COOKIE, createSessionToken(), {
+   113→        httpOnly: true,
+   114→        secure: process.env.NODE_ENV === 'production',
+   115→        sameSite: 'lax',
+   116→        maxAge: SESSION_MAX_AGE,
+   117→        path: '/',
+   118→      });
+   119→      return true;
+   120→    }
+   121→    return false;
+   122→  }
+   123→  
+   124→  if (password !== adminPassword) return false;
+   125→  
+   126→  const cookieStore = await cookies();
+   127→  cookieStore.set(SESSION_COOKIE, createSessionToken(), {
+   128→    httpOnly: true,
+   129→    secure: process.env.NODE_ENV === 'production',
+   130→    sameSite: 'lax',
+   131→    maxAge: SESSION_MAX_AGE,
+   132→    path: '/',
+   133→  });
+   134→  return true;
+   135→}
+   136→
+   137→export async function logout(): Promise<void> {
+   138→  const cookieStore = await cookies();
+   139→  cookieStore.delete(SESSION_COOKIE);
+   140→}
+   141→
+   142→export async function isAuthenticated(): Promise<boolean> {
+   143→  const cookieStore = await cookies();
+   144→  const token = cookieStore.get(SESSION_COOKIE)?.value;
+   145→  if (!token) return false;
+   146→  return verifySessionToken(token);
+   147→}
+   148→
+   149→/**
+   150→ * Throws or redirects if not authenticated.
+   151→ * Use in Server Components / Server Actions.
+   152→ */
+   153→export async function requireAuth(): Promise<void> {
+   154→  const authed = await isAuthenticated();
+   155→  if (!authed) {
+   156→    throw new Error('UNAUTHORIZED');
+   157→  }
+   158→}
+   159→```
+   160→
+   161→- [ ] أضف في `.env.example`:
+   162→  ```bash
+   163→  # Admin (mock auth — will be replaced by Clerk in Phase 10)
+   164→  ADMIN_PASSWORD=""
+   165→  ```
+   166→
+   167→- [ ] في `.env` المحلي، اضبط:
+   168→  ```bash
+   169→  ADMIN_PASSWORD="dev123"  # أو اتركه فارغاً للاستخدام مع "dev" في التطوير
+   170→  ```
+   171→
+   172→### 2️⃣ Middleware لحماية `/admin/*`
+   173→- [ ] أنشئ `src/middleware.admin.ts` (أو حدّث `src/middleware.ts` الحالي):
+   174→
+   175→> ⚠️ **مهم:** الـ middleware الحالي يخص `next-intl`. يجب دمج حماية `/admin` بشكل ذكي. الحل: استخدم Server Component checks بدلاً من middleware (لأن middleware لا يصل لـ cookies بشكل async في Next.js 16 بسهولة).
+   176→
+   177→- [ ] **البديل الأفضل:** استخدم `requireAuth()` في كل صفحة/Server Action في `/admin`:
+   178→
+   179→```tsx
+   180→// في كل صفحة admin:
+   181→import { requireAuth } from '@/lib/auth';
+   182→import { redirect } from 'next/navigation';
+   183→
+   184→export default async function AdminPage() {
+   185→  try {
+   186→    await requireAuth();
+   187→  } catch {
+   188→    redirect('/admin/login');
+   189→  }
+   190→  // ... rest of page
+   191→}
+   192→```
+   193→
+   194→### 3️⃣ صفحة تسجيل الدخول
+   195→- [ ] أنشئ `src/app/[locale]/admin/login/page.tsx` (Server Component wrapper):
+   196→
+   197→```tsx
+   198→import { LoginPageView } from '@/components/admin/login-page-view';
+   199→import { isAuthenticated } from '@/lib/auth';
+   200→import { redirect } from 'next/navigation';
+   201→
+   202→export default async function LoginAdminPage() {
+   203→  // If already authenticated, redirect to dashboard
+   204→  const authed = await isAuthenticated();
+   205→  if (authed) redirect('/admin');
+   206→  
+   207→  return <LoginPageView />;
+   208→}
+   209→```
+   210→
+   211→- [ ] أنشئ `src/components/admin/login-page-view.tsx` (Client Component):
+   212→
+   213→**المحتوى:**
+   214→- خلفية `--c-bg-dark` (أسود فاخر)
+   215→- بطاقة تسجيل دخول في الوسط
+   216→- شعار "Last Unique Touch" + "لوحة التحكم"
+   217→- نموذج:
+   218→  - حقل كلمة المرور (password)
+   219→  - زر "تسجيل الدخول"
+   220→- استدعِ Server Action `loginAction(password)` عند الإرسال
+   221→- عند النجاح: `router.push('/admin')`
+   222→- عند الفشل: اعرض رسالة "كلمة المرور غير صحيحة"
+   223→
+   224→### 4️⃣ Server Actions للـ Auth
+   225→- [ ] أنشئ `src/app/[locale]/admin/login/actions.ts`:
+   226→
+   227→```typescript
+   228→'use server';
+   229→
+   230→import { login, logout } from '@/lib/auth';
+   231→import { revalidatePath } from 'next/cache';
+   232→
+   233→export async function loginAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
+   234→  const password = formData.get('password') as string;
+   235→  if (!password) return { success: false, error: 'missing_password' };
+   236→  
+   237→  const success = await login(password);
+   238→  if (!success) return { success: false, error: 'invalid_password' };
+   239→  
+   240→  revalidatePath('/admin');
+   241→  return { success: true };
+   242→}
+   243→
+   244→export async function logoutAction(): Promise<void> {
+   245→  await logout();
+   246→  revalidatePath('/admin');
+   247→}
+   248→```
+   249→
+   250→### 5️⃣ Admin Layout + Sidebar
+   251→- [ ] أنشئ `src/app/[locale]/admin/layout.tsx`:
+   252→
+   253→```tsx
+   254→import { requireAuth } from '@/lib/auth';
+   255→import { redirect } from 'next/navigation';
+   256→import { AdminShell } from '@/components/admin/admin-shell';
+   257→
+   258→export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+   259→  try {
+   260→    await requireAuth();
+   261→  } catch {
+   262→    redirect('/admin/login');
+   263→  }
+   264→  
+   265→  return <AdminShell>{children}</AdminShell>;
+   266→}
+   267→```
+   268→
+   269→> ⚠️ **استثناء:** صفحة `/admin/login` يجب ألا تمرّ عبر هذا الـ layout. الحل: ضع صفحة login خارج مجلد `[locale]/admin/`:
+   270→> - `src/app/[locale]/admin/login/page.tsx` → انقلها لـ `src/app/admin/login/page.tsx` (بدون locale)
+   271→> - أو استخدم **route group**: `src/app/[locale]/admin/(auth)/login/page.tsx` مع layout منفصل
+   272→
+   273→- [ ] أنشئ `src/components/admin/admin-shell.tsx` (Client Component):
+   274→
+   275→**المحتوى:**
+   276→- **Sidebar (يمين في RTL = يسار بصرياً):**
+   277→  - شعار "Last Unique Touch" + "Admin"
+   278→  - روابط التنقّل:
+   279→    - 📊 لوحة القيادة → `/admin`
+   280→    - 📦 المنتجات → `/admin/products`
+   281→    - 🗂️ الفئات → `/admin/categories`
+   282→    - 📅 الحجوزات → `/admin/bookings`
+   283→    - 🚪 تسجيل الخروج → Server Action `logoutAction()`
+   284→- **Topbar:**
+   285→  - زر "عرض الموقع" → `/` (يفتح في تبويب جديد)
+   286→  - ملف المستخدم (mock — "Admin")
+   287→- **Main content area:** `{children}`
+   288→
+   289→**الستايل:**
+   290→- Sidebar: خلفية `--c-bg-dark`، نص أبيض، روابط نشطة بخلفية `--c-accent-lut` soft
+   291→- Topbar: خلفية بيضاء بحدود `--c-border`
+   292→- Responsive: sidebar يتحول لـ drawer على الموبايل (زر hamburger)
+   293→
+   294→### 6️⃣ صفحة Dashboard (`/admin`)
+   295→- [ ] أنشئ `src/app/[locale]/admin/page.tsx` (Server Component):
+   296→
+   297→**المحتوى:**
+   298→
+   299→**العنوان:** "لوحة القيادة" / "Dashboard"
+   300→
+   301→**4 بطاقات إحصائية (grid-cols-4):**
+   302→
+   303→| البطاقة | القيمة | الأيقونة | اللون |
+   304→|---------|--------|---------|------|
+   305→| إجمالي المنتجات | `count` | Package | ذهبي soft |
+   306→| الحجوزات المعلّقة | `count` (PENDING) | Clock | أصفر soft |
+   307→| الحجوزات المؤكدة | `count` (CONFIRMED) | CheckCircle | أخضر soft |
+   308→| الإيرادات (هذا الشهر) | `sum` (CONFIRMED هذا الشهر) | DollarSign | أحمر soft |
+   309→
+   310→**قسم "أحدث الحجوزات":**
+   311→- جدول بـ 5 أحدث حجوزات
+   312→- أعمدة: اسم الزبون، المنتج، التاريخ، الحالة، الإجمالي
+   313→- زر "عرض الكل" → `/admin/bookings`
+   314→
+   315→**قسم "المنتجات منخفضة المخزون":**
+   316→- قائمة بالمنتجات ذات `stock <= 2`
+   317→- تنبيه بصري (لون أصفر/أحمر)
+   318→
+   319→- [ ] أنشئ `src/lib/admin-stats.ts` للدوال الإحصائية:
+   320→
+   321→```typescript
+   322→import { db } from './db';
+   323→
+   324→export async function getAdminStats() {
+   325→  const [
+   326→    totalProducts,
+   327→    pendingBookings,
+   328→    confirmedBookings,
+   329→    recentBookings,
+   330→    lowStockProducts,
+   331→    monthlyRevenue,
+   332→  ] = await Promise.all([
+   333→    db.product.count({ where: { isActive: true } }),
+   334→    db.booking.count({ where: { status: 'PENDING' } }),
+   335→    db.booking.count({ where: { status: 'CONFIRMED' } }),
+   336→    db.booking.findMany({
+   337→      take: 5,
+   338→      orderBy: { createdAt: 'desc' },
+   339→      include: { product: true },
+   340→    }),
+   341→    db.product.findMany({
+   342→      where: { stock: { lte: 2 }, isActive: true },
+   343→      take: 5,
+   344→    }),
+   345→    db.booking.aggregate({
+   346→      where: {
+   347→        status: 'CONFIRMED',
+   348→        createdAt: {
+   349→          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+   350→        },
+   351→      },
+   352→      _sum: { totalAmount: true },
+   353→    }),
+   354→  ]);
+   355→
+   356→  return {
+   357→    totalProducts,
+   358→    pendingBookings,
+   359→    confirmedBookings,
+   360→    recentBookings,
+   361→    lowStockProducts,
+   362→    monthlyRevenue: monthlyRevenue._sum.totalAmount || 0,
+   363→  };
+   364→}
+   365→```
+   366→
+   367→### 7️⃣ إدارة المنتجات (CRUD)
+   368→
+   369→- [ ] أنشئ `src/app/[locale]/admin/products/page.tsx` (Server Component):
+   370→
+   371→**المحتوى:**
+   372→- عنوان: "المنتجات" + زر "إضافة منتج" → `/admin/products/new`
+   373→- بحث نصي + فلترة بالفئة + فلترة بـ active/inactive
+   374→- جدول المنتجات:
+   375→  - الصورة (thumbnail)
+   376→  - الاسم (nameAr/nameEn حسب الـ locale)
+   377→  - الفئة
+   378→  - سعر الإيجار/اليوم
+   379→  - المخزون
+   380→  - الحالة (نشط/غير نشط)
+   381→  - إجراءات: تعديل، حذف
+   382→
+   383→- [ ] أنشئ `src/app/[locale]/admin/products/new/page.tsx`:
+   384→
+   385→```tsx
+   386→import { requireAuth } from '@/lib/auth';
+   387→import { ProductForm } from '@/components/admin/product-form';
+   388→import { getCategoriesByBrand } from '@/lib/products';
+   389→
+   390→export default async function NewProductPage() {
+   391→  await requireAuth();
+   392→  const categories = await getCategoriesByBrand();
+   393→  return <ProductForm categories={categories} mode="create" />;
+   394→}
+   395→```
+   396→
+   397→- [ ] أنشئ `src/app/[locale]/admin/products/[id]/edit/page.tsx`:
+   398→
+   399→```tsx
+   400→import { requireAuth } from '@/lib/auth';
+   401→import { ProductForm } from '@/components/admin/product-form';
+   402→import { getProductById, getCategoriesByBrand } from '@/lib/products';
+   403→import { notFound } from 'next/navigation';
+   404→
+   405→interface PageProps {
+   406→  params: Promise<{ id: string }>;
+   407→}
+   408→
+   409→export default async function EditProductPage({ params }: PageProps) {
+   410→  await requireAuth();
+   411→  const { id } = await params;
+   412→  const [product, categories] = await Promise.all([
+   413→    getProductById(id),
+   414→    getCategoriesByBrand(),
+   415→  ]);
+   416→  
+   417→  if (!product) notFound();
+   418→  
+   419→  return <ProductForm categories={categories} product={product} mode="edit" />;
+   420→}
+   421→```
+   422→
+   423→- [ ] أنشئ `src/components/admin/product-form.tsx` (Client Component):
+   424→
+   425→**الحقول:**
+   426→
+   427→| الحقل | النوع | ملاحظات |
+   428→|-------|------|--------|
+   429→| الاسم (عربي) | text | مطلوب |
+   430→| الاسم (إنجليزي) | text | مطلوب |
+   431→| الوصف (عربي) | textarea | مطلوب |
+   432→| الوصف (إنجليزي) | textarea | مطلوب |
+   433→| الفئة | select | من القائمة |
+   434→| سعر الإيجار/اليوم | number | مطلوب، > 0 |
+   435→| التأمين | number | مطلوب، >= 0 |
+   436→| المخزون | number | مطلوب، >= 0 |
+   437→| صور (URLs) | dynamic list | يمكن إضافة/حذف URLs |
+   438→| URL نموذج 3D | text | اختياري |
+   439→| نشط | checkbox | default: true |
+   440→| Slug | text | يُولّد تلقائياً من nameEn، يمكن تعديله |
+   441→
+   442→**السلوك:**
+   443→- استخدم `react-hook-form` + `zod`
+   444→- في وضع "create": استدعِ Server Action `createProductAction`
+   445→- في وضع "edit": استدعِ Server Action `updateProductAction`
+   446→- عند النجاح: `router.push('/admin/products')` + toast
+   447→- عند الفشل: اعرض الأخطاء
+   448→
+   449→- [ ] أنشئ `src/app/[locale]/admin/products/actions.ts` (Server Actions):
+   450→
+   451→```typescript
+   452→'use server';
+   453→
+   454→import { z } from 'zod';
+   455→import { db } from '@/lib/db';
+   456→import { requireAuth } from '@/lib/auth';
+   457→import { stringifyImages } from '@/lib/cart';
+   458→import { revalidatePath } from 'next/cache';
+   459→import { redirect } from 'next/navigation';
+   460→
+   461→const productSchema = z.object({
+   462→  nameAr: z.string().min(1).max(200),
+   463→  nameEn: z.string().min(1).max(200),
+   464→  descriptionAr: z.string().min(1),
+   465→  descriptionEn: z.string().min(1),
+   466→  categoryId: z.string().min(1),
+   467→  rentalPricePerDay: z.number().positive(),
+   468→  securityDeposit: z.number().nonnegative(),
+   469→  stock: z.number().int().nonnegative(),
+   470→  images: z.array(z.string().url()).min(1, 'at_least_one_image'),
+   471→  model3dUrl: z.string().url().optional().or(z.literal('')),
+   472→  isActive: z.boolean(),
+   473→  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/, 'invalid_slug'),
+   474→});
+   475→
+   476→export async function createProductAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
+   477→  await requireAuth();
+   478→  
+   479→  const parsed = productSchema.safeParse({
+   480→    nameAr: formData.get('nameAr'),
+   481→    nameEn: formData.get('nameEn'),
+   482→    descriptionAr: formData.get('descriptionAr'),
+   483→    descriptionEn: formData.get('descriptionEn'),
+   484→    categoryId: formData.get('categoryId'),
+   485→    rentalPricePerDay: parseFloat(formData.get('rentalPricePerDay') as string),
+   486→    securityDeposit: parseFloat(formData.get('securityDeposit') as string),
+   487→    stock: parseInt(formData.get('stock') as string, 10),
+   488→    images: JSON.parse(formData.get('images') as string),
+   489→    model3dUrl: formData.get('model3dUrl') || '',
+   490→    isActive: formData.get('isActive') === 'true',
+   491→    slug: formData.get('slug'),
+   492→  });
+   493→  
+   494→  if (!parsed.success) {
+   495→    return { success: false, error: 'invalid_input' };
+   496→  }
+   497→  
+   498→  try {
+   499→    // Check slug uniqueness
+   500→    const existing = await db.product.findUnique({ where: { slug: parsed.data.slug } });
+   501→    if (existing) {
+   502→      return { success: false, error: 'slug_exists' };
+   503→    }
+   504→    
+   505→    await db.product.create({
+   506→      data: {
+   507→        ...parsed.data,
+   508→        brand: 'LUT',
+   509→        model3dUrl: parsed.data.model3dUrl || null,
+   510→        images: stringifyImages(parsed.data.images),
+   511→      },
+   512→    });
+   513→    
+   514→    revalidatePath('/admin/products');
+   515→    redirect('/admin/products');
+   516→  } catch (error) {
+   517→    console.error('Create product error:', error);
+   518→    return { success: false, error: 'internal_error' };
+   519→  }
+   520→}
+   521→
+   522→export async function updateProductAction(id: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
+   523→  await requireAuth();
+   524→  // ... similar logic, but update instead of create
+   525→}
+   526→
+   527→export async function deleteProductAction(id: string): Promise<{ success: boolean; error?: string }> {
+   528→  await requireAuth();
+   529→  
+   530→  try {
+   531→    // Soft delete — set isActive to false (don't actually delete to preserve booking history)
+   532→    await db.product.update({
+   533→      where: { id },
+   534→      data: { isActive: false },
+   535→    });
+   536→    
+   537→    revalidatePath('/admin/products');
+   538→    return { success: true };
+   539→  } catch (error) {
+   540→    console.error('Delete product error:', error);
+   541→    return { success: false, error: 'internal_error' };
+   542→  }
+   543→}
+   544→```
+   545→
+   546→> ⚠️ **قواعد أمنية:**
+   547→> - **#7**: استدعِ `requireAuth()` في كل Server Action
+   548→> - **#10**: تحقق من ملكية المورد (هنا نتحقق أن المنتج من brand=LUT)
+   549→> - **#14**: try/catch شامل
+   550→> - **#15**: لا تُسرّب تفاصيل الخطأ
+   551→> - **#16**: Zod schema
+   552→
+   553→### 8️⃣ إدارة الفئات (CRUD بسيط)
+   554→- [ ] أنشئ `src/app/[locale]/admin/categories/page.tsx`:
+   555→
+   556→**المحتوى:**
+   557→- قائمة الفئات في جدول بسيط
+   558→- زر "إضافة فئة" → modal (ليس صفحة منفصلة)
+   559→- لكل فئة: الاسم (عربي/إنجليزي)، Slug، عدد المنتجات، إجراءات (تعديل، حذف)
+   560→- الحذف: تحقق أولاً أنه لا توجد منتجات في الفئة
+   561→
+   562→- [ ] أنشئ Server Actions في `src/app/[locale]/admin/categories/actions.ts`:
+   563→  - `createCategoryAction`
+   564→  - `updateCategoryAction`
+   565→  - `deleteCategoryAction` (مع فحص المنتجات المرتبطة)
+   566→
+   567→### 9️⃣ إدارة الحجوزات
+   568→- [ ] أنشئ `src/app/[locale]/admin/bookings/page.tsx` (Server Component):
+   569→
+   570→**المحتوى:**
+   571→- عنوان: "الحجوزات"
+   572→- فلترة بالحالة (chips): الكل، PENDING، CONFIRMED، CANCELLED، COMPLETED
+   573→- فلترة بالتاريخ (from/to)
+   574→- بحث برقم الهاتف أو البريد
+   575→- جدول الحجوزات:
+   576→  - رقم الحجز (أول 8 أحرف من ID)
+   577→  - اسم الزبون
+   578→  - المنتج
+   579→  - فترة الإيجار
+   580→  - الإجمالي
+   581→  - الحالة (badge ملوّن)
+   582→  - إجراء: "عرض" → `/admin/bookings/[id]`
+   583→
+   584→- [ ] أنشئ `src/app/[locale]/admin/bookings/[id]/page.tsx`:
+   585→
+   586→**المحتوى:**
+   587→- تفاصيل الحجز الكاملة
+   588→- بيانات الزبون (الاسم، الهاتف، البريد، العنوان، المدينة، ملاحظات)
+   589→- تفاصيل المنتج
+   590→- فترة الإيجار + عدد الأيام
+   591→- الملخص المالي (إيجار + تأمين + إجمالي)
+   592→- **أزرار تغيير الحالة:**
+   593→  - PENDING → CONFIRMED (زر أخضر)
+   594→  - PENDING/CANCELLED → CANCELLED (زر أحمر)
+   595→  - CONFIRMED → COMPLETED (زر أزرق)
+   596→- سجل التغييرات (إن أمكن — أو سجّل في SecurityLog)
+   597→
+   598→- [ ] أنشئ Server Actions في `src/app/[locale]/admin/bookings/actions.ts`:
+   599→
+   600→```typescript
+   601→'use server';
+   602→
+   603→import { z } from 'zod';
+   604→import { db } from '@/lib/db';
+   605→import { requireAuth } from '@/lib/auth';
+   606→import { revalidatePath } from 'next/cache';
+   607→
+   608→const statusSchema = z.object({
+   609→  bookingId: z.string().min(1),
+   610→  newStatus: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']),
+   611→});
+   612→
+   613→export async function updateBookingStatusAction(
+   614→  bookingId: string,
+   615→  newStatus: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+   616→): Promise<{ success: boolean; error?: string }> {
+   617→  await requireAuth();
+   618→  
+   619→  try {
+   620→    const booking = await db.booking.findUnique({ where: { id: bookingId } });
+   621→    if (!booking) return { success: false, error: 'not_found' };
+   622→    
+   623→    // Validate status transition
+   624→    const validTransitions: Record<string, string[]> = {
+   625→      PENDING: ['CONFIRMED', 'CANCELLED'],
+   626→      CONFIRMED: ['COMPLETED', 'CANCELLED'],
+   627→      CANCELLED: [],
+   628→      COMPLETED: [],
+   629→    };
+   630→    
+   631→    if (!validTransitions[booking.status]?.includes(newStatus)) {
+   632→      return { success: false, error: 'invalid_transition' };
+   633→    }
+   634→    
+   635→    await db.booking.update({
+   636→      where: { id: bookingId },
+   637→      data: { status: newStatus },
+   638→    });
+   639→    
+   640→    // Log the change
+   641→    await db.securityLog.create({
+   642→      data: {
+   643→        event: 'booking_status_changed',
+   644→        details: JSON.stringify({
+   645→          bookingId,
+   646→          from: booking.status,
+   647→          to: newStatus,
+   648→        }),
+   649→      },
+   650→    });
+   651→    
+   652→    revalidatePath('/admin/bookings');
+   653→    revalidatePath(`/admin/bookings/${bookingId}`);
+   654→    return { success: true };
+   655→  } catch (error) {
+   656→    console.error('Update booking status error:', error);
+   657→    return { success: false, error: 'internal_error' };
+   658→  }
+   659→}
+   660→```
+   661→
+   662→### 🔟 Toast Notifications
+   663→- [ ] أنشئ `src/components/providers/toast-provider.tsx` (Client Component):
+   664→
+   665→```tsx
+   666→'use client';
+   667→
+   668→import { createContext, useContext, useState, useCallback } from 'react';
+   669→import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+   670→
+   671→type ToastType = 'success' | 'error' | 'warning';
+   672→interface Toast {
+   673→  id: string;
+   674→  type: ToastType;
+   675→  message: string;
+   676→}
+   677→
+   678→const ToastContext = createContext<{
+   679→  showToast: (type: ToastType, message: string) => void;
+   680→} | null>(null);
+   681→
+   682→export function ToastProvider({ children }: { children: React.ReactNode }) {
+   683→  const [toasts, setToasts] = useState<Toast[]>([]);
+   684→
+   685→  const showToast = useCallback((type: ToastType, message: string) => {
+   686→    const id = Math.random().toString(36).substr(2, 9);
+   687→    setToasts((prev) => [...prev, { id, type, message }]);
+   688→    setTimeout(() => {
+   689→      setToasts((prev) => prev.filter((t) => t.id !== id));
+   690→    }, 4000);
+   691→  }, []);
+   692→
+   693→  return (
+   694→    <ToastContext.Provider value={{ showToast }}>
+   695→      {children}
+   696→      <div className="fixed bottom-4 end-4 z-50 space-y-2">
+   697→        {toasts.map((toast) => (
+   698→          <div
+   699→            key={toast.id}
+   700→            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ${
+   701→              toast.type === 'success' ? 'bg-green-600' :
+   702→              toast.type === 'error' ? 'bg-red-600' :
+   703→              'bg-yellow-600'
+   704→            }`}
+   705→          >
+   706→            {toast.type === 'success' && <CheckCircle2 className="w-5 h-5" />}
+   707→            {toast.type === 'error' && <XCircle className="w-5 h-5" />}
+   708→            {toast.type === 'warning' && <AlertCircle className="w-5 h-5" />}
+   709→            <span className="text-sm">{toast.message}</span>
+   710→          </div>
+   711→        ))}
+   712→      </div>
+   713→    </ToastContext.Provider>
+   714→  );
+   715→}
+   716→
+   717→export function useToast() {
+   718→  const ctx = useContext(ToastContext);
+   719→  if (!ctx) throw new Error('useToast must be used within ToastProvider');
+   720→  return ctx;
+   721→}
+   722→```
+   723→
+   724→- [ ] لفّ الـ `[locale]/layout.tsx` بـ `<ToastProvider>`:
+   725→
+   726→```tsx
+   727→<CartProvider>
+   728→  <ToastProvider>
+   729→    {children}
+   730→  </ToastProvider>
+   731→</CartProvider>
+   732→```
+   733→
+   734→### 1️⃣1️⃣ تأكيد الحذف (Modal)
+   735→- [ ] أنشئ `src/components/admin/confirm-delete.tsx` (Client Component):
+   736→
+   737→**المحتوى:**
+   738→- Modal بسيط مع:
+   739→  - عنوان: "تأكيد الحذف"
+   740→  - نص: "هل أنت متأكد من حذف [اسم المنتج]؟"
+   741→  - زر "إلغاء" (ثانوي)
+   742→  - زر "حذف" (أحمر)
+   743→- يستقبل `onConfirm` callback
+   744→
+   745→### 1️⃣2️⃣ تحديث ملفات الترجمة
+   746→- [ ] أضف كل المفاتيح اللازمة لـ `messages/ar.json` و `messages/en.json`:
+   747→
+   748→```json
+   749→{
+   750→  "admin": {
+   751→    "title": "لوحة التحكم",
+   752→    "login": {
+   753→      "title": "تسجيل الدخول",
+   754→      "password": "كلمة المرور",
+   755→      "submit": "دخول",
+   756→      "invalid": "كلمة المرور غير صحيحة",
+   757→      "devHint": "في التطوير، استخدم كلمة المرور \"dev\""
+   758→    },
+   759→    "nav": {
+   760→      "dashboard": "لوحة القيادة",
+   761→      "products": "المنتجات",
+   762→      "categories": "الفئات",
+   763→      "bookings": "الحجوزات",
+   764→      "logout": "تسجيل الخروج",
+   765→      "viewSite": "عرض الموقع"
+   766→    },
+   767→    "dashboard": {
+   768→      "title": "لوحة القيادة",
+   769→      "stats": {
+   770→        "totalProducts": "إجمالي المنتجات",
+   771→        "pendingBookings": "حجوزات معلّقة",
+   772→        "confirmedBookings": "حجوزات مؤكدة",
+   773→        "monthlyRevenue": "الإيرادات (هذا الشهر)"
+   774→      },
+   775→      "recentBookings": "أحدث الحجوزات",
+   776→      "lowStock": "منتجات منخفضة المخزون",
+   777→      "viewAll": "عرض الكل"
+   778→    },
+   779→    "products": {
+   780→      "title": "المنتجات",
+   781→      "add": "إضافة منتج",
+   782→      "edit": "تعديل",
+   783→      "delete": "حذف",
+   784→      "search": "بحث...",
+   785→      "filterCategory": "كل الفئات",
+   786→      "filterStatus": "كل الحالات",
+   787→      "active": "نشط",
+   788→      "inactive": "غير نشط",
+   789→      "stock": "المخزون",
+   790→      "price": "السعر/يوم",
+   791→      "actions": "إجراءات",
+   792→      "form": {
+   793→        "titleNew": "إضافة منتج جديد",
+   794→        "titleEdit": "تعديل المنتج",
+   795→        "nameAr": "الاسم (عربي)",
+   796→        "nameEn": "الاسم (إنجليزي)",
+   797→        "descriptionAr": "الوصف (عربي)",
+   798→        "descriptionEn": "الوصف (إنجليزي)",
+   799→        "category": "الفئة",
+   800→        "rentalPrice": "سعر الإيجار/اليوم",
+   801→        "securityDeposit": "التأمين",
+   802→        "stock": "المخزون",
+   803→        "images": "صور (URLs)",
+   804→        "addImage": "إضافة صورة",
+   805→        "model3dUrl": "URL نموذج 3D (اختياري)",
+   806→        "isActive": "نشط",
+   807→        "slug": "Slug",
+   808→        "submit": "حفظ",
+   809→        "cancel": "إلغاء"
+   810→      },
+   811→      "deleted": "تم حذف المنتج",
+   812→      "saved": "تم حفظ المنتج",
+   813→      "confirmDelete": "هل أنت متأكد من حذف \"{name}\"؟"
+   814→    },
+   815→    "categories": {
+   816→      "title": "الفئات",
+   817→      "add": "إضافة فئة",
+   818→      "nameAr": "الاسم (عربي)",
+   819→      "nameEn": "الاسم (إنجليزي)",
+   820→      "slug": "Slug",
+   821→      "productCount": "عدد المنتجات",
+   822→      "actions": "إجراءات",
+   823→      "cannotDelete": "لا يمكن حذف فئة تحتوي على منتجات",
+   824→      "saved": "تم حفظ الفئة",
+   825→      "deleted": "تم حذف الفئة"
+   826→    },
+   827→    "bookings": {
+   828→      "title": "الحجوزات",
+   829→      "filterStatus": {
+   830→        "all": "الكل",
+   831→        "PENDING": "معلّق",
+   832→        "CONFIRMED": "مؤكد",
+   833→        "CANCELLED": "ملغي",
+   834→        "COMPLETED": "مكتمل"
+   835→      },
+   836→      "table": {
+   837→        "id": "رقم الحجز",
+   838→        "customer": "الزبون",
+   839→        "product": "المنتج",
+   840→        "period": "فترة الإيجار",
+   841→        "total": "الإجمالي",
+   842→        "status": "الحالة",
+   843→        "actions": "إجراءات"
+   844→      },
+   845→      "detail": {
+   846→        "title": "تفاصيل الحجز",
+   847→        "customerInfo": "بيانات الزبون",
+   848→        "name": "الاسم",
+   849→        "phone": "الهاتف",
+   850→        "email": "البريد",
+   851→        "address": "العنوان",
+   852→        "city": "المدينة",
+   853→        "notes": "ملاحظات",
+   854→        "productInfo": "بيانات المنتج",
+   855→        "rentalInfo": "بيانات الإيجار",
+   856→        "startDate": "تاريخ البداية",
+   857→        "endDate": "تاريخ النهاية",
+   858→        "days": "عدد الأيام",
+   859→        "financialSummary": "الملخص المالي",
+   860→        "rental": "الإيجار",
+   861→        "deposit": "التأمين",
+   862→        "total": "الإجمالي",
+   863→        "changeStatus": "تغيير الحالة",
+   864→        "confirm": "تأكيد",
+   865→        "cancel": "إلغاء",
+   866→        "complete": "إكمال"
+   867→      },
+   868→      "statusChanged": "تم تغيير حالة الحجز",
+   869→      "invalidTransition": "لا يمكن تغيير الحالة بهذا الشكل"
+   870→    },
+   871→    "common": {
+   872→      "save": "حفظ",
+   873→      "cancel": "إلغاء",
+   874→      "delete": "حذف",
+   875→      "edit": "تعديل",
+   876→      "view": "عرض",
+   877→      "confirm": "تأكيد",
+   878→      "back": "رجوع",
+   879→      "loading": "جارٍ التحميل...",
+   880→      "noData": "لا توجد بيانات",
+   881→      "error": "حدث خطأ"
+   882→    },
+   883→    "errors": {
+   884→      "invalid_input": "بيانات غير صالحة",
+   885→      "slug_exists": "الـ Slug مستخدم مسبقاً",
+   886→      "not_found": "غير موجود",
+   887→      "internal_error": "حدث خطأ — يرجى المحاولة لاحقاً",
+   888→      "unauthorized": "غير مصرّح"
+   889→    }
+   890→  }
+   891→}
+   892→```
+   893→
+   894→---
+   895→
+   896→## ✅ قائمة التحقق النهائية
+   897→
+   898→### الوظائف
+   899→- [ ] `/admin/login` تعرض صفحة تسجيل الدخول
+   900→- [ ] تسجيل الدخول بـ "dev" (في التطوير) يعمل
+   901→- [ ] `/admin` محمية — تُعيد توجيه لـ login إن لم يكن مسجّلاً
+   902→- [ ] `/admin` تعرض Dashboard بالإحصائيات
+   903→- [ ] `/admin/products` تعرض قائمة المنتجات
+   904→- [ ] `/admin/products/new` تعرض نموذج إضافة منتج
+   905→- [ ] إضافة منتج يعمل (Server Action)
+   906→- [ ] `/admin/products/[id]/edit` تعرض نموذج التعديل
+   907→- [ ] تعديل منتج يعمل
+   908→- [ ] حذف منتج (soft delete) يعمل
+   909→- [ ] `/admin/categories` تعرض الفئات
+   910→- [ ] إضافة/تعديل/حذف فئة يعمل
+   911→- [ ] `/admin/bookings` تعرض قائمة الحجوزات
+   912→- [ ] فلترة الحجوزات بالحالة تعمل
+   913→- [ ] `/admin/bookings/[id]` تعرض تفاصيل الحجز
+   914→- [ ] تغيير حالة الحجز يعمل (مع valid transitions)
+   915→- [ ] تسجيل الخروج يعمل
+   916→- [ ] Toast notifications تظهر عند النجاح/الفشل
+   917→- [ ] تأكيد الحذف modal يعمل
+   918→
+   919→### الأمان
+   920→- [ ] `requireAuth()` في كل صفحة و Server Action
+   921→- [ ] Cookie httpOnly + secure + sameSite
+   922→- [ ] HMAC signature على session token
+   923→- [ ] Zod schema على كل input
+   924→- [ ] try/catch شامل
+   925→- [ ] لا تُسرّب تفاصيل الخطأ
+   926→- [ ] Soft delete للمنتجات (يحافظ على سجل الحجوزات)
+   927→- [ ] فحص المنتجات المرتبطة قبل حذف فئة
+   928→- [ ] Valid status transitions للحجوزات
+   929→
+   930→### UX
+   931→- [ ] Sidebar navigation احترافي
+   932→- [ ] Responsive على الموبايل (drawer للـ sidebar)
+   933→- [ ] Toast notifications أنيقة
+   934→- [ ] تأكيدات الحذف
+   935→- [ ] Loading states
+   936→- [ ] Empty states (لا توجد منتجات/حجوزات)
+   937→
+   938→### i18n
+   939→- [ ] كل النصوص في `messages/*.json`
+   940→- [ ] لا hardcoded strings
+   941→- [ ] RTL/LTR ديناميكي
+   942→
+   943→### التشغيل
+   944→- [ ] `bun dev --webpack -p 3000` يعمل بدون أخطاء
+   945→- [ ] `bun run lint` — لا أخطاء
+   946→- [ ] `bun run typecheck` — لا أخطاء
+   947→- [ ] `bun run build` — ينجح بدون MISSING_MESSAGE
+   948→
+   949→---
+   950→
+   951→## 📝 التقرير المطلوب
+   952→
+   953→### 1. ملخص التنفيذ
+   954→### 2. المكوّنات والصفحات المُنشأة
+   955→```
+   956→src/lib/
+   957→├── auth.ts                       ← Mock auth (cookie + HMAC)
+   958→└── admin-stats.ts                ← Dashboard statistics
+   959→
+   960→src/components/admin/
+   961→├── admin-shell.tsx               ← Layout with sidebar
+   962→├── login-page-view.tsx           ← Login form
+   963→├── product-form.tsx              ← Create/Edit product form
+   964→├── confirm-delete.tsx            ← Delete confirmation modal
+   965→└── (bookings-table, categories-table, etc.)
+   966→
+   967→src/components/providers/
+   968→└── toast-provider.tsx            ← Toast notifications
+   969→
+   970→src/app/[locale]/admin/
+   971→├── layout.tsx                    ← Protected layout
+   972→├── page.tsx                      ← Dashboard
+   973→├── login/page.tsx                ← Login page (excluded from layout)
+   974→├── products/
+   975→│   ├── page.tsx                  ← List
+   976→│   ├── new/page.tsx              ← Create
+   977→│   ├── [id]/edit/page.tsx        ← Edit
+   978→│   └── actions.ts                ← Server Actions
+   979→├── categories/
+   980→│   ├── page.tsx                  ← List + modal
+   981→│   └── actions.ts                ← Server Actions
+   982→└── bookings/
+   983→    ├── page.tsx                  ← List
+   984→    ├── [id]/page.tsx             ← Detail
+   985→    └── actions.ts                ← Server Actions
+   986→```
+   987→
+   988→### 3. لقطات شاشة (إلزامية)
+   989→- لقطة لـ `/admin/login`
+   990→- لقطة لـ `/admin` (Dashboard)
+   991→- لقطة لـ `/admin/products` (قائمة)
+   992→- لقطة لـ `/admin/products/new` (نموذج إضافة)
+   993→- لقطة لـ `/admin/products/[id]/edit` (نموذج تعديل)
+   994→- لقطة لـ `/admin/categories`
+   995→- لقطة لـ `/admin/bookings` (قائمة مع فلترة)
+   996→- لقطة لـ `/admin/bookings/[id]` (تفاصيل + أزرار تغيير الحالة)
+   997→- لقطة لـ Toast notification (نجاح)
+   998→- لقطة لـ Modal تأكيد الحذف
+   999→- لقطة للموبايل (375px)
+  1000→
+  1001→### 4. نتائج الفحوصات
+  1002→```
+  1003→bun run lint:        ✅ / ❌
+  1004→bun run typecheck:   ✅ / ❌
+  1005→bun run build:       ✅ / ❌
+  1006→bun dev --webpack:   ✅ / ❌
+  1007→```
+  1008→
+  1009→### 5. اختبارات وظيفية
+  1010→| الاختبار | النتيجة |
+  1011→|----------|---------|
+  1012→| تسجيل الدخول بـ "dev" | ✅ / ❌ |
+  1013→| حماية `/admin` (redirect لـ login) | ✅ / ❌ |
+  1014→| إضافة منتج | ✅ / ❌ |
+  1015→| تعديل منتج | ✅ / ❌ |
+  1016→| حذف منتج (soft delete) | ✅ / ❌ |
+  1017→| إضافة فئة | ✅ / ❌ |
+  1018→| حذف فئة (مع منتجات) | ✅ (ممنوع) / ❌ |
+  1019→| فلترة الحجوزات | ✅ / ❌ |
+  1020→| تغيير حالة حجز | ✅ / ❌ |
+  1021→| Invalid transition | ✅ (مرفوض) / ❌ |
+  1022→| تسجيل الخروج | ✅ / ❌ |
+  1023→| Toast notifications | ✅ / ❌ |
+  1024→
+  1025→### 6. ملاحظات للمستخدم
+  1026→- تأكيد أن mock auth سيعمل في التطوير بكلمة مرور "dev"
+  1027→- تأكيد أن Clerk سيُضاف في المرحلة 10 (مع الترحيل لـ Supabase)
+  1028→- ملاحظة أن رفع الصور سيُضاف في المرحلة 10 (الآن URL input فقط)
+  1029→
+  1030→---
+  1031→
+  1032→## ⚠️ قواعد صارمة
+  1033→
+  1034→1. **🚨 لا تستخدم Clerk** — mock auth فقط (cookie + HMAC).
+  1035→2. **لا تتجاوز نطاق هذه المرحلة** — لا تبنِ اختبارات (المرحلة 9)، لا ترحيل لـ Supabase (المرحلة 10).
+  1036→3. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع.
+  1037→4. **`requireAuth()` في كل صفحة و Server Action** (يمنع خطأ أمني #7).
+  1038→5. **Cookie: httpOnly + secure + sameSite** (يمنع XSS).
+  1039→6. **HMAC signature على session token** (يمنع التزوير).
+  1040→7. **Zod schema على كل input** (يمنع خطأ أمني #16).
+  1041→8. **try/catch شامل** (يمنع خطأ أمني #14).
+  1042→9. **لا تُسرّب تفاصيل الخطأ** (يمنع خطأ أمني #15).
+  1043→10. **Soft delete للمنتجات** — لا تحذف فعلياً (يحافظ على سجل الحجوزات).
+  1044→11. **فحص المنتجات قبل حذف فئة** — امنع الحذف إن وُجدت منتجات.
+  1045→12. **Valid status transitions** — لا تسمح بانتقالات غير منطقية.
+  1046→13. **استخدم Server Actions** للتغييرات في DB (أنظف من API routes للوحة التحكم).
+  1047→14. **`next/image` لا يقبل `undefined`** — conditional rendering.
+  1048→15. **لا تستخدم `next/link` مباشرة** — استخدم `Link` من `@/i18n/routing`.
+  1049→16. **استخدم logical properties** للـ RTL/LTR.
+  1050→17. **لا إيموجي Unicode** — استخدم أيقونات lucide-react.
+  1051→18. **TypeScript strict** — لا `any`.
+  1052→19. **اقرأ الكود الحالي قبل البدء** — خصوصاً `src/lib/products.ts` و `src/lib/cart.ts`.
+  1053→20. **اقرأ `dev.log` بعد كل تغيير كبير**.
+  1054→21. **ابدأ Agent Browser قبل الإبلاغ بالانتهاء** — اختبر الرحلة الكاملة بصرياً.
+  1055→
+  1056→---
+  1057→
+  1058→## 🎯 معيار النجاح
+  1059→
+  1060→المهمة تُعتبر مكتملة إذا وفقط إذا:
+  1061→1. ✅ `/admin/login` تعمل (تسجيل دخول بـ "dev")
+  1062→2. ✅ `/admin` محمية وتعرض Dashboard
+  1063→3. ✅ CRUD المنتجات يعمل كاملاً
+  1064→4. ✅ CRUD الفئات يعمل كاملاً
+  1065→5. ✅ `/admin/bookings` تعرض القائمة مع فلترة
+  1066→6. ✅ `/admin/bookings/[id]` تعرض التفاصيل + تغيير الحالة
+  1067→7. ✅ Valid status transitions مُطبّقة
+  1068→8. ✅ Toast notifications تظهر
+  1069→9. ✅ تأكيدات الحذف تعمل
+  1070→10. ✅ تسجيل الخروج يعمل
+  1071→11. ✅ `bun run build` ينجح بدون MISSING_MESSAGE
+  1072→12. ✅ لا أخطاء TypeScript أو ESLint
+  1073→
+  1074→ابدأ الآن. أبلغني فور الانتهاء بالتقرير الكامل مع لقطات الشاشة.
+  1075→````
+  1076→
+  1077→---
+  1078→

@@ -166,7 +166,146 @@
   },
   "admin": {
     "title": "Dashboard",
-    "comingPhase": "Phase 8"
+    "comingPhase": "Phase 8",
+    "login": {
+      "title": "Login",
+      "password": "Password",
+      "submit": "Login",
+      "invalid": "Invalid password",
+      "devHint": "In development, use password \"dev\""
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "categories": "Categories",
+      "bookings": "Bookings",
+      "logout": "Logout",
+      "viewSite": "View Site"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "stats": {
+        "totalProducts": "Total Products",
+        "pendingBookings": "Pending Bookings",
+        "confirmedBookings": "Confirmed Bookings",
+        "monthlyRevenue": "Monthly Revenue"
+      },
+      "recentBookings": "Recent Bookings",
+      "lowStock": "Low Stock Products",
+      "viewAll": "View All"
+    },
+    "products": {
+      "title": "Products",
+      "add": "Add Product",
+      "edit": "Edit",
+      "delete": "Delete",
+      "search": "Search...",
+      "filterCategory": "All Categories",
+      "filterStatus": "All Statuses",
+      "active": "Active",
+      "inactive": "Inactive",
+      "stock": "Stock",
+      "price": "Price/Day",
+      "actions": "Actions",
+      "form": {
+        "titleNew": "Add New Product",
+        "titleEdit": "Edit Product",
+        "nameAr": "Name (Arabic)",
+        "nameEn": "Name (English)",
+        "descriptionAr": "Description (Arabic)",
+        "descriptionEn": "Description (English)",
+        "category": "Category",
+        "rentalPrice": "Rental Price/Day",
+        "securityDeposit": "Security Deposit",
+        "stock": "Stock",
+        "images": "Images (URLs)",
+        "addImage": "Add Image",
+        "model3dUrl": "3D Model URL (optional)",
+        "isActive": "Active",
+        "slug": "Slug",
+        "submit": "Save",
+        "cancel": "Cancel"
+      },
+      "deleted": "Product deleted",
+      "saved": "Product saved",
+      "confirmDelete": "Are you sure you want to delete \"{name}\"?"
+    },
+    "categories": {
+      "title": "Categories",
+      "add": "Add Category",
+      "nameAr": "Name (Arabic)",
+      "nameEn": "Name (English)",
+      "slug": "Slug",
+      "productCount": "Product Count",
+      "actions": "Actions",
+      "cannotDelete": "Cannot delete a category with products",
+      "saved": "Category saved",
+      "deleted": "Category deleted"
+    },
+    "bookings": {
+      "title": "Bookings",
+      "filterStatus": {
+        "all": "All",
+        "PENDING": "Pending",
+        "CONFIRMED": "Confirmed",
+        "CANCELLED": "Cancelled",
+        "COMPLETED": "Completed"
+      },
+      "table": {
+        "id": "Booking ID",
+        "customer": "Customer",
+        "product": "Product",
+        "period": "Rental Period",
+        "total": "Total",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "detail": {
+        "title": "Booking Details",
+        "customerInfo": "Customer Info",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "city": "City",
+        "notes": "Notes",
+        "productInfo": "Product Info",
+        "product": "Product",
+        "rentalInfo": "Rental Info",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "days": "Number of Days",
+        "financialSummary": "Financial Summary",
+        "rental": "Rental",
+        "deposit": "Deposit",
+        "total": "Total",
+        "changeStatus": "Change Status",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "complete": "Complete"
+      },
+      "statusChanged": "Booking status changed",
+      "invalidTransition": "Cannot change status this way"
+    },
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "view": "View",
+      "confirm": "Confirm",
+      "back": "Back",
+      "loading": "Loading...",
+      "noData": "No data",
+      "error": "An error occurred"
+    },
+    "errors": {
+      "invalid_input": "Invalid input",
+      "slug_exists": "Slug already exists",
+      "not_found": "Not found",
+      "internal_error": "An error occurred — please try again later",
+      "unauthorized": "Unauthorized"
+    }
   },
   "cart": {
     "title": "Shopping Cart",
