@@ -1,0 +1,1086 @@
+     1→
+     2→---
+     3→
+     4→# 🚀 البرومبت التاسع — SEO + اختبارات + a11y + تحسين الأداء
+     5→
+     6→انسخ البرومبت التالي وأرسله للـ Full Stack Agent:
+     7→
+     8→---
+     9→
+    10→````markdown
+    11→# مهمة: SEO + اختبارات + إمكانية الوصول + تحسين الأداء — المرحلة 9
+    12→
+    13→## 📖 السياق والمراجع الإلزامية
+    14→
+    15→### طبيعة هذه المرحلة
+    16→أنت في **المرحلة 9 من 10**. المرحلة 8 (لوحة التحكم) اكتملت بنجاح. الآن نبني **طبقة الجودة النهائية** قبل النشر: SEO احترافي، اختبارات وحدة وتكامل، إمكانية وصول (a11y)، وتحسين الأداء. هذه المرحلة تضمن أن الموقع جاهز للإنتاج بمعايير احترافية.
+    17→
+    18→### ⚠️ قيود بيئية (مهمة)
+    19→1. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع
+    20→2. **SQLite فقط**
+    21→3. **لا تغييرات جوهرية في الميزات** — فقط تحسينات وتحضيرات
+    22→4. **لا تركّز على Lighthouse score مثالي** — استهدف ≥85 في كل فئة (Performance, Accessibility, Best Practices, SEO)
+    23→5. **استخدم Vitest للاختبارات** (مثبّت من Next.js 16 افتراضياً)
+    24→
+    25→### المراجع الإلزامية (اقرأها قبل البدء)
+    26→1. ملف `GLM-5.2-FullStack-Build-Reference.md`
+    27→2. ملف `GLM-5.2-Assistant-Operations-Reference.md` — **خصوصاً الأخطاء #22-35 (متوسطة الأولوية) و #36-40 (منخفضة)**
+    28→3. **اقرأ الكود الحالي قبل البدء**:
+    29→   - `src/app/[locale]/layout.tsx` — للـ metadata
+    30→   - `src/app/[locale]/page.tsx` وكل الصفحات — للـ SEO
+    31→   - `src/app/sitemap.ts` و `src/app/robots.ts` — موجودان من المرحلة 7
+    32→   - `src/app/globals.css` — للأنماط
+    33→   - كل الـ components للـ a11y review
+    34→
+    35→---
+    36→
+    37→## 🎯 هدف هذه المهمة
+    38→
+    39→رفع جودة الموقع لمعايير الإنتاج:
+    40→1. **SEO شامل**: metadata ديناميكي، OpenGraph، Twitter Cards، structured data
+    41→2. **اختبارات وحدة (Unit Tests)**: للـ utils و lib functions
+    42→3. **اختبارات تكامل (Integration Tests)**: للـ APIs الحساسة
+    43→4. **إمكانية الوصول (a11y)**: aria labels، focus states، skip links، semantic HTML
+    44→5. **تحسين الأداء**: image optimization، font loading، code splitting
+    45→6. **Error Boundaries محسّنة**: error pages احترافية
+    46→7. **PWA basics**: manifest + theme color (تمهيد)
+    47→
+    48→---
+    49→
+    50→## 🔧 المهام المطلوبة (بالترتيب)
+    51→
+    52→### 1️⃣ SEO Metadata الشامل
+    53→
+    54→- [ ] أنشئ `src/lib/seo.ts` — مركزي للـ metadata:
+    55→
+    56→```typescript
+    57→import { Metadata } from 'next';
+    58→
+    59→const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    60→const SITE_NAME = 'Last Unique Touch';
+    61→const DEFAULT_DESCRIPTION = {
+    62→  ar: 'منصة فاخرة لتأجير الأثاث ومعدات الأيفنتات في الكويت',
+    63→  en: 'Luxury platform for furniture and event equipment rental in Kuwait',
+    64→};
+    65→
+    66→export function buildMetadata({
+    67→  title,
+    68→  description,
+    69→  path = '',
+    70→  image,
+    71→  locale = 'ar',
+    72→  noIndex = false,
+    73→}: {
+    74→  title?: string;
+    75→  description?: string;
+    76→  path?: string;
+    77→  image?: string;
+    78→  locale?: 'ar' | 'en';
+    79→  noIndex?: boolean;
+    80→}): Metadata {
+    81→  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — ${DEFAULT_DESCRIPTION[locale]}`;
+    82→  const desc = description || DEFAULT_DESCRIPTION[locale];
+    83→  const url = `${BASE_URL}/${locale}${path}`;
+    84→  const ogImage = image || `${BASE_URL}/og-default.png`;
+    85→
+    86→  return {
+    87→    title: fullTitle,
+    88→    description: desc,
+    89→    canonical: url,
+    90→    alternates: {
+    91→      canonical: url,
+    92→      languages: {
+    93→        'ar': `${BASE_URL}/ar${path}`,
+    94→        'en': `${BASE_URL}/en${path}`,
+    95→      },
+    96→    },
+    97→    openGraph: {
+    98→      title: fullTitle,
+    99→      description: desc,
+   100→      url,
+   101→      siteName: SITE_NAME,
+   102→      images: [{ url: ogImage, width: 1200, height: 630 }],
+   103→      locale: locale === 'ar' ? 'ar_KW' : 'en_US',
+   104→      type: 'website',
+   105→    },
+   106→    twitter: {
+   107→      card: 'summary_large_image',
+   108→      title: fullTitle,
+   109→      description: desc,
+   110→      images: [ogImage],
+   111→    },
+   112→    robots: noIndex
+   113→      ? { index: false, follow: false }
+   114→      : { index: true, follow: true },
+   115→  };
+   116→}
+   117→
+   118→export const HOME_METADATA_AR = buildMetadata({ locale: 'ar', path: '' });
+   119→export const HOME_METADATA_EN = buildMetadata({ locale: 'en', path: '' });
+   120→```
+   121→
+   122→- [ ] طبّق `buildMetadata()` في كل صفحة:
+   123→
+   124→```tsx
+   125→// src/app/[locale]/page.tsx
+   126→import { buildMetadata } from '@/lib/seo';
+   127→
+   128→export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+   129→  const { locale } = await params;
+   130→  return buildMetadata({
+   131→    locale: locale as 'ar' | 'en',
+   132→    path: '',
+   133→    title: undefined, // Use default
+   134→  });
+   135→}
+   136→```
+   137→
+   138→- [ ] أضف metadata لكل صفحة رئيسية:
+   139→  - `/` — الرئيسية
+   140→  - `/products` — المنتجات (title: "المنتجات")
+   141→  - `/products/[slug]` — صفحة المنتج (title: اسم المنتج، description: وصف المنتج)
+   142→  - `/about` — من نحن
+   143→  - `/contact` — تواصل
+   144→  - `/cart` — السلة (noIndex: true — لا حاجة لفهرستها)
+   145→  - `/checkout` — الدفع (noIndex: true)
+   146→  - `/checkout/payment` — الدفع (noIndex: true)
+   147→  - `/checkout/success` — نجاح (noIndex: true)
+   148→  - `/terms`, `/privacy`, `/refund` — صفحات قانونية
+   149→
+   150→### 2️⃣ Structured Data (JSON-LD)
+   151→
+   152→- [ ] أنشئ `src/components/seo/json-ld.tsx` — مكوّن يحقن JSON-LD في الصفحة:
+   153→
+   154→```tsx
+   155→interface JsonLdProps {
+   156→  data: Record<string, any>;
+   157→}
+   158→
+   159→export function JsonLd({ data }: JsonLdProps) {
+   160→  return (
+   161→    <script
+   162→      type="application/ld+json"
+   163→      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+   164→    />
+   165→  );
+   166→}
+   167→```
+   168→
+   169→> ⚠️ **ملاحظة:** `dangerouslySetInnerHTML` هنا آمن لأن البيانات JSON ثابتة (ليست من user input). لا حاجة لـ DOMPurify.
+   170→
+   171→- [ ] أضف JSON-LD للصفحة الرئيسية:
+   172→
+   173→```tsx
+   174→// src/app/[locale]/page.tsx
+   175→import { JsonLd } from '@/components/seo/json-ld';
+   176→
+   177→const organizationLd = {
+   178→  '@context': 'https://schema.org',
+   179→  '@type': 'Organization',
+   180→  name: 'Last Unique Touch',
+   181→  description: 'Luxury furniture and event equipment rental',
+   182→  url: 'https://lastuniquetouch.com',
+   183→  logo: 'https://lastuniquetouch.com/logo.png',
+   184→  sameAs: [
+   185→    'https://instagram.com/lastuniquetouch',
+   186→  ],
+   187→  contactPoint: {
+   188→    '@type': 'ContactPoint',
+   189→    telephone: '+965-1234-5678',
+   190→    email: 'info@lastuniquetouch.com',
+   191→    contactType: 'customer service',
+   192→  },
+   193→};
+   194→
+   195→// في الـ JSX:
+   196→<JsonLd data={organizationLd} />
+   197→```
+   198→
+   199→- [ ] أضف JSON-LD لصفحات المنتجات (Product schema):
+   200→
+   201→```tsx
+   202→// src/app/[locale]/products/[slug]/page.tsx
+   203→const productLd = {
+   204→  '@context': 'https://schema.org',
+   205→  '@type': 'Product',
+   206→  name: product.nameEn,
+   207→  description: product.descriptionEn,
+   208→  image: product.images,
+   209→  sku: product.id,
+   210→  brand: { '@type': 'Brand', name: 'Last Unique Touch' },
+   211→  category: product.category.nameEn,
+   212→  offers: {
+   213→    '@type': 'Offer',
+   214→    price: product.rentalPricePerDay,
+   215→    priceCurrency: 'KWD',
+   216→    availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+   217→    priceSpecification: {
+   218→      '@type': 'UnitPriceSpecification',
+   219→      price: product.rentalPricePerDay,
+   220→      priceCurrency: 'KWD',
+   221→      unitText: 'per day',
+   222→    },
+   223→  },
+   224→};
+   225→```
+   226→
+   227→### 3️⃣ إعداد Vitest
+   228→
+   229→- [ ] أنشئ `vitest.config.ts`:
+   230→
+   231→```typescript
+   232→import { defineConfig } from 'vitest/config';
+   233→import path from 'path';
+   234→
+   235→export default defineConfig({
+   236→  test: {
+   237→    environment: 'node',
+   238→    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+   239→    exclude: ['node_modules', '.next'],
+   240→    coverage: {
+   241→      provider: 'v8',
+   242→      reporter: ['text', 'json', 'html'],
+   243→      exclude: ['node_modules/', '.next/', '**/*.test.*'],
+   244→    },
+   245→  },
+   246→  resolve: {
+   247→    alias: {
+   248→      '@': path.resolve(__dirname, './src'),
+   249→    },
+   250→  },
+   251→});
+   252→```
+   253→
+   254→- [ ] أضف في `package.json`:
+   255→
+   256→```json
+   257→{
+   258→  "scripts": {
+   259→    "test": "vitest run",
+   260→    "test:watch": "vitest",
+   261→    "test:coverage": "vitest run --coverage"
+   262→  }
+   263→}
+   264→```
+   265→
+   266→- [ ] ثبّت الـ deps:
+   267→  ```bash
+   268→  bun add -d vitest @vitest/coverage-v8 @vitejs/plugin-react
+   269→  ```
+   270→
+   271→### 4️⃣ اختبارات الوحدة (Unit Tests)
+   272→
+   273→- [ ] أنشئ `src/lib/__tests__/products.test.ts` — اختبر الدوال النقية:
+   274→
+   275→```typescript
+   276→import { describe, it, expect } from 'vitest';
+   277→import { parseImages, stringifyImages, calculateRentalTotal } from '@/lib/products';
+   278→
+   279→describe('parseImages', () => {
+   280→  it('parses valid JSON array', () => {
+   281→    expect(parseImages('["url1", "url2"]')).toEqual(['url1', 'url2']);
+   282→  });
+   283→
+   284→  it('returns empty array for null', () => {
+   285→    expect(parseImages(null)).toEqual([]);
+   286→  });
+   287→
+   288→  it('returns empty array for undefined', () => {
+   289→    expect(parseImages(undefined)).toEqual([]);
+   290→  });
+   291→
+   292→  it('returns empty array for invalid JSON', () => {
+   293→    expect(parseImages('not json')).toEqual([]);
+   294→  });
+   295→
+   296→  it('returns empty array for non-array JSON', () => {
+   297→    expect(parseImages('"string"')).toEqual([]);
+   298→    expect(parseImages('{}')).toEqual([]);
+   299→  });
+   300→});
+   301→
+   302→describe('stringifyImages', () => {
+   303→  it('converts array to JSON string', () => {
+   304→    expect(stringifyImages(['url1', 'url2'])).toBe('["url1","url2"]');
+   305→  });
+   306→
+   307→  it('handles empty array', () => {
+   308→    expect(stringifyImages([])).toBe('[]');
+   309→  });
+   310→});
+   311→
+   312→describe('calculateRentalTotal', () => {
+   313→  it('calculates total for 1 day, 1 quantity', () => {
+   314→    const start = new Date('2026-07-01');
+   315→    const end = new Date('2026-07-02');
+   316→    const result = calculateRentalTotal(10, 50, start, end, 1);
+   317→    expect(result.days).toBe(1);
+   318→    expect(result.subtotal).toBe(10);
+   319→    expect(result.deposit).toBe(50);
+   320→    expect(result.total).toBe(60);
+   321→  });
+   322→
+   323→  it('calculates total for 3 days, 2 quantity', () => {
+   324→    const start = new Date('2026-07-01');
+   325→    const end = new Date('2026-07-04');
+   326→    const result = calculateRentalTotal(10, 50, start, end, 2);
+   327→    expect(result.days).toBe(3);
+   328→    expect(result.subtotal).toBe(60); // 10 * 3 * 2
+   329→    expect(result.deposit).toBe(100); // 50 * 2
+   330→    expect(result.total).toBe(160);
+   331→  });
+   332→
+   333→  it('handles same-day rental (1 day minimum)', () => {
+   334→    const start = new Date('2026-07-01');
+   335→    const end = new Date('2026-07-01');
+   336→    const result = calculateRentalTotal(10, 50, start, end, 1);
+   337→    expect(result.days).toBe(1);
+   338→    expect(result.total).toBe(60);
+   339→  });
+   340→});
+   341→```
+   342→
+   343→- [ ] أنشئ `src/lib/__tests__/cart.test.ts` — اختبر دوال السلة:
+   344→
+   345→```typescript
+   346→import { describe, it, expect, beforeEach, vi } from 'vitest';
+   347→
+   348→// Mock localStorage
+   349→const localStorageMock = (() => {
+   350→  let store: Record<string, string> = {};
+   351→  return {
+   352→    getItem: (key: string) => store[key] || null,
+   353→    setItem: (key: string, value: string) => { store[key] = value; },
+   354→    removeItem: (key: string) => { delete store[key]; },
+   355→    clear: () => { store = {}; },
+   356→  };
+   357→})();
+   358→
+   359→Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
+   360→Object.defineProperty(globalThis, 'window', {
+   361→  value: {
+   362→    dispatchEvent: vi.fn(),
+   363→    addEventListener: vi.fn(),
+   364→    removeEventListener: vi.fn(),
+   365→  },
+   366→});
+   367→
+   368→import { getCart, addToCart, removeFromCart, clearCart, getCartCount, getCartTotal } from '@/lib/cart';
+   369→
+   370→describe('Cart', () => {
+   371→  beforeEach(() => {
+   372→    localStorage.clear();
+   373→  });
+   374→
+   375→  it('returns empty cart initially', () => {
+   376→    expect(getCart()).toEqual([]);
+   377→    expect(getCartCount()).toBe(0);
+   378→    expect(getCartTotal()).toBe(0);
+   379→  });
+   380→
+   381→  it('adds item to cart', () => {
+   382→    const item = {
+   383→      productId: 'p1',
+   384→      slug: 'test',
+   385→      nameAr: 'اختبار',
+   386→      nameEn: 'Test',
+   387→      image: 'img.jpg',
+   388→      rentalPricePerDay: 10,
+   389→      securityDeposit: 50,
+   390→      startDate: '2026-07-01',
+   391→      endDate: '2026-07-02',
+   392→      quantity: 1,
+   393→      days: 1,
+   394→      total: 60,
+   395→    };
+   396→    addToCart(item);
+   397→    expect(getCart()).toHaveLength(1);
+   398→    expect(getCartCount()).toBe(1);
+   399→  });
+   400→
+   401→  it('removes item from cart', () => {
+   402→    const item = { /* ... */ };
+   403→    addToCart(item);
+   404→    removeFromCart(0);
+   405→    expect(getCart()).toEqual([]);
+   406→  });
+   407→
+   408→  it('clears cart', () => {
+   409→    addToCart({ /* ... */ } as any);
+   410→    clearCart();
+   411→    expect(getCart()).toEqual([]);
+   412→  });
+   413→});
+   414→```
+   415→
+   416→- [ ] أنشئ `src/lib/__tests__/n8n.test.ts` — اختبر بناء الـ payload:
+   417→
+   418→```typescript
+   419→import { describe, it, expect } from 'vitest';
+   420→
+   421→describe('n8n payload construction', () => {
+   422→  it('builds valid payload structure', () => {
+   423→    const booking = {
+   424→      id: 'b1',
+   425→      status: 'CONFIRMED',
+   426→      startDate: new Date('2026-07-01'),
+   427→      endDate: new Date('2026-07-03'),
+   428→      totalAmount: 100,
+   429→      currency: 'KWD',
+   430→      createdAt: new Date('2026-06-01'),
+   431→      customerName: 'Test',
+   432→      customerPhone: '+96512345678',
+   433→      customerEmail: 'test@test.com',
+   434→      product: {
+   435→        id: 'p1',
+   436→        slug: 'test',
+   437→        nameAr: 'اختبار',
+   438→        nameEn: 'Test',
+   439→        rentalPricePerDay: 10,
+   440→        securityDeposit: 50,
+   441→        category: { nameAr: 'كراسي', nameEn: 'Chairs' },
+   442→      },
+   443→    };
+   444→
+   445→    // Build the payload same way as triggerOrderConfirmedWebhook
+   446→    const payload = {
+   447→      event: 'order.confirmed',
+   448→      timestamp: expect.any(String),
+   449→      booking: {
+   450→        id: booking.id,
+   451→        status: booking.status,
+   452→        startDate: booking.startDate.toISOString(),
+   453→        endDate: booking.endDate.toISOString(),
+   454→        totalAmount: booking.totalAmount,
+   455→        currency: booking.currency,
+   456→      },
+   457→      customer: {
+   458→        name: booking.customerName,
+   459→        phone: booking.customerPhone,
+   460→        email: booking.customerEmail,
+   461→      },
+   462→      product: {
+   463→        id: booking.product.id,
+   464→        slug: booking.product.slug,
+   465→        nameAr: booking.product.nameAr,
+   466→        nameEn: booking.product.nameEn,
+   467→      },
+   468→    };
+   469→
+   470→    expect(payload.event).toBe('order.confirmed');
+   471→    expect(payload.booking.id).toBe('b1');
+   472→    expect(payload.customer.email).toBe('test@test.com');
+   473→  });
+   474→});
+   475→```
+   476→
+   477→### 5️⃣ اختبارات تكامل (Integration Tests) للـ APIs
+   478→
+   479→- [ ] أنشئ `src/app/api/__tests__/health.test.ts`:
+   480→
+   481→```typescript
+   482→import { describe, it, expect, vi } from 'vitest';
+   483→import { GET } from '@/app/api/v1/health/route';
+   484→
+   485→describe('Health endpoint', () => {
+   486→  it('returns ok status', async () => {
+   487→    const response = await GET();
+   488→    const data = await response.json();
+   489→    
+   490→    expect(response.status).toBe(200);
+   491→    expect(data.status).toBe('ok');
+   492→    expect(data.timestamp).toBeDefined();
+   493→  });
+   494→});
+   495→```
+   496→
+   497→- [ ] أنشئ `src/app/api/__tests__/orders.test.ts` — اختبر الفحوصات الأمنية:
+   498→
+   499→```typescript
+   500→import { describe, it, expect, beforeEach } from 'vitest';
+   501→import { POST } from '@/app/api/orders/route';
+   502→import { NextRequest } from 'next/server';
+   503→
+   504→describe('POST /api/orders security', () => {
+   505→  it('rejects invalid input', async () => {
+   506→    const req = new NextRequest('http://localhost/api/orders', {
+   507→      method: 'POST',
+   508→      body: JSON.stringify({ invalid: 'data' }),
+   509→    });
+   510→    const response = await POST(req);
+   511→    const data = await response.json();
+   512→    
+   513→    expect(response.status).toBe(400);
+   514→    expect(data.error).toBe('invalid_input');
+   515→  });
+   516→
+   517→  it('rejects empty items array', async () => {
+   518→    const req = new NextRequest('http://localhost/api/orders', {
+   519→      method: 'POST',
+   520→      body: JSON.stringify({
+   521→        items: [],
+   522→        customer: { /* valid */ },
+   523→        idempotencyKey: 'test-key-12345',
+   524→      }),
+   525→    });
+   526→    const response = await POST(req);
+   527→    expect(response.status).toBe(400);
+   528→  });
+   529→
+   530→  it('rejects invalid email', async () => {
+   531→    const req = new NextRequest('http://localhost/api/orders', {
+   532→      method: 'POST',
+   533→      body: JSON.stringify({
+   534→        items: [/* valid item */],
+   535→        customer: {
+   536→          customerName: 'Test',
+   537→          customerPhone: '+96512345678',
+   538→          customerEmail: 'not-an-email',
+   539→          address: 'Test address 123456',
+   540→          city: 'Kuwait',
+   541→        },
+   542→        idempotencyKey: 'test-key-12345',
+   543→      }),
+   544→    });
+   545→    const response = await POST(req);
+   546→    expect(response.status).toBe(400);
+   547→  });
+   548→});
+   549→```
+   550→
+   551→> ⚠️ **ملاحظة:** هذه الاختبارات تتطلب mock للـ DB. استخدم `vi.mock('@/lib/db', ...)` لتوفير بيانات وهمية.
+   552→
+   553→### 6️⃣ إمكانية الوصول (a11y)
+   554→
+   555→- [ ] **تحسينات شاملة على كل المكوّنات:**
+   556→
+   557→**A. Skip to content link:**
+   558→- [ ] أضف في `[locale]/layout.tsx`:
+   559→
+   560→```tsx
+   561→<a
+   562→  href="#main-content"
+   563→  className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:start-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded"
+   564→>
+   565→  {t('a11y.skipToContent')}
+   566→</a>
+   567→<main id="main-content">{children}</main>
+   568→```
+   569→
+   570→**B. aria labels على الأيقونات التفاعلية:**
+   571→- [ ] في كل `<button>` يحتوي فقط على أيقونة (مثل زر الحذف، زر القائمة)، أضف `aria-label`:
+   572→
+   573→```tsx
+   574→<button aria-label={t('cart.item.remove')}>
+   575→  <Trash2 className="w-5 h-5" />
+   576→</button>
+   577→```
+   578→
+   579→- [ ] في `<input>` بدون `<label>` ظاهر، أضف `aria-label`.
+   580→
+   581→**C. Focus states واضحة:**
+   582→- [ ] أضف في `globals.css`:
+   583→
+   584→```css
+   585→/* Global focus styles for accessibility */
+   586→*:focus-visible {
+   587→  outline: 2px solid var(--c-accent-lut);
+   588→  outline-offset: 2px;
+   589→  border-radius: 4px;
+   590→}
+   591→
+   592→/* Remove default outline only when focus-visible is supported */
+   593→*:focus:not(:focus-visible) {
+   594→  outline: none;
+   595→}
+   596→
+   597→/* Skip link */
+   598→.sr-only {
+   599→  position: absolute;
+   600→  width: 1px;
+   601→  height: 1px;
+   602→  padding: 0;
+   603→  margin: -1px;
+   604→  overflow: hidden;
+   605→  clip: rect(0, 0, 0, 0);
+   606→  white-space: nowrap;
+   607→  border: 0;
+   608→}
+   609→```
+   610→
+   611→**D. Semantic HTML:**
+   612→- [ ] تأكد أن كل صفحة تستخدم `<main>` للمحتوى الرئيسي
+   613→- [ ] استخدم `<nav>` للقوائم التنقّل
+   614→- [ ] استخدم `<header>` و `<footer>` بشكل صحيح
+   615→- [ ] استخدم `<section>` مع `aria-labelledby` للأقسام
+   616→
+   617→**E. alt text للصور:**
+   618→- [ ] كل `<Image>` له `alt` وصفي (ليس فارغاً):
+   619→
+   620→```tsx
+   621→<Image
+   622→  src={product.images[0]}
+   623→  alt={locale === 'ar' ? product.nameAr : product.nameEn}
+   624→  fill
+   625→  className="object-cover"
+   626→/>
+   627→```
+   628→
+   629→**F. Form labels:**
+   630→- [ ] كل `<input>` له `<label>` مرتبط عبر `htmlFor` و `id`:
+   631→
+   632→```tsx
+   633→<Label htmlFor="cardNumber">{t('payment.form.cardNumber')}</Label>
+   634→<Input id="cardNumber" name="cardNumber" />
+   635→```
+   636→
+   637→**G. Heading hierarchy:**
+   638→- [ ] تأكد أن كل صفحة لها H1 واحد فقط
+   639→- [ ] التسلسل هرمي صحيح (H1 → H2 → H3، لا قفزات)
+   640→
+   641→### 7️⃣ تحسين الأداء (Performance)
+   642→
+   643→**A. Image Optimization:**
+   644→- [ ] حدّث `next.config.ts` لتحسين الصور:
+   645→
+   646→```typescript
+   647→images: {
+   648→  remotePatterns: [
+   649→    { protocol: 'https', hostname: 'images.unsplash.com' },
+   650→  ],
+   651→  formats: ['image/avif', 'image/webp'],
+   652→  minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+   653→},
+   654→```
+   655→
+   656→- [ ] في كل `<Image>`، أضف `sizes` لتقليل الـ layout shift:
+   657→
+   658→```tsx
+   659→<Image
+   660→  src={product.images[0]}
+   661→  alt={...}
+   662→  fill
+   663→  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+   664→  className="object-cover"
+   665→/>
+   666→```
+   667→
+   668→**B. Font Loading:**
+   669→- [ ] استخدم `next/font` بدلاً من Google Fonts `<link>` (يحسّن الأداء ويمنع CLS):
+   670→
+   671→```typescript
+   672→// src/app/fonts.ts
+   673→import { Inter, Tajawal } from 'next/font/google';
+   674→
+   675→export const inter = Inter({
+   676→  subsets: ['latin'],
+   677→  display: 'swap',
+   678→  variable: '--font-inter',
+   679→});
+   680→
+   681→export const tajawal = Tajawal({
+   682→  subsets: ['arabic'],
+   683→  display: 'swap',
+   684→  variable: '--font-tajawal',
+   685→  weight: ['300', '400', '500', '700', '900'],
+   686→});
+   687→```
+   688→
+   689→- [ ] في `[locale]/layout.tsx`:
+   690→
+   691→```tsx
+   692→import { inter, tajawal } from '@/app/fonts';
+   693→
+   694→<html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${inter.variable} ${tajawal.variable}`}>
+   695→```
+   696→
+   697→- [ ] حدّث `globals.css` لاستخدام الـ variables:
+   698→
+   699→```css
+   700→html, body {
+   701→  font-family: var(--font-inter), system-ui, sans-serif;
+   702→}
+   703→
+   704→html[dir="rtl"] body {
+   705→  font-family: var(--font-tajawal), system-ui, sans-serif;
+   706→}
+   707→```
+   708→
+   709→- [ ] **احذف** روابط Google Fonts `<link>` من `<head>` (لم تعد ضرورية).
+   710→
+   711→**C. Code Splitting:**
+   712→- [ ] تأكد أن المكوّنات الثقيلة (3D viewer, charts) تستخدم `dynamic()` مع `ssr: false` (موجود من قبل)
+   713→- [ ] استخدم `React.lazy` للـ modals الثقيلة (ConfirmDelete، إلخ) إن لزم
+   714→
+   715→**D. Bundle Analysis:**
+   716→- [ ] ثبّت `@next/bundle-analyzer`:
+   717→  ```bash
+   718→  bun add -d @next/bundle-analyzer
+   719→  ```
+   720→- [ ] أضف script في `package.json`:
+   721→  ```json
+   722→  "analyze": "ANALYZE=true bun run build"
+   723→  ```
+   724→- [ ] طبّق في `next.config.ts`:
+   725→
+   726→```typescript
+   727→import bundleAnalyzer from '@next/bundle-analyzer';
+   728→
+   729→const withBundleAnalyzer = bundleAnalyzer({
+   730→  enabled: process.env.ANALYZE === 'true',
+   731→});
+   732→
+   733→const nextConfig = {
+   734→  // ... existing config
+   735→};
+   736→
+   737→export default withBundleAnalyzer(nextConfig);
+   738→```
+   739→
+   740→### 8️⃣ Error Boundaries محسّنة
+   741→
+   742→- [ ] حدّث `src/app/[locale]/error.tsx` ليكون أكثر احترافية:
+   743→
+   744→```tsx
+   745→'use client';
+   746→
+   747→import { useEffect } from 'react';
+   748→import { AlertTriangle, RotateCcw } from 'lucide-react';
+   749→import { useTranslations } from 'next-intl';
+   750→
+   751→export default function Error({
+   752→  error,
+   753→  reset,
+   754→}: {
+   755→  error: Error & { digest?: string };
+   756→  reset: () => void;
+   757→}) {
+   758→  const t = useTranslations('error');
+   759→
+   760→  useEffect(() => {
+   761→    console.error('Page error:', error);
+   762→  }, [error]);
+   763→
+   764→  return (
+   765→    <div className="min-h-screen flex items-center justify-center p-8">
+   766→      <div className="max-w-md w-full text-center">
+   767→        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
+   768→          <AlertTriangle className="w-10 h-10 text-red-600" />
+   769→        </div>
+   770→        <h2 className="text-2xl font-bold mb-3 text-[var(--c-text)]">
+   771→          {t('title')}
+   772→        </h2>
+   773→        <p className="text-[var(--c-text-muted)] mb-8">
+   774→          {t('subtitle')}
+   775→        </p>
+   776→        {error.digest && (
+   777→          <p className="text-xs text-gray-400 mb-6 font-mono">
+   778→            {t('errorId')}: {error.digest}
+   779→          </p>
+   780→        )}
+   781→        <button
+   782→          onClick={reset}
+   783→          className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--c-accent-lut)] text-white rounded-lg hover:opacity-90 transition"
+   784→        >
+   785→          <RotateCcw className="w-4 h-4" />
+   786→          {t('retry')}
+   787→        </button>
+   788→      </div>
+   789→    </div>
+   790→  );
+   791→}
+   792→```
+   793→
+   794→- [ ] أنشئ `src/app/[locale]/global-error.tsx` (للأخطاء في الـ root layout):
+   795→
+   796→```tsx
+   797→'use client';
+   798→
+   799→export default function GlobalError({
+   800→  error,
+   801→  reset,
+   802→}: {
+   803→  error: Error & { digest?: string };
+   804→  reset: () => void;
+   805→}) {
+   806→  return (
+   807→    <html lang="ar" dir="rtl">
+   808→      <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0, padding: '20px' }}>
+   809→        <div style={{ maxWidth: '500px', margin: '50px auto', textAlign: 'center' }}>
+   810→          <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>حدث خطأ حرج</h2>
+   811→          <p style={{ color: '#666', marginBottom: '24px' }}>
+   812→            نعتذر — حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.
+   813→          </p>
+   814→          <button
+   815→            onClick={reset}
+   816→            style={{
+   817→              padding: '12px 24px',
+   818→              backgroundColor: '#E62129',
+   819→              color: 'white',
+   820→              border: 'none',
+   821→              borderRadius: '8px',
+   822→              cursor: 'pointer',
+   823→            }}
+   824→          >
+   825→            إعادة المحاولة
+   826→          </button>
+   827→        </div>
+   828→      </body>
+   829→    </html>
+   830→  );
+   831→}
+   832→```
+   833→
+   834→### 9️⃣ PWA Basics
+   835→
+   836→- [ ] أنشئ `public/manifest.json`:
+   837→
+   838→```json
+   839→{
+   840→  "name": "Last Unique Touch",
+   841→  "short_name": "LUT",
+   842→  "description": "Luxury furniture and event equipment rental",
+   843→  "start_url": "/ar",
+   844→  "display": "standalone",
+   845→  "background_color": "#0A0A0A",
+   846→  "theme_color": "#E62129",
+   847→  "orientation": "portrait-primary",
+   848→  "lang": "ar",
+   849→  "dir": "rtl",
+   850→  "icons": [
+   851→    {
+   852→      "src": "/icon-192.png",
+   853→      "sizes": "192x192",
+   854→      "type": "image/png",
+   855→      "purpose": "any maskable"
+   856→    },
+   857→    {
+   858→      "src": "/icon-512.png",
+   859→      "sizes": "512x512",
+   860→      "type": "image/png",
+   861→      "purpose": "any maskable"
+   862→    }
+   863→  ]
+   864→}
+   865→```
+   866→
+   867→- [ ] أضف في `[locale]/layout.tsx`:
+   868→
+   869→```tsx
+   870→<link rel="manifest" href="/manifest.json" />
+   871→<meta name="theme-color" content="#E62129" />
+   872→```
+   873→
+   874→- [ ] أنشئ `public/icon-192.png` و `public/icon-512.png` (يمكن استخدام placeholder بسيط — شعار "LUT" على خلفية حمراء)
+   875→
+   876→### 🔟 تحسينات متنوعة
+   877→
+   878→**A. .env.example محدّث:**
+   879→- [ ] تأكد أن كل المتغيرات موثّقة بشكل واضح
+   880→
+   881→**B. README.md بسيط:**
+   882→- [ ] أنشئ `README.md` يشرح:
+   883→  - كيفية تشغيل المشروع محلياً
+   884→  - الأوامر المتاحة (dev, build, lint, typecheck, test)
+   885→  - هيكل المشروع المختصر
+   886→  - متغيرات البيئة المطلوبة
+   887→
+   888→**C. تحديث ملفات الترجمة:**
+   889→- [ ] أضف مفاتيح `a11y` و `error`:
+   890→
+   891→```json
+   892→{
+   893→  "a11y": {
+   894→    "skipToContent": "تخطّي إلى المحتوى الرئيسي"
+   895→  },
+   896→  "error": {
+   897→    "title": "حدث خطأ ما",
+   898→    "subtitle": "نعتذر — حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+   899→    "errorId": "معرّف الخطأ",
+   900→    "retry": "إعادة المحاولة"
+   901→  }
+   902→}
+   903→```
+   904→
+   905→---
+   906→
+   907→## ✅ قائمة التحقق النهائية
+   908→
+   909→### SEO
+   910→- [ ] كل صفحة لها metadata (title, description, openGraph, twitter)
+   911→- [ ] canonical URLs صحيحة
+   912→- [ ] hreflang للغتين (ar, en)
+   913→- [ ] JSON-LD على الصفحة الرئيسية (Organization)
+   914→- [ ] JSON-LD على صفحات المنتجات (Product)
+   915→- [ ] sitemap.xml محدّث (كل الصفحات + المنتجات)
+   916→- [ ] robots.txt صحيح
+   917→- [ ] صفحات noIndex (cart, checkout, payment, success, admin)
+   918→
+   919→### الاختبارات
+   920→- [ ] Vitest مُعدّ بشكل صحيح
+   921→- [ ] اختبارات للـ utils (parseImages, calculateRentalTotal)
+   922→- [ ] اختبارات للـ cart (add, remove, clear)
+   923→- [ ] اختبارات للـ health endpoint
+   924→- [ ] اختبارات للـ orders API (security checks)
+   925→- [ ] `bun run test` ينجح
+   926→
+   927→### a11y
+   928→- [ ] Skip to content link موجود
+   929→- [ ] aria-labels على كل الأزرار الأيقونية
+   930→- [ ] focus states واضحة (focus-visible)
+   931→- [ ] alt text وصفي على كل الصور
+   932→- [ ] كل input له label مرتبط
+   933→- [ ] heading hierarchy صحيح (H1 واحد لكل صفحة)
+   934→- [ ] semantic HTML (main, nav, header, footer, section)
+   935→
+   936→### الأداء
+   937→- [ ] `next/font` بدلاً من Google Fonts `<link>`
+   938→- [ ] `sizes` على كل `<Image>`
+   939→- [ ] formats: avif + webp
+   940→- [ ] `minimumCacheTTL` للصور
+   941→- [ ] bundle analyzer مثبّت
+   942→- [ ] code splitting للـ 3D و modals
+   943→
+   944→### Error Boundaries
+   945→- [ ] `error.tsx` محسّن (واجهة احترافية + error digest)
+   946→- [ ] `global-error.tsx` موجود
+   947→
+   948→### PWA
+   949→- [ ] `manifest.json` موجود
+   950→- [ ] `theme-color` meta tag
+   951→- [ ] icons (192, 512)
+   952→
+   953→### التشغيل
+   954→- [ ] `bun dev --webpack -p 3000` يعمل بدون أخطاء
+   955→- [ ] `bun run lint` — لا أخطاء
+   956→- [ ] `bun run typecheck` — لا أخطاء
+   957→- [ ] `bun run test` — كل الاختبارات تنجح
+   958→- [ ] `bun run build` — ينجح بدون MISSING_MESSAGE
+   959→
+   960→---
+   961→
+   962→## 📝 التقرير المطلوب
+   963→
+   964→### 1. ملخص التنفيذ
+   965→### 2. المكوّنات والملفات المُنشأة
+   966→```
+   967→src/lib/
+   968→├── seo.ts                            ← Centralized metadata builder
+   969→└── __tests__/
+   970→    ├── products.test.ts              ← parseImages, calculateRentalTotal
+   971→    ├── cart.test.ts                  ← Cart operations
+   972→    └── n8n.test.ts                   ← Payload construction
+   973→
+   974→src/components/seo/
+   975→└── json-ld.tsx                       ← JSON-LD injector
+   976→
+   977→src/app/
+   978→├── fonts.ts                          ← next/font setup
+   979→├── [locale]/
+   980→│   ├── global-error.tsx              ← Root error boundary
+   981→│   └── error.tsx                     ← (updated) Enhanced error UI
+   982→└── api/__tests__/
+   983→    ├── health.test.ts                ← Health endpoint
+   984→    └── orders.test.ts                ← Security checks
+   985→
+   986→public/
+   987→├── manifest.json                     ← PWA manifest
+   988→├── icon-192.png                      ← PWA icon
+   989→└── icon-512.png                      ← PWA icon
+   990→
+   991→vitest.config.ts
+   992→README.md
+   993→```
+   994→
+   995→### 3. لقطات شاشة (إلزامية)
+   996→- لقطة من DevTools → Elements → `<head>` تعرض metadata كاملة (title, meta, og:*, twitter:*)
+   997→- لقطة من DevTools → Elements تعرض JSON-LD script tag
+   998→- لقطة من `/sitemap.xml` في المتصفح
+   999→- لقطة من terminal تعرض `bun run test` تنجح
+  1000→- لقطة من `bun run test:coverage` تعرض تقرير التغطية
+  1001→- لقطة من error page (ادخل URL خاطئ)
+  1002→- لقطة من Lighthouse report (إن أمكن) — استهدف ≥85
+  1003→
+  1004→### 4. نتائج الفحوصات
+  1005→```
+  1006→bun run lint:        ✅ / ❌
+  1007→bun run typecheck:   ✅ / ❌
+  1008→bun run test:        ✅ / ❌ (X tests passed)
+  1009→bun run build:       ✅ / ❌
+  1010→bun dev --webpack:   ✅ / ❌
+  1011→```
+  1012→
+  1013→### 5. اختبارات وظيفية
+  1014→| الاختبار | النتيجة |
+  1015→|----------|---------|
+  1016→| Metadata على الصفحة الرئيسية | ✅ / ❌ |
+  1017→| JSON-LD Organization | ✅ / ❌ |
+  1018→| JSON-LD Product على `/products/[slug]` | ✅ / ❌ |
+  1019→| Skip to content link | ✅ / ❌ |
+  1020→| Focus states واضحة | ✅ / ❌ |
+  1021→| alt text على الصور | ✅ / ❌ |
+  1022→| `next/font` يعمل | ✅ / ❌ |
+  1023→| `manifest.json` يُحمّل | ✅ / ❌ |
+  1024→| اختبارات الوحدة تنجح | ✅ / ❌ |
+  1025→| اختبارات التكامل تنجح | ✅ / ❌ |
+  1026→| Error page احترافية | ✅ / ❌ |
+  1027→
+  1028→### 6. Lighthouse Report (إن أمكن)
+  1029→- Performance: ___ / 100
+  1030→- Accessibility: ___ / 100
+  1031→- Best Practices: ___ / 100
+  1032→- SEO: ___ / 100
+  1033→
+  1034→### 7. ملاحظات للمستخدم
+  1035→- أي قيود واجهتها
+  1036→- توصيات للمرحلة 10 (النشر)
+  1037→
+  1038→---
+  1039→
+  1040→## ⚠️ قواعد صارمة
+  1041→
+  1042→1. **لا تتجاوز نطاق هذه المرحلة** — لا ترحّل لـ Supabase (المرحلة 10)، لا تضف Clerk.
+  1043→2. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع.
+  1044→3. **لا تغييرات جوهرية في الميزات** — فقط تحسينات و metadata واختبارات.
+  1045→4. **استهدف Lighthouse ≥85** (ليس 100 — لا تستثمر وقتاً في تحسين الـ milliseconds الأخيرة).
+  1046→5. **اختبارات Unit للدوال النقية فقط** — لا تختبر React components (تحتاج jsdom + rtl، معقّد).
+  1047→6. **اختبارات Integration للـ APIs الحرجة فقط** — health, orders, payment-success.
+  1048→7. **Mock الـ DB في الاختبارات** — استخدم `vi.mock('@/lib/db', ...)`.
+  1049→8. **`next/font` بدلاً من Google Fonts `<link>`** — يحسّن الأداء ويمنع CLS.
+  1050→9. **`sizes` على كل `<Image>`** — يقلل layout shift ويحسّن LCP.
+  1051→10. **aria-labels على الأزرار الأيقونية** — ضروري للـ screen readers.
+  1052→11. **focus-visible واضح** — للوصول بلوحة المفاتيح.
+  1053→12. **alt text وصفي** — ليس "image" أو "".
+  1054→13. **H1 واحد لكل صفحة** — للـ SEO.
+  1055→14. **noIndex على الصفحات الخاصة** (cart, checkout, admin).
+  1056→15. **JSON-LD صحيح** — استخدم schema.org validator.
+  1057→16. **manifest.json صالح** — استخدم PWA validator.
+  1058→17. **`dangerouslySetInnerHTML` فقط للـ JSON-LD** — لا تستخدمه لأي محتوى من user input.
+  1059→18. **اقرأ الكود الحالي قبل البدء** — لا تُعِد إنشاء ما هو موجود.
+  1060→19. **اقرأ `dev.log` بعد كل تغيير كبير**.
+  1061→20. **ابدأ Agent Browser قبل الإبلاغ بالانتهاء** — تحقق بصرياً من metadata و a11y.
+  1062→
+  1063→---
+  1064→
+  1065→## 🎯 معيار النجاح
+  1066→
+  1067→المهمة تُعتبر مكتملة إذا وف فقط إذا:
+  1068→1. ✅ كل صفحة لها metadata كاملة (title, description, OG, Twitter, canonical, hreflang)
+  1069→2. ✅ JSON-LD على الصفحة الرئيسية وصفحات المنتجات
+  1070→3. ✅ Vitest مُعدّ و`bun run test` ينجح (10+ اختبارات)
+  1071→4. ✅ Skip to content link موجود
+  1072→5. ✅ aria-labels على كل الأزرار الأيقونية
+  1073→6. ✅ focus states واضحة
+  1074→7. ✅ `next/font` بدلاً من Google Fonts `<link>`
+  1075→8. ✅ `sizes` على كل `<Image>`
+  1076→9. ✅ Error boundaries محسّنة + global-error.tsx
+  1077→10. ✅ manifest.json + theme-color
+  1078→11. ✅ sitemap.xml محدّث بكل المنتجات
+  1079→12. ✅ `bun run build` ينجح بدون MISSING_MESSAGE
+  1080→13. ✅ لا أخطاء TypeScript أو ESLint
+  1081→
+  1082→ابدأ الآن. أبلغني فور الانتهاء بالتقرير الكامل مع لقطات الشاشة (خصوصاً للـ metadata في DevTools ونتائج الاختبارات).
+  1083→````
+  1084→
+  1085→---
+  1086→

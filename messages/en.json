@@ -90,6 +90,15 @@
     "phaseLabel": "Phase {phase} — Foundation complete",
     "noImage": "No image"
   },
+  "a11y": {
+    "skipToContent": "Skip to main content"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "subtitle": "We apologize — an unexpected error occurred. Please try again.",
+    "errorId": "Error ID",
+    "retry": "Try again"
+  },
   "products": {
     "title": "Products",
     "subtitle": "Discover our luxury collection of furniture and event equipment",

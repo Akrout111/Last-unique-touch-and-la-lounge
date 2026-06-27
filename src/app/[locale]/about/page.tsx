@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { getLocale } from 'next-intl/server'
 import { LegalPageWrapper } from '@/components/legal/page-header'
@@ -6,8 +7,25 @@ import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight, Target, Handshake, Zap, Gem } from 'lucide-react'
 import { getContent } from '@/lib/content'
+import { buildMetadata } from '@/lib/seo'
 
-export default async function AboutPage() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations()
+  return buildMetadata({
+    locale: locale as 'ar' | 'en',
+    path: '/about',
+    title: t('about.title'),
+    description: t('about.subtitle'),
+  })
+}
+
+export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
+  await params // consume the promise
   const t = await getTranslations()
   const locale = await getLocale()
   const content = await getContent(locale, 'about')

@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect } from 'react'
+import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-export default function ErrorPage({
-  error: _error,
+export default function Error({
+  error,
   reset,
 }: {
   error: Error & { digest?: string }
@@ -11,15 +13,35 @@ export default function ErrorPage({
 }) {
   const t = useTranslations()
 
+  useEffect(() => {
+    console.error('Page error:', error)
+  }, [error])
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <h2 className="text-2xl font-bold mb-4">{t('common.error')}</h2>
-      <button
-        onClick={reset}
-        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-      >
-        {t('common.retry')}
-      </button>
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="max-w-md w-full text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
+          <AlertTriangle className="w-10 h-10 text-red-600" />
+        </div>
+        <h2 className="text-2xl font-bold mb-3 text-foreground">
+          {t('error.title')}
+        </h2>
+        <p className="text-muted-foreground mb-8">
+          {t('error.subtitle')}
+        </p>
+        {error.digest && (
+          <p className="text-xs text-muted-foreground mb-6 font-mono">
+            {t('error.errorId')}: {error.digest}
+          </p>
+        )}
+        <button
+          onClick={reset}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-lut text-white rounded-lg hover:opacity-90 transition"
+        >
+          <RotateCcw className="w-4 h-4" />
+          {t('error.retry')}
+        </button>
+      </div>
     </div>
   )
 }
