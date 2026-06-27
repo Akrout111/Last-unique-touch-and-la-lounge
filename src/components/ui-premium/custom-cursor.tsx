@@ -58,9 +58,9 @@ export function CustomCursor() {
             width: isPointer ? 40 : 8,
             height: isPointer ? 40 : 8,
             backgroundColor: isPointer
-              ? 'rgba(201, 162, 39, 0.2)'
-              : 'rgba(201, 162, 39, 0.8)',
-            border: isPointer ? '1px solid rgba(201, 162, 39, 0.6)' : 'none',
+              ? 'rgba(230, 33, 41, 0.2)'
+              : 'rgba(230, 33, 41, 0.8)',
+            border: isPointer ? '1px solid rgba(230, 33, 41, 0.6)' : 'none',
           }}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
           style={{

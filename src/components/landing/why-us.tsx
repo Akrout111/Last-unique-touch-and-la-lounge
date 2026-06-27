@@ -22,7 +22,7 @@ export function WhyUs() {
         className="absolute inset-0 opacity-20"
         style={{
           background:
-            'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(176, 141, 87, 0.15) 0%, transparent 70%)',
+            'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(230, 33, 41, 0.12) 0%, transparent 70%)',
         }}
       />
 

@@ -21,7 +21,7 @@ export function FeaturedProductsClient({ products }: { products: ProductWithImag
         className="absolute inset-0 opacity-[0.015] pointer-events-none"
         style={{
           backgroundImage:
-            'linear-gradient(135deg, #6B4F35 0%, transparent 50%, #B08D57 100%)',
+            'linear-gradient(135deg, #E62129 0%, transparent 50%, #0A0A0A 100%)',
         }}
       />
 

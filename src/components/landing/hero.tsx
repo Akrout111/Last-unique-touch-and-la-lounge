@@ -20,7 +20,7 @@ const brands: Brand[] = [
     key: 'lut',
     image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1600&q=85',
     logo: '/logo-lut.jpg',
-    accent: '#C9A227',
+    accent: '#E62129',
     active: true,
     tag: 'HERITAGE',
   },
@@ -36,7 +36,7 @@ const brands: Brand[] = [
     key: 'birthday',
     image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1600&q=85',
     logo: '/logo-birthday.jpg',
-    accent: '#D4A574',
+    accent: '#FFD700',
     active: false,
     tag: 'ATELIER',
   },
@@ -76,7 +76,7 @@ export function Hero() {
         className="absolute inset-0 z-0"
         style={{
           background:
-            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201, 162, 39, 0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 50% 100%, rgba(176, 141, 87, 0.04) 0%, transparent 50%)',
+            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(230, 33, 41, 0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 50% 100%, rgba(230, 33, 41, 0.04) 0%, transparent 50%)',
         }}
       />
       {/* === Top: Brand logo + tagline === */}
@@ -207,7 +207,7 @@ export function Hero() {
                       className="h-16 w-auto object-contain rounded-sm"
                       style={{
                         opacity: hoveredBrand === idx ? 1 : 0.7,
-                        filter: hoveredBrand === idx ? 'drop-shadow(0 0 10px rgba(201, 162, 39, 0.3))' : 'none',
+                        filter: hoveredBrand === idx ? 'drop-shadow(0 0 10px rgba(230, 33, 41, 0.4))' : 'none',
                       }}
                     />
                   </div>
