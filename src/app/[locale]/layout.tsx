@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -16,12 +16,15 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: t('brand.lut'),
     manifest: '/manifest.json',
-    themeColor: '#E62129',
     icons: {
       icon: '/icon-192.png',
       apple: '/icon-192.png',
     },
   }
+}
+
+export const viewport: Viewport = {
+  themeColor: '#E62129',
 }
 
 export function generateStaticParams() {
