@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Globe } from 'lucide-react'
+import { Menu, X, Globe, ShoppingCart } from 'lucide-react'
+import { getCartCount } from '@/lib/cart'
 
 export function Navbar() {
   const t = useTranslations()
@@ -13,11 +14,20 @@ export function Navbar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Update cart count on mount and when cart-updated event fires
+  useEffect(() => {
+    const updateCount = () => setCartCount(getCartCount())
+    updateCount()
+    window.addEventListener('cart-updated', updateCount)
+    return () => window.removeEventListener('cart-updated', updateCount)
   }, [])
 
   const switchLocale = () => {
@@ -67,8 +77,22 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Right side: lang switch + mobile menu */}
+          {/* Right side: cart + lang switch + mobile menu */}
           <div className="flex items-center gap-3">
+            {/* Cart icon with badge */}
+            <Link
+              href="/cart"
+              className="relative p-2 text-white/80 hover:text-lut transition-colors"
+              aria-label="Cart"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-lut text-white text-[10px] font-bold">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
             <Button
               variant="ghost"
               size="sm"
@@ -76,7 +100,7 @@ export function Navbar() {
               className="text-white/80 hover:text-lut hover:bg-white/10 gap-1.5"
             >
               <Globe className="w-4 h-4" />
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium hidden sm:inline">
                 {locale === 'ar' ? 'EN' : 'عربي'}
               </span>
             </Button>

@@ -1,0 +1,76 @@
+'use client'
+
+import { Suspense, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { Loader2, Box, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
+// Dynamically import the actual 3D canvas (heavy) — client only
+const ModelCanvas = dynamic(
+  () => import('./model-canvas').then((m) => m.ModelCanvas),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-[400px] bg-muted rounded-xl">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+)
+
+// Sample GLB model for demo (since model3dUrl in DB is example.com placeholder)
+const SAMPLE_MODEL_URL =
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb'
+
+interface Product3DViewerProps {
+  modelUrl: string
+}
+
+export function Product3DViewer({ modelUrl: _modelUrl }: Product3DViewerProps) {
+  const t = useTranslations()
+  const [enabled, setEnabled] = useState(false)
+
+  if (!enabled) {
+    return (
+      <button
+        onClick={() => setEnabled(true)}
+        className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 border border-gold/50 rounded-xl text-gold hover:bg-gold/10 transition-colors"
+      >
+        <Box className="w-5 h-5" />
+        {t('product.3d.enable')}
+      </button>
+    )
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-medium flex items-center gap-2">
+          <Box className="w-4 h-4 text-gold" />
+          {t('product.3d.title')}
+        </h3>
+        <button
+          onClick={() => setEnabled(false)}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="w-3 h-3" />
+          {t('product.3d.disable')}
+        </button>
+      </div>
+      <div className="h-[400px] bg-gradient-to-br from-muted to-muted/50 rounded-xl overflow-hidden border border-border">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          }
+        >
+          <ModelCanvas modelUrl={SAMPLE_MODEL_URL} />
+        </Suspense>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2 text-center">
+        {t('product.3d.hint')}
+      </p>
+    </div>
+  )
+}

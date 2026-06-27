@@ -115,6 +115,55 @@
     },
     "comingPhase": "المرحلة 3"
   },
+  "product": {
+    "breadcrumbs": {
+      "home": "الرئيسية",
+      "products": "المنتجات",
+      "category": "الفئة"
+    },
+    "category": "الفئة",
+    "perDay": "د.ك / يوم",
+    "securityDeposit": "+ {amount} د.ك تأمين (يُسترجع)",
+    "description": "الوصف",
+    "rental": {
+      "title": "اختر فترة الإيجار",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "checking": "جارٍ الفحص...",
+      "available": "متاح للفترة المختارة",
+      "unavailable": "غير متاح — يوجد حجز متداخل",
+      "selectDates": "اختر التواريخ للتحقق من التوافر"
+    },
+    "quantity": {
+      "label": "الكمية",
+      "decrease": "إنقاص",
+      "increase": "زيادة"
+    },
+    "priceSummary": {
+      "title": "ملخص السعر",
+      "days": "عدد الأيام: {count}",
+      "rental": "الإيجار ({rate} × {days} × {qty}): {amount} د.ك",
+      "deposit": "التأمين: {amount} د.ك",
+      "total": "الإجمالي: {amount} د.ك"
+    },
+    "addToCart": "أضف للسلة",
+    "outOfStock": "غير متاح حالياً",
+    "addedToCart": "تمت الإضافة للسلة",
+    "viewCart": "عرض السلة",
+    "3d": {
+      "enable": "عرض ثلاثي الأبعاد",
+      "disable": "إخفاء",
+      "title": "عرض ثلاثي الأبعاد",
+      "hint": "اسحب للتدوير، عجلة الماوس للتكبير"
+    },
+    "related": "منتجات ذات صلة",
+    "trustBadges": {
+      "delivery": "توصيل وتركيب احترافي",
+      "insurance": "تأمين مشمول",
+      "refund": "استرجاع التأمين بعد الإرجاع",
+      "quality": "منتجات فاخرة منتقاة"
+    }
+  },
   "admin": {
     "title": "لوحة التحكم",
     "comingPhase": "المرحلة 8"

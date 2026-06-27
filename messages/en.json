@@ -115,6 +115,55 @@
     },
     "comingPhase": "Phase 3"
   },
+  "product": {
+    "breadcrumbs": {
+      "home": "Home",
+      "products": "Products",
+      "category": "Category"
+    },
+    "category": "Category",
+    "perDay": "KWD / day",
+    "securityDeposit": "+ {amount} KWD deposit (refundable)",
+    "description": "Description",
+    "rental": {
+      "title": "Select Rental Period",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "checking": "Checking...",
+      "available": "Available for selected period",
+      "unavailable": "Unavailable — overlapping booking exists",
+      "selectDates": "Select dates to check availability"
+    },
+    "quantity": {
+      "label": "Quantity",
+      "decrease": "Decrease",
+      "increase": "Increase"
+    },
+    "priceSummary": {
+      "title": "Price Summary",
+      "days": "Number of days: {count}",
+      "rental": "Rental ({rate} × {days} × {qty}): {amount} KWD",
+      "deposit": "Deposit: {amount} KWD",
+      "total": "Total: {amount} KWD"
+    },
+    "addToCart": "Add to Cart",
+    "outOfStock": "Out of stock",
+    "addedToCart": "Added to cart",
+    "viewCart": "View Cart",
+    "3d": {
+      "enable": "View 3D",
+      "disable": "Hide",
+      "title": "3D Preview",
+      "hint": "Drag to rotate, scroll to zoom"
+    },
+    "related": "Related Products",
+    "trustBadges": {
+      "delivery": "Professional delivery & setup",
+      "insurance": "Insurance included",
+      "refund": "Deposit refund after return",
+      "quality": "Curated luxury items"
+    }
+  },
   "admin": {
     "title": "Dashboard",
     "comingPhase": "Phase 8"

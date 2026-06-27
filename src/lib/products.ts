@@ -215,6 +215,88 @@ export async function getProductBySlug(slug: string): Promise<ProductWithImages 
 }
 
 /**
+ * Check if a product is available for booking in a given date range.
+ * Returns true if no overlapping CONFIRMED or PENDING booking exists.
+ */
+export async function checkProductAvailability(
+  productId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<{ available: boolean; conflictingBookings: number }> {
+  const conflictingBookings = await db.booking.count({
+    where: {
+      productId,
+      status: { in: ['CONFIRMED', 'PENDING'] },
+      // Overlap condition: existing booking (s, e) overlaps with (startDate, endDate)
+      // if startDate < e AND endDate > s
+      AND: [
+        { startDate: { lt: endDate } },
+        { endDate: { gt: startDate } },
+      ],
+    },
+  })
+
+  return {
+    available: conflictingBookings === 0,
+    conflictingBookings,
+  }
+}
+
+/**
+ * Get related products (same category, different slug, with stock).
+ */
+export async function getRelatedProducts(
+  productId: string,
+  categoryId: string,
+  brand: Brand = 'LUT',
+  limit = 4
+): Promise<ProductWithImages[]> {
+  const products = await db.product.findMany({
+    where: {
+      brand,
+      isActive: true,
+      categoryId,
+      id: { not: productId },
+      stock: { gt: 0 },
+    },
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      category: {
+        select: { id: true, nameAr: true, nameEn: true, slug: true },
+      },
+    },
+  })
+
+  return products.map((p) => ({
+    ...p,
+    images: parseImages(p.images),
+  }))
+}
+
+/**
+ * Calculate total rental price for a booking.
+ */
+export function calculateRentalTotal(
+  rentalPricePerDay: number,
+  securityDeposit: number,
+  startDate: Date,
+  endDate: Date,
+  quantity: number = 1
+): { days: number; subtotal: number; deposit: number; total: number } {
+  const msPerDay = 24 * 60 * 60 * 1000
+  const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay))
+  const subtotal = rentalPricePerDay * days * quantity
+  const deposit = securityDeposit * quantity
+  return {
+    days,
+    subtotal,
+    deposit,
+    total: subtotal + deposit,
+  }
+}
+
+/**
  * Type for raw Product from Prisma (before image parsing).
  */
 export type RawProduct = Product
