@@ -1,10 +1,11 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, Suspense } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight, Plus } from 'lucide-react'
+import { WaveBackground } from './wave-background'
 
 interface Brand {
   key: 'lut' | 'lalounge' | 'birthday'
@@ -61,32 +62,17 @@ export function Hero() {
       ref={ref}
       className="relative min-h-screen w-full overflow-hidden bg-ink flex flex-col"
     >
-      {/* === Background texture — brand identity === */}
+      {/* === 3D Wave Background (red & white flowing lines) === */}
+      <Suspense fallback={null}>
+        <WaveBackground />
+      </Suspense>
+
+      {/* Red gradient mesh — brand glow overlay */}
       <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: 'url(/hero-bg-texture.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.35,
-        }}
-      />
-      {/* Red gradient mesh — brand glow */}
-      <div
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 70% 50% at 30% 30%, rgba(230, 33, 41, 0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 70% 70%, rgba(230, 33, 41, 0.08) 0%, transparent 50%), radial-gradient(ellipse 100% 60% at 50% 100%, rgba(10, 10, 10, 0.6) 0%, transparent 60%)',
-        }}
-      />
-      {/* Subtle grid overlay */}
-      <div
-        className="absolute inset-0 z-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, #FFFFFF 1px, transparent 1px), linear-gradient(to bottom, #FFFFFF 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
+            'radial-gradient(ellipse 70% 50% at 30% 20%, rgba(230, 33, 41, 0.15) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 70% 80%, rgba(230, 33, 41, 0.1) 0%, transparent 50%), linear-gradient(to bottom, transparent 0%, rgba(10, 10, 10, 0.5) 80%, rgba(10, 10, 10, 0.8) 100%)',
         }}
       />
       {/* === Top: Brand logo + tagline === */}

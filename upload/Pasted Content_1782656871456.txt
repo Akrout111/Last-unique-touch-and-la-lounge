@@ -1,0 +1,1181 @@
+
+---
+
+````markdown
+# مهمة: إصلاحات UI/UX من تقرير Tri-AI + قواعد منع التكرار — المرحلة 10
+
+## 📖 السياق والمراجع الإلزامية
+
+### طبيعة هذه المرحلة
+أنت في **المرحلة 10 من 10** (الأخيرة قبل النشر). تم تنفيذ المراحل 1-9 بنجاح. صدر **تقرير Tri-AI UI/UX Design Review v3.0** (دمج Claude Sonnet 4.6 + Kimi k2.5 + GLM-5.2 مع التحقق من الكود) يكشف عن **49 مشكلة** (21 مؤكدة + 7 جزئية + 20 جديدة من GLM-5.2). هدفك: **إصلاح كل المشاكل + إنشاء قواعد دائمة تمنع تكرارها**.
+
+### ⚠️ قيود بيئية (مهمة)
+1. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع
+2. **SQLite فقط** — لا تغييرات في الـ DB
+3. **لا ميزات جديدة** — فقط إصلاحات + قواعد منع
+4. **التزم بالـ tokens الحالية** — لا تخترع ألواناً جديدة
+5. **اختبر كل إصلاح بصرياً** قبل المتابعة
+
+### المراجع الإلزامية (اقرأها قبل البدء)
+1. ملف `GLM-5.2-FullStack-Build-Reference.md`
+2. ملف `GLM-5.2-Assistant-Operations-Reference.md`
+3. **تقرير Tri-AI v3.0** (PDF مرفق في `upload/LUT_UIUX_Design_Report_v3_TriAI.pdf`) — اقرأه كاملاً قبل البدء
+4. **اقرأ الكود الحالي قبل كل إصلاح** — لا تعتمد على وصف التقرير وحده
+
+### قاعدة ذهبية من التقرير
+> "الأساس البصري قوي — ثق به ولا تعد بناءه. كل ما تحتاجه هو التوحيد والتلميع."
+
+---
+
+## 🎯 هدف هذه المهمة
+
+1. **إصلاح الـ 4 مشاكل الحرجة** (Quick Wins — 30 دقيقة)
+2. **إصلاح مشاكل GLM-5.2 الـ 20** (G1-G20)
+3. **إصلاح مشاكل Claude/Kimi المؤكدة** المتبقية
+4. **توحيد لغة التصميم** (أهم رافع للجودة)
+5. **تنظيف الكود الميت والـ tokens المكررة**
+6. **إنشاء قواعد منع دائمة** (linting + docs + checklists) تمنع تكرار هذه المشاكل
+
+---
+
+## 🔧 المهام المطلوبة (بالترتيب — لا تتخطّ)
+
+### 1️⃣ Quick Wins الحرجة (ابدأ بها فوراً — 30 دقيقة)
+
+#### 1A. إصلاح Navbar dead ternaries (15 دقيقة)
+- [ ] افتح `src/components/layout/navbar.tsx`
+- [ ] ابحث عن الـ 4 dead ternaries في الأسطر (تقريباً 1948, 1964, 1983, 2003):
+  ```tsx
+  // ❌ خاطئ — نفس القيمة في الفرعين
+  scrolled ? 'text-paper' : 'text-paper'
+  scrolled ? 'text-paper/70 hover:text-paper' : 'text-paper/70 hover:text-paper'
+  ```
+- [ ] استبدلها بقيم مختلفة فعلاً:
+  ```tsx
+  // ✅ صحيح — قيم مختلفة
+  scrolled ? 'text-paper' : 'text-ink'
+  scrolled ? 'text-paper/70 hover:text-paper' : 'text-ink/70 hover:text-ink'
+  ```
+- [ ] **اختبر بصرياً:** قبل التمرير النص داكن على الخلفية البيضاء، بعد التمرير النص أبيض على `glass-dark`
+
+#### 1B. إضافة `bg-bg-light`/`bg-bg-dark` tokens (5 دقائق)
+- [ ] افتح `src/app/globals.css`
+- [ ] ابحث عن `@theme inline {` (أو `:root {`)
+- [ ] أضف:
+  ```css
+  --color-bg-light: var(--c-paper-warm); /* #F8F5F0 */
+  --color-bg-dark: var(--c-ink); /* #0A0A0A */
+  ```
+- [ ] تحقق أن 13 ملفاً يستخدم `bg-bg-light` و `bg-bg-dark` الآن تعمل بشكل صحيح
+- [ ] **اختبر بصرياً:** صفحات `cart-view`, `trust-badges`, `checkout-view`, `payment-view`, `success-view`, `contact-view`, `page-header`, `products-page-content`, `confirm-delete`, `about/page`, `admin-shell`, `login-page-view` — كلها يجب أن تظهر خلفياتها الصحيحة
+
+#### 1C. إصلاح RTL drawer animation (10 دقائق)
+- [ ] افتح `src/components/layout/navbar.tsx` (تقريباً السطر 2038-2043)
+- [ ] استبدل:
+  ```tsx
+  // ❌ خاطئ — دائماً من اليمين
+  initial={{ x: '100%' }}
+  animate={{ x: 0 }}
+  exit={{ x: '100%' }}
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — يعتمد على locale
+  const drawerX = locale === 'ar' ? '-100%' : '100%';
+  initial={{ x: drawerX }}
+  animate={{ x: 0 }}
+  exit={{ x: drawerX }}
+  ```
+- [ ] **اختبر بصرياً:** في العربية، الدرج يجب أن يدخل من اليسار؛ في الإنجليزية من اليمين
+
+#### 1D. ترجمة `"KWD/day"` (2 دقيقة)
+- [ ] افتح `src/components/landing/featured-products-client.tsx` (تقريباً السطر 1539)
+- [ ] استبدل:
+  ```tsx
+  // ❌ خاطئ — hardcoded English
+  <span className="font-mono text-[10px] text-stone">KWD/day</span>
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — مترجم
+  <span className="font-mono text-[10px] text-stone">{t('featured.perDay')}</span>
+  ```
+- [ ] تأكد أن `messages/ar.json` يحتوي على `"perDay": "د.ك / يوم"` (موجود من المرحلة 3)
+
+---
+
+### 2️⃣ مشاكل GLM-5.2 الحرجة والعالية (3-4 ساعات)
+
+#### G1 (CRITICAL): بطاقات البراند على desktop غير قابلة للنقر
+- [ ] افتح `src/components/landing/hero.tsx` (تقريباً السطر 680-823)
+- [ ] **المشكلة:** النسخة الـ desktop تستخدم `motion.div` بدون `Link` أو `onClick`، بينما النسخة الـ mobile تستخدم `Link` بشكل صحيح
+- [ ] **الإصلاح:** غلّف الـ `motion.div` الـ desktop بنفس الـ `Link` conditional المستخدم في الـ mobile:
+  ```tsx
+  // Desktop version — قبل
+  <motion.div className="...cursor-pointer">
+    {/* content only, no link */}
+  </motion.div>
+  
+  // Desktop version — بعد
+  {brand.active ? (
+    <Link href="/products">
+      <motion.div className="...cursor-pointer">{card}</motion.div>
+    </Link>
+  ) : (
+    <div className="cursor-default">{card}</div>
+  )}
+  ```
+- [ ] **اختبر بصرياً:** على desktop (1280px+)، انقر على بطاقة LUT — يجب أن تذهب لـ `/products`
+
+#### G2 (HIGH): MagneticButton يستخدم `<a href>` بدلاً من Next.js Link
+- [ ] افتح `src/components/ui/magnetic-button.tsx` (تقريباً السطر 2283-2288)
+- [ ] استبدل:
+  ```tsx
+  // ❌ خاطئ — full page reload
+  if (href) { return <a href={href} onClick={onClick}>{content}</a> }
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — client-side navigation
+  import { Link } from '@/i18n/routing';
+  
+  if (href) { return <Link href={href} onClick={onClick}>{content}</Link> }
+  ```
+- [ ] تحقق أن `cta-section.tsx` (الأسطر 1770, 1779) وكل من يستخدم `MagneticButton` مع `href` يعمل بشكل صحيح
+- [ ] **اختبر بصرياً:** انقر على "ابدأ الآن" في الـ homepage — يجب أن ينتقل لـ `/products` بدون reload
+
+#### G3 (HIGH): `contact-view` يستخدم string-comparison hack للاستنتاج locale
+- [ ] افتح `src/components/contact/contact-view.tsx` (تقريباً السطر 4574)
+- [ ] استبدل:
+  ```tsx
+  // ❌ خاطئ — string comparison
+  {t('contact.form.subject') !== 'Subject' ? 'إرسال رسالة أخرى' : 'Send another message'}
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — translation key
+  {t('contact.form.sendAnother')}
+  ```
+- [ ] أضف المفتاح في `messages/ar.json`: `"sendAnother": "إرسال رسالة أخرى"`
+- [ ] أضف المفتاح في `messages/en.json`: `"sendAnother": "Send another message"`
+
+#### G4 (HIGH): Admin confirm-delete dialog كله hardcoded Arabic
+- [ ] افتح `src/components/admin/confirm-delete.tsx` (تقريباً الأسطر 7043-7063)
+- [ ] استبدل كل النصوص hardcoded بـ `useTranslations`:
+  ```tsx
+  // ❌ خاطئ — hardcoded Arabic
+  <h2>تأكيد الحذف</h2>
+  <p>هل أنت متأكد من حذف</p>
+  <button>إلغاء</button>
+  <button>حذف</button>
+  <span>جار الحذف...</span>
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — i18n
+  const t = useTranslations('admin.confirmDelete');
+  
+  <h2>{t('title')}</h2>
+  <p>{t('message', { name })}</p>
+  <button>{t('cancel')}</button>
+  <button>{t('confirm')}</button>
+  <span>{t('processing')}</span>
+  ```
+- [ ] أضف المفاتيح في `messages/ar.json` و `messages/en.json`:
+  ```json
+  "confirmDelete": {
+    "title": "تأكيد الحذف",
+    "message": "هل أنت متأكد من حذف \"{name}\"؟",
+    "cancel": "إلغاء",
+    "confirm": "حذف",
+    "processing": "جارٍ الحذف..."
+  }
+  ```
+  ```json
+  "confirmDelete": {
+    "title": "Confirm Delete",
+    "message": "Are you sure you want to delete \"{name}\"?",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "processing": "Deleting..."
+  }
+  ```
+
+#### G5 (HIGH): payment summary يعرض `Quantity: 0` غير منطقية عند سلة فارغة
+- [ ] افتح `src/components/checkout/payment-view.tsx` (تقريباً الأسطر 4361-4365)
+- [ ] أضف فحصاً للسلة الفارغة قبل عرض الـ summary:
+  ```tsx
+  // قبل عرض order summary
+  if (cartItems.length === 0) {
+    return (
+      <div>
+        <p>{t('payment.emptyCart')}</p>
+        <Link href="/products">{t('payment.browseProducts')}</Link>
+      </div>
+    );
+  }
+  ```
+- [ ] أضف المفاتيح:
+  - `ar.json`: `"emptyCart": "سلتك فارغة — لا يمكن إتمام الدفع"`, `"browseProducts": "تصفّح المنتجات"`
+  - `en.json`: `"emptyCart": "Your cart is empty — cannot checkout"`, `"browseProducts": "Browse products"`
+
+#### G7 (HIGH): Toast بدون role/aria-live — غير مرئي لقارئي الشاشة
+- [ ] افتح `src/components/providers/toast-provider.tsx` (تقريباً الأسطر 5074-5092)
+- [ ] أضف `role` و `aria-live`:
+  ```tsx
+  // Container
+  <div
+    className="fixed bottom-4 end-4 z-50 space-y-2"
+    role="region"
+    aria-label="Notifications"
+  >
+    {/* toasts */}
+  </div>
+  
+  // Individual toast
+  <div
+    key={toast.id}
+    className={`...`}
+    role={toast.type === 'error' ? 'alert' : 'status'}
+    aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+  >
+    {/* content */}
+  </div>
+  ```
+
+#### G17 (HIGH): Save-card Checkbox binding مكسور (RHF + Radix)
+- [ ] افتح `src/components/checkout/payment-view.tsx` (تقريباً السطر 4270)
+- [ ] استبدل:
+  ```tsx
+  // ❌ خاطئ — register على Radix Checkbox
+  <Checkbox id="saveCard" {...register('saveCard')} />
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — Controller من RHF
+  <Controller
+    control={control}
+    name="saveCard"
+    render={({ field: { value, onChange } }) => (
+      <Checkbox
+        id="saveCard"
+        checked={value ?? false}
+        onCheckedChange={(c) => onChange(!!c)}
+      />
+    )}
+  />
+  ```
+- [ ] استورد `Controller` من `react-hook-form`
+
+---
+
+### 3️⃣ مشاكل GLM-5.2 المتوسطة (2-3 ساعات)
+
+#### G6: عملات مختلطة على نفس الشاشة
+- [ ] افتح `src/components/cart/cart-view.tsx` (الأسطر 3590, 3622, 3630, 3640)
+- [ ] استبدل `split(' ')[0]` hack و `'KWD'` hardcoded بـ متغير موحد:
+  ```tsx
+  const currency = t('common.currency'); // "د.ك" أو "KWD"
+  ```
+- [ ] أضف المفتاح: `ar.json` → `"currency": "د.ك"`, `en.json` → `"currency": "KWD"`
+- [ ] استخدم `currency` في كل مكان بدلاً من الـ hack
+
+#### G8: Toast بدون enter/exit animation
+- [ ] في `toast-provider.tsx`، استخدم `framer-motion` `AnimatePresence`:
+  ```tsx
+  import { AnimatePresence, motion } from 'framer-motion';
+  
+  <AnimatePresence>
+    {toasts.map((toast) => (
+      <motion.div
+        key={toast.id}
+        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+        transition={{ duration: 0.2 }}
+        className="..."
+      >
+        {/* content */}
+      </motion.div>
+    ))}
+  </AnimatePresence>
+  ```
+
+#### G9: Toast container يتجاهل `safe-area-inset-bottom`
+- [ ] في `toast-provider.tsx`، أضف padding آمن:
+  ```tsx
+  className="fixed bottom-4 end-4 z-50 space-y-2"
+  style={{
+    paddingBottom: 'env(safe-area-inset-bottom, 1rem)',
+    paddingRight: 'env(safe-area-inset-right, 1rem)',
+  }}
+  ```
+
+#### G10: كل toasts (بما فيها errors) تختفي بعد 4s بدون close button
+- [ ] أضف زر إغلاق لكل toast:
+  ```tsx
+  <button
+    onClick={() => removeToast(toast.id)}
+    aria-label="Close notification"
+    className="..."
+  >
+    <X className="w-4 h-4" />
+  </button>
+  ```
+- [ ] اجعل `errors` تبقى أطول (مثلاً 8s) أو لا تختفي تلقائياً:
+  ```tsx
+  const duration = toast.type === 'error' ? 8000 : 4000;
+  setTimeout(() => removeToast(toast.id), duration);
+  ```
+
+#### G11: alt text مكرر (قارئ الشاشة يعلن اسم البراند مرتين)
+- [ ] افتح `src/components/landing/hero.tsx` (الأسطر 704, 741, 844, 876)
+- [ ] للصور الزخرفية (logo، صور البراند)، استخدم `alt=""`:
+  ```tsx
+  <Image src={brand.logo} alt="" /> // زخرفية، اسم البراند مكتوب كنص بجانبها
+  ```
+- [ ] للصور المعلوماتية، استخدم alt وصفي فريد
+
+#### G12: ambient glow في 3D viewer يستخدم لون ذهبي بدلاً من أحمر البراند
+- [ ] افتح `src/components/product/product-3d-viewer.tsx` (السطر 2739)
+- [ ] استبدل `rgba(201,162,39)` بـ `rgba(230, 33, 41)` (الأحمر LUT)
+
+#### G13: 3D Viewer يمرر `modelUrl=''` hardcoded بدلاً من الـ prop
+- [ ] افتح `src/components/product/product-3d-viewer.tsx` (الأسطر 2703, 2749)
+- [ ] ابحث عن أي `modelUrl=''` hardcoded واستبدله بـ `modelUrl={modelUrl}` (الـ prop)
+- [ ] تحقق أن الـ prop يصل فعلاً للـ `ModelCanvas`
+
+#### G15: Touch targets أصغر من 44×44px
+- [ ] راجع:
+  - `cart-view.tsx` (السطر 3571) — أزرار `+`/`-` للكمية
+  - `product-info.tsx` (السطر 3219) — أزرار الكمية
+  - `pagination.tsx` (السطر 5419) — أزرار أرقام الصفحات
+- [ ] تأكد أن كل زر تفاعلي له `min-h-[44px] min-w-[44px]` على الأقل (WCAG 2.5.8)
+
+#### G16: حقول بطاقة الدفع بدون autoComplete
+- [ ] افتح `src/components/checkout/payment-view.tsx` (الأسطر 4203-4265)
+- [ ] أضف `autoComplete` لكل حقل:
+  ```tsx
+  <Input id="cardNumber" autoComplete="cc-number" {...} />
+  <Input id="cardName" autoComplete="cc-name" {...} />
+  <Input id="expiry" autoComplete="cc-exp" {...} />
+  <Input id="cvv" autoComplete="cc-csc" {...} />
+  ```
+
+#### G18: Footer هاتف نص فقط (لا `tel:` link)، WhatsApp placeholder، Instagram URLs مختلفة
+- [ ] افتح `src/components/layout/footer.tsx` (الأسطر 2122, 2131, 2197)
+- [ ] استبدل نص الهاتف بـ link:
+  ```tsx
+  <a href="tel:+96512345678" className="...">+965 1234 5678</a>
+  ```
+- [ ] استبدل WhatsApp placeholder بـ link حقيقي:
+  ```tsx
+  <a href="https://wa.me/96512345678" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+  ```
+- [ ] وحّد Instagram URL عبر الموقع (نفس الـ URL في كل مكان)
+
+---
+
+### 4️⃣ مشاكل GLM-5.2 المنخفضة (1 ساعة)
+
+#### G19: WhyUs feature cards لها `cursor-default` لكن hover effects واضحة
+- [ ] افتح `src/components/landing/why-us.tsx` (الأسطر 1672-1693)
+- [ ] أزل الـ hover effects غير الضرورية، أو أضف `cursor-pointer` + `onClick` إن كانت فعلاً قابلة للنقر
+
+#### G20: Pagination nav `aria-label = 'Page'` (عام جداً)، ellipsis بدون `aria-hidden`
+- [ ] افتح `src/components/products/pagination.tsx` (الأسطر 5413, 5427-5435)
+- [ ] حدّث `aria-label`:
+  ```tsx
+  <nav aria-label={t('products.pagination')} >
+  ```
+- [ ] أضف `aria-hidden` للـ ellipsis:
+  ```tsx
+  <span aria-hidden="true">...</span>
+  ```
+
+---
+
+### 5️⃣ مشاكل Claude/Kimi المؤكدة المتبقية (2-3 ساعات)
+
+#### 5A. تكرار `categoryName` مرتين في ProductCard
+- [ ] افتح `src/components/landing/product-card.tsx` (الأسطر 1846 + 1872)
+- [ ] احذف النص السفلي (السطر 1872):
+  ```tsx
+  // ❌ احذف هذا
+  <p className="text-xs text-muted-foreground mb-1">{categoryName}</p>
+  ```
+- [ ] أبقِ الـ Badge العلوي فقط (السطر 1846)
+
+#### 5B. توحيد لغة التصميم (أهم رافع للجودة!)
+- [ ] افتح `src/components/landing/product-card.tsx` (السطر 1828)
+- [ ] استبدل `rounded-xl` بـ `borderRadius: '2px'` (matching Landing style):
+  ```tsx
+  // ❌ قبل
+  <div className="rounded-xl overflow-hidden ...">
+  
+  // ✅ بعد
+  <div className="overflow-hidden ..." style={{ borderRadius: '2px' }}>
+  ```
+- [ ] **بدلاً من ذلك (مُوصى به):** إن كنت تفضل `rounded-xl`، طبّقه على `featured-products-client.tsx` أيضاً واتركه موحداً. **المهم: اختر لغة واحدة وطبّقها على الكروت كلها.**
+
+#### 5C. توحيد typography لعناوين المنتجات
+- [ ] افتح `product-card.tsx` (السطر 1875) و `featured-products-client.tsx` (السطر 1559)
+- [ ] استخدم نفس الـ class في كليهما:
+  ```tsx
+  // موحّد
+  <h3 className="font-display text-xl text-ink">{productName}</h3>
+  ```
+
+#### 5D. حذف `brand-selector.tsx` (كود ميت)
+- [ ] تحقق أن `brand-selector.tsx` غير مستورد في أي مكان (`grep -r "brand-selector" src/`)
+- [ ] إن لم يُستورد، احذفه:
+  ```bash
+  rm src/components/landing/brand-selector.tsx
+  ```
+
+#### 5E. تنظيف Dark Mode الميت
+- [ ] افتح `src/app/globals.css` (الأسطر 83-102)
+- [ ] احذف كتلة `dark {...}` الميتة (18 متغير بدون تفعيل)
+- [ ] أو، إن أردت إبقاءها: فعّلها بـ `next-themes`:
+  ```bash
+  bun add next-themes
+  ```
+- [ ] أضف `<ThemeProvider>` في الـ layout + زر toggle في الـ Navbar
+
+#### 5F. توحيد `--c-gold` المضلل → `--c-brand`
+- [ ] في `src/app/globals.css`:
+  ```css
+  /* ❌ قبل — مضلل */
+  --c-gold: #E62129; /* أحمر! */
+  
+  /* ✅ بعد — صحيح */
+  --c-brand: #E62129;
+  ```
+- [ ] استخدم find & replace شامل: `'gold'` → `'brand'` في كل أسماء الـ classes والمتغيرات
+- [ ] تحديث: `.bg-gold` → `.bg-brand`, `.text-gold` → `.text-brand`, `.shadow-gold` → `.shadow-brand`, إلخ
+- [ ] **تحذير:** تأكد أن الـ CSS variable `--c-gold` (إن كانت تشير لذهبي حقيقي `#D4A574`) لا تختلط. راجع `palette.md` المرجعي.
+
+#### 5G. تقليل أوزان الخطوط
+- [ ] افتح `src/app/fonts.ts` (الأسطر 398, 405, 406)
+- [ ] استبدل:
+  ```typescript
+  // ❌ قبل — 15 ملف خط
+  Tajawal: { weight: ['300','400','500','700','900'] }
+  Cormorant: { weight: ['300','400','500','600','700'], style: ['normal','italic'] }
+  
+  // ✅ بعد — 4 ملفات خط فقط
+  Tajawal: { weight: ['400','700'] }
+  Cormorant: { weight: ['400','500'] }
+  ```
+
+#### 5H. توحيد `eyebrow` font-size
+- [ ] افتح `src/app/globals.css` (السطر 197)
+- [ ] عرّف `.eyebrow` و `.eyebrow-sm`:
+  ```css
+  .eyebrow {
+    font-size: 12px;
+    /* باقي الخصائص */
+  }
+  .eyebrow-sm {
+    font-size: 10px;
+  }
+  ```
+- [ ] في `hero.tsx`, `brand-selector.tsx` (إن أبقيته), `why-us.tsx`, `cta-section.tsx`:
+  - استبدل كل `text-[10px]`, `text-[9px]`, `text-xs` على عناصر eyebrow بـ `.eyebrow` أو `.eyebrow-sm`
+  - احذف الـ inline overrides
+
+#### 5I. تنويع أنماط eyebrow
+- [ ] اجعل كل قسم له نمط eyebrow مميز:
+  - **Hero:** eyebrow بدون خطوط (نقطة فقط)
+  - **WhyUs:** خط واحد جانبي
+  - **CTA:** خط مزدوج
+- [ ] هذا يكسر الرتابة ويحسّن الإيقاع البصري
+
+#### 5J. Skeleton للسلة وصفحة الدفع
+- [ ] أنشئ `src/components/cart/cart-skeleton.tsx`:
+  ```tsx
+  export function CartSkeleton() {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-24 rounded-xl bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  ```
+- [ ] أنشئ `src/components/checkout/checkout-skeleton.tsx` بشكل مماثل
+- [ ] استبدل `<div className="animate-pulse text-muted-foreground">...</div>` في `cart-view.tsx` و `checkout-view.tsx` بـ الـ skeletons الجديدة
+
+#### 5K. EmptyState موحّد
+- [ ] أنشئ `src/components/ui/empty-state.tsx`:
+  ```tsx
+  interface EmptyStateProps {
+    icon: React.ReactNode;
+    title: string;
+    description?: string;
+    action?: React.ReactNode;
+  }
+  
+  export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+          {icon}
+        </div>
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        {description && <p className="text-muted-foreground mb-6">{description}</p>}
+        {action}
+      </div>
+    );
+  }
+  ```
+- [ ] استخدمه في:
+  - `empty-state.tsx` (products) → `<EmptyState icon={<SearchX />} title="..." />`
+  - `cart-view.tsx` (empty cart) → `<EmptyState icon={<ShoppingCart />} title="..." action={<Link>...</Link>} />`
+  - `checkout-view.tsx` (empty checkout) → `<EmptyState icon={<PackageX />} title="..." action={...} />`
+
+#### 5L. تحسين Form errors
+- [ ] في `checkout-view.tsx`, `payment-view.tsx`, `contact-view.tsx`:
+- [ ] استبدل:
+  ```tsx
+  // ❌ بسيط
+  {errors.customerName && (
+    <p className="text-xs text-lut">{t('checkout.form.name')} *</p>
+  )}
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ احترافي
+  {errors.customerName && (
+    <motion.p
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex items-center gap-1.5 text-xs text-lut mt-1"
+      role="alert"
+    >
+      <AlertCircle className="w-3.5 h-3.5" />
+      <span>{t('form.errors.required', { field: t('checkout.form.name') })}</span>
+    </motion.p>
+  )}
+  ```
+- [ ] أضف مفاتيح `form.errors.*` في `ar.json` و `en.json`:
+  ```json
+  "form": {
+    "errors": {
+      "required": "{field} مطلوب",
+      "minLength": "{field} قصير جداً (الحد الأدنى {n} أحرف)",
+      "email": "بريد إلكتروني غير صالح",
+      "phone": "رقم هاتف غير صالح"
+    }
+  }
+  ```
+
+#### 5M. إصلاح `cursor-pointer` على براندات غير نشطة
+- [ ] افتح `src/components/landing/hero.tsx` (الأسطر 939-946)
+- [ ] استبدل:
+  ```tsx
+  // ❌ خاطئ — cursor-pointer على غير نشط
+  return <div key={brand.key} className="cursor-pointer group">{card}</div>;
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ صحيح — cursor-default
+  return <div key={brand.key} className="cursor-default">{card}</div>;
+  ```
+
+#### 5N. إصلاح `WaveBackground` fallback
+- [ ] افتح `src/components/landing/hero.tsx` (الأسطر 625-628)
+- [ ] أنشئ `src/components/landing/static-gradient-bg.tsx`:
+  ```tsx
+  export function StaticGradientBg() {
+    return (
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%)',
+        }}
+      />
+    );
+  }
+  ```
+- [ ] استبدل:
+  ```tsx
+  // ❌ قبل
+  <Suspense fallback={null}>
+    <WaveBackground />
+  </Suspense>
+  ```
+- [ ] بـ:
+  ```tsx
+  // ✅ بعد
+  <Suspense fallback={<StaticGradientBg />}>
+    <WaveBackground />
+  </Suspense>
+  ```
+
+#### 5O. استبدال `<img>` بـ `next/image`
+- [ ] افتح `src/components/landing/hero.tsx` (الأسطر 704, 741, 845, 876)
+- [ ] استبدل كل `<img>` بـ `next/image`:
+  ```tsx
+  // ❌ قبل
+  <img src={brand.logo} alt={brand.name} className="..." />
+  
+  // ✅ بعد
+  import Image from 'next/image';
+  <Image src={brand.logo} alt={brand.name} width={48} height={48} className="..." />
+  ```
+
+#### 5P. إضافة `xl:` و `2xl:` breakpoints
+- [ ] ابحث عن `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` (بدون `xl:`)
+- [ ] أضف `xl:grid-cols-4` حيثما يناسب
+- [ ] وحّد `padding` pattern: `px-4 sm:px-6 lg:px-8 xl:px-12` في كل الـ containers
+
+#### 5Q. إصلاح `why-us gap-px` على mobile
+- [ ] افتح `src/components/landing/why-us.tsx` (السطر 1658)
+- [ ] استبدل `gap-px` بـ borders مباشرة:
+  ```tsx
+  // ❌ قبل
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-paper/10">
+  
+  // ✅ بعد
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    {items.map((item, i) => (
+      <div key={i} className="border-b border-e border-paper/10 last:border-e-0">
+        {/* content */}
+      </div>
+    ))}
+  </div>
+  ```
+
+#### 5R. تحسين Footer visual hierarchy
+- [ ] افتح `src/components/layout/footer.tsx`
+- [ ] ارفع `font-size` للعناوين من `text-sm` (~14px) إلى `text-base` (~16px):
+  ```tsx
+  // ❌ قبل
+  <h3 className="eyebrow text-gold">{title}</h3>
+  
+  // ✅ بعد
+  <h3 className="text-base font-semibold text-gold">{title}</h3>
+  ```
+
+#### 5S. تحسين Three.js performance
+- [ ] افتح `src/components/landing/wave-background.tsx`
+- [ ] أضف `frameloop="demand"` للـ Canvas:
+  ```tsx
+  <Canvas frameloop="demand" ...>
+  ```
+- [ ] أو استخدم `next/dynamic` مع `ssr: false` لـ lazy load:
+  ```tsx
+  const WaveBackground = dynamic(() => import('./wave-background'), { ssr: false });
+  ```
+
+#### 5T. إزالة `mix-blend-mode: multiply` من grain overlay
+- [ ] افتح `src/app/globals.css` (الأسطر 234-243)
+- [ ] احذف `mix-blend-mode: multiply`:
+  ```css
+  /* ❌ قبل */
+  .grain-overlay::before {
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,...");
+    mix-blend-mode: multiply; /* GPU-heavy */
+  }
+  
+  /* ✅ بعد */
+  .grain-overlay::before {
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,...");
+  }
+  ```
+
+---
+
+### 6️⃣ إنشاء قواعد منع التكرار (هذا هو الأهم!)
+
+الآن بعد إصلاح كل المشاكل، نحتاج لآليات تمنع تكرارها في أي تعديل مستقبلي. هذه القواعد دائمة.
+
+#### 6A. إنشاء ملف `DESIGN_RULES.md` في جذر المشروع
+- [ ] أنشئ `DESIGN_RULES.md` يحتوي على كل القواعد التالية (مكتوبة كـ checklist):
+
+```markdown
+# Last Unique Touch — Design Rules (Do Not Violate)
+
+> هذه القواعد مستخلصة من تقرير Tri-AI v3.0. أي مخالفة لها = bug مؤكد.
+
+## 1. i18n — لا نصوص hardcoded
+- ❌ لا تستخدم `'KWD/day'`, `'KWD'`, `'Subject'`, أو أي نص آخر hardcoded في JSX
+- ✅ كل النصوص تمر عبر `t('key')` من `next-intl`
+- ✅ كل مفتاح في `ar.json` يجب أن يكون في `en.json` أيضاً
+- ✅ Admin panel也不例外 — كل النصوص مترجمة
+
+## 2. الألوان — مصدر واحد للحقيقة
+- ❌ لا تخترع hex codes جديدة في JSX
+- ✅ استخدم CSS variables من `globals.css` (`--c-ink`, `--c-paper`, `--c-brand`, إلخ)
+- ❌ لا تكرر نفس اللون في 3 أنظمة متغيرات (`--c-gold` + `--primary` + `--color-gold`)
+- ✅ استخدم متغيراً مصدراً واحداً (`--c-brand`) واجعل البقية يشيرون إليه
+
+## 3. لغة التصميم — توحيد صارم
+- ❌ لا تستخدم `rounded-xl` في صفحة و `borderRadius: '2px'` في صفحة أخرى لنفس العنصر
+- ✅ اختر لغة واحدة لكل البطاقات/الكروت وطبّقها في كل مكان
+- ❌ لا تستخدم `font-display` لعنوان في صفحة و `font-semibold` لنفس العنصر في صفحة أخرى
+- ✅ عناوين المنتجات موحّدة عبر كل الصفحات
+
+## 4. RTL — احترام الاتجاه
+- ❌ لا تستخدم `left`/`right` في CSS أو `x: '100%'` ثابت في animations
+- ✅ استخدم logical properties: `ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`
+- ✅ animations تعتمد على `locale`: `const drawerX = locale === 'ar' ? '-100%' : '100%'`
+- ✅ استخدم `ArrowLeft`/`ArrowRight` من lucide-react مع تبديل حسب الـ locale
+
+## 5. التصفّح (Navigation) — استخدم Next.js Link
+- ❌ لا تستخدم `<a href>` للروابط الداخلية
+- ✅ استخدم `Link` من `@/i18n/routing` (يحافظ على locale + client-side navigation)
+- ✅ MagneticButton وكل wrapper components يجب أن تستخدم `Link` داخلياً
+
+## 6. الصور — استخدم next/image دائماً
+- ❌ لا تستخدم `<img>` أبداً (لأسباب أداء + SEO)
+- ✅ استخدم `next/image` مع `width`, `height`, `alt`, و `sizes`
+- ✅ alt text وصفي للصور المعلوماتية، `alt=""` للزخرفية
+- ❌ لا تمرر `undefined` لـ `src` — استخدم conditional rendering
+
+## 7. الأزرار التفاعلية — cursor صحيح
+- ❌ لا تستخدم `cursor-pointer` على عناصر غير قابلة للنقر
+- ✅ `cursor-pointer` فقط للعناصر القابلة للنقر فعلاً
+- ✅ `cursor-default` أو `cursor-not-allowed` للعناصر المعطّلة
+
+## 8. A11y — قواعد إلزامية
+- ✅ كل `<button>` بأيقونة فقط يجب أن يكون له `aria-label`
+- ✅ كل `<input>` يجب أن يكون له `<label>` مرتبط (via `htmlFor` و `id`)
+- ✅ Toast container: `role="region"` + `aria-label="Notifications"`
+- ✅ Toast فردي: `role="status"` (نجاح) أو `role="alert"` (خطأ) + `aria-live`
+- ✅ Touch targets: `min-h-[44px] min-w-[44px]` (WCAG 2.5.8)
+- ✅ Form errors: `role="alert"` + icon + رسالة محددة (ليس اسم الحقل مكرراً)
+- ✅ Pagination: `aria-label={t('products.pagination')}` + `aria-hidden` للـ ellipsis
+- ✅ Form fields: `autoComplete` صحيح (`cc-number`, `cc-exp`, `cc-csc`, `email`, `tel`)
+- ✅ H1 واحد لكل صفحة
+- ✅ Skip to content link في كل layout
+
+## 9. React Hook Form + Radix — استخدم Controller
+- ❌ لا تستخدم `{...register('field')}` على Radix components (Checkbox, Switch, Select)
+- ✅ استخدم `<Controller control={control} name="field" render={...} />`
+- ✅ Radix يستخدم `checked` + `onCheckedChange`، وليس `value` + `onChange`
+
+## 10. Skeletons + Empty States — توحيد
+- ❌ لا تستخدم `<div className="animate-pulse">...</div>` كـ loading state
+- ✅ استخدم skeleton components (`CartSkeleton`, `CheckoutSkeleton`, `ProductsGridSkeleton`)
+- ✅ استخدم `<EmptyState>` الموحّد لكل empty states (icon + title + description + action)
+
+## 11. الكود الميت — احذفه فوراً
+- ❌ لا تترك components غير مستوردة (مثل `brand-selector.tsx` سابقاً)
+- ✅ ابحث بـ `grep -r "ComponentName" src/` قبل الحذف للتأكد
+- ✅ احذف الـ CSS الميت (كتل `dark {...}` بدون تفعيل، tokens مكررة، إلخ)
+
+## 12. Typography — أوزان محدودة
+- ❌ لا تحمّل 5+ أوزان لكل خط (يبطّئ التحميل)
+- ✅ Tajawal: `['400', '700']` فقط
+- ✅ Cormorant: `['400', '500']` فقط
+- ✅ Inter: `['400', '500', '700']` فقط
+
+## 13. Three.js — أداء
+- ✅ استخدم `frameloop="demand"` لإيقاف rAF عند عدم الحاجة
+- ✅ استخدم `dynamic` مع `ssr: false` للـ lazy load
+- ✅ وفّر `fallback` (مثل `StaticGradientBg`) عند فشل WebGL
+- ✅ استخدم `IntersectionObserver` لإيقاف الـ canvas offscreen
+
+## 14. Dead Code — لا ternaries بنفس القيمة
+- ❌ لا تكتب `cond ? 'a' : 'a'` (نفس القيمة في الفرعين)
+- ✅ راجع كل ternary — إن كانت القيمتان متطابقتين، احذف الـ ternary
+
+## 15. الإصدار — اختبار قبل الإصدار
+- ✅ `bun run lint` — 0 errors
+- ✅ `bun run typecheck` — 0 errors
+- ✅ `bun run test` — كل الاختبارات تنجح
+- ✅ `bun run build` — ينجح بدون MISSING_MESSAGE
+- ✅ اختبر بصرياً على mobile (375px) + tablet (768px) + desktop (1280px+)
+- ✅ اختبر RTL + LTR
+```
+
+#### 6B. إنشاء ESLint rules مخصصة لمنع المشاكل
+- [ ] أنشئ `.eslintrc.rules.js` (أو حدّث `eslint.config.mjs`):
+
+```javascript
+// قواعد مخصصة لمنع تكرار مشاكل Tri-AI
+const customRules = {
+  // 1. منع <img> — استخدم next/image
+  '@next/next/no-img-element': 'error',
+  
+  // 2. منع any
+  '@typescript-eslint/no-explicit-any': 'error',
+  
+  // 3. منع unused vars
+  '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+  
+  // 4. منع unreachable code
+  'no-unreachable': 'error',
+  
+  // 5. منع <a href> للروابط الداخلية (custom rule)
+  // ملاحظة: هذا يحتاج plugin مخصص، يمكن استخدام no-restricted-syntax
+  'no-restricted-syntax': [
+    'error',
+    {
+      selector: "JSXOpeningElement[name.name='a'][attributes.*.name.name='href']",
+      message: 'استخدم Link من @/i18n/routing بدلاً من <a href> للروابط الداخلية',
+    },
+  ],
+  
+  // 6. منع hardcoded currency strings
+  'no-restricted-syntax': [
+    'error',
+    {
+      selector: "Literal[value=/KWD|د\\.ك/]",
+      message: 'استخدم t("common.currency") بدلاً من hardcoded currency',
+    },
+  ],
+};
+
+module.exports = { customRules };
+```
+
+- [ ] أضفها لـ `eslint.config.mjs`
+
+#### 6C. إنشاء Pre-commit Hook
+- [ ] ثبّت husky:
+  ```bash
+  bun add -d husky lint-staged
+  bunx husky init
+  ```
+- [ ] أنشئ `.husky/pre-commit`:
+  ```bash
+  #!/usr/bin/env sh
+  . "$(dirname -- "$0")/_/husky.sh"
+  
+  echo "🔍 Running lint-staged..."
+  bunx lint-staged
+  
+  echo "🔍 Running typecheck..."
+  bun run typecheck
+  
+  echo "🔍 Running tests..."
+  bun run test
+  
+  echo "✅ All checks passed!"
+  ```
+- [ ] أضف في `package.json`:
+  ```json
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": ["bun run lint", "bun run typecheck"],
+    "src/**/*.{ts,tsx,json}": ["prettier --write"]
+  }
+  ```
+
+#### 6D. إنشاء CI Checklist في `PULL_REQUEST_TEMPLATE.md`
+- [ ] أنشئ `.github/PULL_REQUEST_TEMPLATE.md` (أو `PULL_REQUEST_TEMPLATE.md` في الجذر):
+
+```markdown
+## Pull Request Checklist
+
+### قبل التقديم
+- [ ] قرأت `DESIGN_RULES.md` والتزمت بكل القواعد
+- [ ] `bun run lint` — 0 errors
+- [ ] `bun run typecheck` — 0 errors
+- [ ] `bun run test` — كل الاختبارات تنجح
+- [ ] `bun run build` — ينجح بدون MISSING_MESSAGE
+
+### i18n
+- [ ] لا نصوص hardcoded في JSX
+- [ ] كل مفتاح جديد في `ar.json` موجود في `en.json`
+- [ ] Admin panel أيضاً مترجم بالكامل
+
+### RTL
+- [ ] استخدمت logical properties (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`)
+- [ ] animations تعتمد على `locale` (لا `x: '100%'` ثابت)
+- [ ] اختبرت بصرياً في العربية والإنجليزية
+
+### Navigation
+- [ ] استخدمت `Link` من `@/i18n/routing` (ليس `<a href>`)
+- [ ] MagneticButton وكل wrappers تستخدم `Link` داخلياً
+
+### الصور
+- [ ] استخدمت `next/image` (ليس `<img>`)
+- [ ] alt text وصفي (أو `alt=""` للزخرفية)
+- [ ] `sizes` مضافة للصور responsive
+
+### A11y
+- [ ] أزرار بأيقونة فقط لها `aria-label`
+- [ ] كل input له label مرتبط
+- [ ] Toast: `role` + `aria-live`
+- [ ] Touch targets ≥ 44×44px
+- [ ] Form errors: icon + رسالة محددة + `role="alert"`
+- [ ] Form fields: `autoComplete` صحيح
+
+### التصميم
+- [ ] استخدمت CSS variables (لا hex codes)
+- [ ] لغة تصميم موحّدة (نفس borderRadius + font للعناصر المتشابهة)
+- [ ] cursor صحيح (`pointer` للقابل للنقر، `default` لغيره)
+
+### React Hook Form
+- [ ] استخدمت `Controller` مع Radix components (ليس `register`)
+
+### الأداء
+- [ ] Three.js: `frameloop="demand"` + lazy load + fallback
+- [ ] لا أوزان خطوط زائدة
+- [ ] Skeleton components للـ loading states
+
+### الاختبار البصري
+- [ ] اختبرت على mobile (375px)
+- [ ] اختبرت على tablet (768px)
+- [ ] اختبرت على desktop (1280px+)
+- [ ] اختبرت RTL + LTR
+```
+
+#### 6E. إنشاء Script للتحقق التلقائي
+- [ ] أنشئ `scripts/check-design-rules.ts`:
+
+```typescript
+#!/usr/bin/env bun
+/**
+ * Design Rules Checker — يتحقق من القواعد في DESIGN_RULES.md
+ * شغّل: bun scripts/check-design-rules.ts
+ */
+
+import { glob } from 'glob';
+import * as fs from 'fs';
+
+const errors: string[] = [];
+
+// 1. لا <img> — استخدم next/image
+const files = await glob('src/**/*.{ts,tsx}');
+for (const file of files) {
+  const content = fs.readFileSync(file, 'utf-8');
+  
+  // Check for <img>
+  if (/<img\s/.test(content)) {
+    errors.push(`❌ ${file}: استخدم next/image بدلاً من <img>`);
+  }
+  
+  // Check for hardcoded currency
+  if (/['"]KWD['"]/.test(content) || /['"]د\.ك['"]/.test(content)) {
+    errors.push(`❌ ${file}: استخدم t("common.currency") بدلاً من hardcoded currency`);
+  }
+  
+  // Check for <a href> (internal links)
+  if (/<a\s+href=['"]\/(?!tel:|mailto:|https?:)/.test(content)) {
+    errors.push(`❌ ${file}: استخدم Link من @/i18n/routing بدلاً من <a href> للروابط الداخلية`);
+  }
+  
+  // Check for hardcoded Arabic in JSX (basic check)
+  const arabicInJsx = content.match(/>\s*[\u0600-\u06FF][^<]*</g);
+  if (arabicInJsx && !file.includes('test') && !file.includes('locale') && !file.includes('messages')) {
+    errors.push(`⚠️ ${file}: قد يحتوي على نصوص عربية hardcoded — تحقق من i18n`);
+  }
+  
+  // Check for dead ternaries (same value in both branches)
+  const deadTernaries = content.match(/\?\s*['"]([^'"]+)['"]\s*:\s*['"]\1['"]/g);
+  if (deadTernaries) {
+    errors.push(`❌ ${file}: dead ternary detected — نفس القيمة في الفرعين: ${deadTernaries.join(', ')}`);
+  }
+  
+  // Check for left/right instead of logical properties
+  if (/\bml-|\bmr-|\bpl-|\bpr-|\bleft-|\bright-/.test(content)) {
+    errors.push(`⚠️ ${file}: استخدم logical properties (ms-, me-, ps-, pe-, start-, end-) بدلاً من left/right`);
+  }
+}
+
+if (errors.length > 0) {
+  console.error('\n🚨 Design Rules Violations:\n');
+  errors.forEach(e => console.error(e));
+  console.error(`\n❌ ${errors.length} violation(s) found. اقرأ DESIGN_RULES.md.`);
+  process.exit(1);
+} else {
+  console.log('✅ All design rules passed!');
+}
+```
+
+- [ ] أضف في `package.json`:
+  ```json
+  "scripts": {
+    "check-rules": "bun scripts/check-design-rules.ts"
+  }
+  ```
+- [ ] أضف هذا الـ script لـ `pre-commit` hook
+
+---
+
+## ✅ قائمة التحقق النهائية
+
+### Quick Wins (إلزامية قبل أي شيء آخر)
+- [ ] 1A: Navbar dead ternaries مصحوبة
+- [ ] 1B: `bg-bg-light`/`bg-bg-dark` tokens مضافة
+- [ ] 1C: RTL drawer animation يعتمد على locale
+- [ ] 1D: `"KWD/day"` مترجمة
+
+### مشاكل GLM-5.2 الحرجة والعالية
+- [ ] G1: desktop brand cards قابلة للنقر
+- [ ] G2: MagneticButton يستخدم `Link`
+- [ ] G3: contact-view لا يستخدم string-comparison hack
+- [ ] G4: admin confirm-delete مترجم بالكامل
+- [ ] G5: payment empty-cart microcopy صحيحة
+- [ ] G7: Toast له `role` + `aria-live`
+- [ ] G17: Save-card Checkbox يستخدم `Controller`
+
+### مشاكل GLM-5.2 المتوسطة
+- [ ] G6: عملة موحّدة في cart-view
+- [ ] G8: Toast له enter/exit animation
+- [ ] G9: Toast يحترم `safe-area-inset-bottom`
+- [ ] G10: Toast له close button + duration أطول للأخطاء
+- [ ] G11: alt text غير مكرر
+- [ ] G12: 3D glow يستخدم لون البراند
+- [ ] G13: 3D Viewer يمرر الـ prop بشكل صحيح
+- [ ] G15: Touch targets ≥ 44×44px
+- [ ] G16: Form fields لها `autoComplete`
+- [ ] G18: Footer روابط `tel:` + WhatsApp + Instagram موحّد
+
+### مشاكل GLM-5.2 المنخفضة
+- [ ] G19: WhyUs cards cursor صحيح
+- [ ] G20: Pagination aria محسّن
+
+### مشاكل Claude/Kimi المؤكدة
+- [ ] 5A: تكرار categoryName أُزيل
+- [ ] 5B: لغة تصميم موحّدة (2px sharp أو rounded-xl في كل مكان)
+- [ ] 5C: typography موحّد لعناوين المنتجات
+- [ ] 5D: brand-selector.tsx محذوف
+- [ ] 5E: Dark Mode الميت أُزيل أو فُعّل
+- [ ] 5F: `--c-gold` أُعيدت تسميتها لـ `--c-brand`
+- [ ] 5G: أوزان الخطوط قُلّصت
+- [ ] 5H: eyebrow font-size موحّد
+- [ ] 5I: تنويع أنماط eyebrow
+- [ ] 5J: Skeletons للسلة والدفع
+- [ ] 5K: EmptyState موحّد
+- [ ] 5L: Form errors محسّنة (icon + message + role="alert")
+- [ ] 5M: cursor-pointer على براندات غير نشطة أُصلح
+- [ ] 5N: WaveBackground له fallback
+- [ ] 5O: `<img>` استُبدلت بـ `next/image`
+- [ ] 5P: `xl:` و `2xl:` breakpoints مضافة
+- [ ] 5Q: why-us gap-px أُصلح
+- [ ] 5R: Footer visual hierarchy محسّن
+- [ ] 5S: Three.js performance محسّن
+- [ ] 5T: grain overlay `mix-blend-mode` أُزيل
+
+### قواعد منع التكرار
+- [ ] 6A: `DESIGN_RULES.md` مُنشأ في جذر المشروع
+- [ ] 6B: ESLint rules مخصصة مُفعّلة
+- [ ] 6C: Pre-commit hook يعمل (lint + typecheck + test)
+- [ ] 6D: `PULL_REQUEST_TEMPLATE.md` مُنشأ
+- [ ] 6E: `scripts/check-design-rules.ts` يعمل
+
+### التشغيل
+- [ ] `bun dev --webpack -p 3000` يعمل بدون أخطاء
+- [ ] `bun run lint` — 0 errors
+- [ ] `bun run typecheck` — 0 errors
+- [ ] `bun run test` — كل الاختبارات تنجح
+- [ ] `bun run build` — ينجح بدون MISSING_MESSAGE
+- [ ] `bun run check-rules` — 0 violations
+
+---
+
+## 📝 التقرير المطلوب
+
+### 1. ملخص التنفيذ
+- ما الذي تم تنفيذه
+- المشاكل المُصلَحة (عدد + قائمة مختصرة)
+- القواعد المُنشأة
+
+### 2. جدول الإصلاحات
+| المشكلة | المصدر | الملف | الحالة |
+|---------|--------|------|------|
+| Navbar dead ternaries | Claude+Kimi+GLM | navbar.tsx | ✅ |
+| bg-bg-light tokens | Claude | globals.css | ✅ |
+| ... | ... | ... | ✅ |
+
+### 3. قواعد منع التكرار المُنشأة
+```
+DESIGN_RULES.md                 ← 15 قاعدة مكتوبة
+eslint.config.mjs               ← rules مخصصة
+.husky/pre-commit               ← lint + typecheck + test
+PULL_REQUEST_TEMPLATE.md        ← checklist شامل
+scripts/check-design-rules.ts   ← تحقق تلقائي
+```
+
+### 4. لقطات شاشة (إلزامية)
+- لقطة قبل/بعد للـ Navbar (text color عند التمرير)
+- لقطة قبل/بعد لـ RTL drawer (يدخل من اليسار في العربية)
+- لقطة قبل/بعد لـ desktop brand cards (قابلة للنقر الآن)
+- لقطة قبل/بعد لـ Toast (مع animation + close button)
+- لقطة قبل/بعد لـ ProductCard (موحّد لغة تصميم)
+- لقطة قبل/بعد لـ Form errors (icon + message)
+- لقطة قبل/بعد لـ EmptyState (موحّد)
+- لقطة من `bun run check-rules` (يجب أن تُظهر ✅)
+
+### 5. نتائج الفحوصات
+```
+bun run lint:        ✅ / ❌
+bun run typecheck:   ✅ / ❌
+bun run test:        ✅ / ❌
+bun run build:       ✅ / ❌
+bun run check-rules: ✅ / ❌
+```
+
+### 6. التحقق من قواعد المنع
+- [ ] جرّب إضافة `<img>` في أي مكان → يجب أن يفشل lint
+- [ ] جرّب إضافة `'KWD'` hardcoded → يجب أن يفشل `check-rules`
+- [ ] جرّب commit بدون typecheck → يجب أن يفشل pre-commit hook
+- [ ] جرّب فتح PR → يجب أن يظهر الـ checklist
+
+### 7. ملاحظات للمستخدم
+- أي مشاكل لم تُصلَح ولماذا
+- توصيات للصيانة المستقبلية
+
+---
+
+## ⚠️ قواعد صارمة
+
+1. **ابدأ بالـ Quick Wins أولاً** — الـ 4 إصلاحات الحرجة قبل أي شيء آخر.
+2. **لا تتجاوز أي مشكلة** — كل المشاكل في التقرير يجب أن تُصلَح.
+3. **اختبر كل إصلاح بصرياً** قبل المتابعة — استخدم Agent Browser.
+4. **لا تخترع حلولاً جديدة** — اتبع الإصلاحات الموصوفة في التقرير.
+5. **أنشئ قواعد المنع** بعد إكمال كل الإصلاحات — هذا أهم جزء.
+6. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع.
+7. **اقرأ `DESIGN_RULES.md` بعد إنشائه** — تأكد أنه شامل.
+8. **اختبر قواعد المنع فعلاً** — جرّب كسرها وتأكد أنها ترفض.
+9. **لا تترك كود ميت** — احذف أي component غير مستخدم.
+10. **التزم بـ tokens الحالية** — لا تخترع ألواناً جديدة.
+11. **استخدم logical properties دائماً** للـ RTL.
+12. **كل النصوص في `messages/*.json`** — لا hardcoded strings.
+13. **`next/image` دائماً** — لا `<img>`.
+14. **`Link` من `@/i18n/routing`** — لا `<a href>`.
+15. **`Controller` مع Radix** — لا `register` على Radix components.
+16. **اقرأ `dev.log` بعد كل تغيير كبير**.
+17. **ابدأ Agent Browser قبل الإبلاغ بالانتهاء** — تأكد بصرياً من كل إصلاح.
+
+---
+
+## 🎯 معيار النجاح
+
+المهمة تُعتبر مكتملة إذا وفقط إذا:
+
+### إصلاحات
+1. ✅ كل الـ 4 Quick Wins الحرجة مصحوبة ومختبرة بصرياً
+2. ✅ كل مشاكل GLM-5.2 الـ 20 مصحوبة (G1-G20)
+3. ✅ كل مشاكل Claude/Kimi المؤكدة مصحوبة
+4. ✅ لغة التصميم موحّدة عبر كل الصفحات
+5. ✅ الكود الميت محذوف
+6. ✅ الـ tokens المكررة موحّدة
+
+### قواعد منع التكرار
+7. ✅ `DESIGN_RULES.md` مُنشأ وشامل (15+ قاعدة)
+8. ✅ ESLint rules مخصصة مُفعّلة
+9. ✅ Pre-commit hook يعمل
+10. ✅ `PULL_REQUEST_TEMPLATE.md` مُنشأ
+11. ✅ `scripts/check-design-rules.ts` يعمل ويرفض المخالفات
+
+### جودة
+12. ✅ `bun run lint` — 0 errors
+13. ✅ `bun run typecheck` — 0 errors
+14. ✅ `bun run test` — كل الاختبارات تنجح
+15. ✅ `bun run build` — ينجح بدون MISSING_MESSAGE
+16. ✅ `bun run check-rules` — 0 violations
+17. ✅ اختبرت بصرياً كل الإصلاحات في العربية والإنجليزية
+
+ابدأ الآن. ابدأ بالـ Quick Wins أولاً (30 دقيقة)، ثم انتقل للمشاكل الأخرى بالترتيب. أبلغني فور الانتهاء بالتقرير الكامل مع لقطات الشاشة قبل/بعد.
+````
+
+---
