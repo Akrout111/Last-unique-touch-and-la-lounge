@@ -1,0 +1,1369 @@
+
+---
+
+````markdown
+# مهمة: إصلاحات شاملة + إعادة بناء 3D Hero Scroll Animation — المرحلة 11
+
+## 📖 السياق والمراجع الإلزامية
+
+### طبيعة هذه المهمة
+هذه **المرحلة 11** — مهمة إصلاحية شاملة تجمع بين:
+1. **إصلاح 12 مشكلة** من تقرير Tri-AI لم تُصلَح في المرحلة 10
+2. **إعادة بناء 3D Hero** ليعمل على PC + Mobile بشكل صحيح
+3. **تنسيق الـ Pop-in animation** مع بطاقات البراند
+
+### ⚠️ قيود بيئية (مهمة جداً)
+1. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع
+2. **SQLite فقط** — لا تغييرات في الـ DB
+3. **التزم بـ `DESIGN_RULES.md`** الموجود في المشروع
+4. **لا تخرب أي ميزة تعمل** — اختبر كل إصلاح قبل المتابعة
+
+### المراجع الإلزامية (اقرأها قبل البدء)
+1. ملف `GLM-5.2-FullStack-Build-Reference.md`
+2. ملف `DESIGN_RULES.md` في جذر المشروع
+3. **اقرأ كل الملفات التالية قبل البدء**:
+   - `src/components/layout/navbar.tsx`
+   - `src/components/ui-premium/magnetic-button.tsx`
+   - `src/components/admin/confirm-delete.tsx`
+   - `src/components/checkout/payment-view.tsx`
+   - `src/components/providers/toast-provider.tsx`
+   - `src/components/providers/cart-provider.tsx`
+   - `src/components/landing/hero.tsx`
+   - `src/components/hero-3d/hero-3d-section.tsx`
+   - `src/components/hero-3d/hero-canvas.tsx`
+   - `src/components/hero-3d/model-3d.tsx`
+   - `src/components/landing/brand-model.tsx` (إن وُجد — يحتاج حذف)
+   - `src/app/fonts.ts`
+   - `src/app/globals.css`
+   - `src/app/[locale]/page.tsx`
+   - `messages/ar.json` و `messages/en.json`
+
+---
+
+## 🎯 الأهداف
+
+1. **إصلاح 12 مشكلة** من Tri-AI Review
+2. **إعادة بناء 3D Hero** ليعمل على PC + Mobile
+3. **استخدام ملفات GLB الفعلية** (وليس نماذج procedural)
+4. **تنسيق Pop-in animation** مع بطاقات البراند
+5. **ربط النماذج بزوايا البطاقات** بصرياً
+
+---
+
+## 🔧 المهام المطلوبة (بالترتيب — لا تتخطّ)
+
+### 1️⃣ إصلاح Navbar Dead Ternaries (حرج — 15 دقيقة)
+
+- [ ] افتح `src/components/layout/navbar.tsx`
+- [ ] ابحث عن الكود التالي (حوالي السطر 70-75):
+  ```tsx
+  pathname === link.href
+    ? 'text-gold'
+    : scrolled ? 'text-paper/70 hover:text-paper' : 'text-paper/70 hover:text-paper'
+  ```
+- [ ] **استبدله بـ:**
+  ```tsx
+  pathname === link.href
+    ? 'text-gold'
+    : scrolled ? 'text-paper/70 hover:text-paper' : 'text-ink/70 hover:text-ink'
+  ```
+- [ ] ابحث عن الكود التالي (للـ Cart link، حوالي السطر 85):
+  ```tsx
+  className={`relative p-2 transition-colors ${
+    scrolled ? 'text-paper/70 hover:text-gold' : 'text-paper/70 hover:text-gold'
+  }`}
+  ```
+- [ ] **استبدله بـ:**
+  ```tsx
+  className={`relative p-2 transition-colors ${
+    scrolled ? 'text-paper/70 hover:text-gold' : 'text-ink/70 hover:text-gold'
+  }`}
+  ```
+- [ ] ابحث عن الكود التالي (لـ Language switcher، حوالي السطر 110):
+  ```tsx
+  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
+    scrolled
+      ? 'text-paper/70 hover:text-gold'
+      : 'text-paper/70 hover:text-gold'
+  }`}
+  ```
+- [ ] **استبدله بـ:**
+  ```tsx
+  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
+    scrolled
+      ? 'text-paper/70 hover:text-gold'
+      : 'text-ink/70 hover:text-gold'
+  }`}
+  ```
+- [ ] **اختبر بصرياً:** قبل التمرير، النص داكن على الخلفية البيضاء. بعد التمرير، النص أبيض على `glass-dark`.
+
+### 2️⃣ إصلاح RTL Drawer Animation (حرج — 10 دقائق)
+
+- [ ] في `src/components/layout/navbar.tsx`، ابحث عن:
+  ```tsx
+  <motion.div
+    initial={{ x: '100%' }}
+    animate={{ x: 0 }}
+    exit={{ x: '100%' }}
+    transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+    className="fixed top-0 end-0 bottom-0 z-50 w-80 max-w-[85vw] bg-ink md:hidden flex flex-col"
+  >
+  ```
+- [ ] **استبدله بـ:**
+  ```tsx
+  <motion.div
+    initial={{ x: locale === 'ar' ? '-100%' : '100%' }}
+    animate={{ x: 0 }}
+    exit={{ x: locale === 'ar' ? '-100%' : '100%' }}
+    transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+    className="fixed top-0 end-0 bottom-0 z-50 w-80 max-w-[85vw] bg-ink md:hidden flex flex-col"
+  >
+  ```
+- [ ] **اختبر بصرياً:** في العربية، الدرج يدخل من اليسار ويخرج لليسار. في الإنجليزية، يدخل من اليمين ويخرج لليمين.
+
+### 3️⃣ إصلاح MagneticButton — استخدم Link (حرج — 10 دقائق)
+
+- [ ] افتح `src/components/ui-premium/magnetic-button.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+  ```tsx
+  'use client'
+
+  import { useRef, type ReactNode, type MouseEvent } from 'react'
+  import { motion, useMotionValue, useSpring } from 'framer-motion'
+  import { Link } from '@/i18n/routing'
+
+  interface MagneticButtonProps {
+    children: ReactNode
+    className?: string
+    strength?: number
+    onClick?: () => void
+    href?: string
+  }
+
+  export function MagneticButton({
+    children,
+    className = '',
+    strength = 0.3,
+    onClick,
+    href,
+  }: MagneticButtonProps) {
+    const ref = useRef<HTMLDivElement>(null)
+    const x = useMotionValue(0)
+    const y = useMotionValue(0)
+
+    const springX = useSpring(x, { stiffness: 200, damping: 20 })
+    const springY = useSpring(y, { stiffness: 200, damping: 20 })
+
+    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+      if (!ref.current) return
+      const rect = ref.current.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      const distX = e.clientX - centerX
+      const distY = e.clientY - centerY
+      x.set(distX * strength)
+      y.set(distY * strength)
+    }
+
+    const handleMouseLeave = () => {
+      x.set(0)
+      y.set(0)
+    }
+
+    const content = (
+      <motion.div
+        ref={ref}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{ x: springX, y: springY }}
+        className={className}
+      >
+        {children}
+      </motion.div>
+    )
+
+    if (href) {
+      return (
+        <Link href={href} onClick={onClick} className="inline-block">
+          {content}
+        </Link>
+      )
+    }
+
+    return (
+      <button onClick={onClick} className="inline-block bg-transparent border-0 p-0 cursor-pointer">
+        {content}
+      </button>
+    )
+  }
+  ```
+
+### 4️⃣ إصلاح Admin confirm-delete — i18n (عالي — 30 دقيقة)
+
+- [ ] افتح `src/components/admin/confirm-delete.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+  ```tsx
+  'use client'
+
+  import { useState, type ReactNode } from 'react'
+  import { useTranslations } from 'next-intl'
+  import { Button } from '@/components/ui/button'
+  import { AlertTriangle, X } from 'lucide-react'
+
+  interface ConfirmDeleteProps {
+    trigger: ReactNode
+    itemName: string
+    onConfirm: () => Promise<void> | void
+  }
+
+  export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeleteProps) {
+    const t = useTranslations('admin.confirmDelete')
+    const [open, setOpen] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+
+    const handleConfirm = async () => {
+      setDeleting(true)
+      try {
+        await onConfirm()
+        setOpen(false)
+      } finally {
+        setDeleting(false)
+      }
+    }
+
+    return (
+      <>
+        <div onClick={() => setOpen(true)} className="cursor-pointer">
+          {trigger}
+        </div>
+
+        {open && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+            onClick={() => !deleting && setOpen(false)}
+          >
+            <div
+              className="bg-card rounded-xl shadow-xl max-w-sm w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <button
+                  onClick={() => !deleting && setOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label={t('cancel')}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {t('title')}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                {t('message', { name: itemName })}
+              </p>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-border"
+                  onClick={() => setOpen(false)}
+                  disabled={deleting}
+                >
+                  {t('cancel')}
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleConfirm}
+                  disabled={deleting}
+                >
+                  {deleting ? t('processing') : t('confirm')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
+  ```
+
+- [ ] أضف المفاتيح التالية في `messages/ar.json` تحت `admin`:
+  ```json
+  "confirmDelete": {
+    "title": "تأكيد الحذف",
+    "message": "هل أنت متأكد من حذف \"{name}\"؟",
+    "cancel": "إلغاء",
+    "confirm": "حذف",
+    "processing": "جارٍ الحذف..."
+  }
+  ```
+- [ ] أضف في `messages/en.json` تحت `admin`:
+  ```json
+  "confirmDelete": {
+    "title": "Confirm Delete",
+    "message": "Are you sure you want to delete \"{name}\"?",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "processing": "Deleting..."
+  }
+  ```
+
+### 5️⃣ إصلاح Payment View — Controller + autoComplete (عالي — 30 دقيقة)
+
+- [ ] افتح `src/components/checkout/payment-view.tsx`
+- [ ] **أضف imports**:
+  ```tsx
+  import { useForm, Controller } from 'react-hook-form'
+  ```
+  (استبدل `import { useForm } from 'react-hook-form'`)
+
+- [ ] **حدّث الـ Input fields** لتشمل `autoComplete`:
+
+  ```tsx
+  {/* Card Number */}
+  <Input
+    id="cardNumber"
+    dir="ltr"
+    placeholder="0000 0000 0000 0000"
+    autoComplete="cc-number"
+    inputMode="numeric"
+    {...register('cardNumber')}
+    onChange={handleCardNumberChange}
+    className="bg-background"
+  />
+
+  {/* Card Name */}
+  <Input
+    id="cardName"
+    autoComplete="cc-name"
+    placeholder="JOHN DOE"
+    {...register('cardName')}
+    className="bg-background"
+  />
+
+  {/* Expiry */}
+  <Input
+    id="expiry"
+    dir="ltr"
+    placeholder="MM/YY"
+    autoComplete="cc-exp"
+    inputMode="numeric"
+    {...register('expiry')}
+    onChange={handleExpiryChange}
+    className="bg-background"
+  />
+
+  {/* CVV */}
+  <Input
+    id="cvv"
+    dir="ltr"
+    placeholder="123"
+    autoComplete="cc-csc"
+    inputMode="numeric"
+    {...register('cvv')}
+    onChange={handleCvvChange}
+    className="bg-background"
+  />
+  ```
+
+- [ ] **استبدل الـ Save-card Checkbox** بـ Controller:
+
+  ```tsx
+  {/* Save card (UI only) */}
+  <div className="flex items-center gap-2">
+    <Controller
+      control={control}
+      name="saveCard"
+      render={({ field: { value, onChange } }) => (
+        <Checkbox
+          id="saveCard"
+          checked={value ?? false}
+          onCheckedChange={(c) => onChange(!!c)}
+        />
+      )}
+    />
+    <Label htmlFor="saveCard" className="text-sm text-muted-foreground cursor-pointer">
+      {t('payment.form.saveCard')}
+    </Label>
+  </div>
+  ```
+
+- [ ] **أضف `control` لـ useForm destructuring**:
+  ```tsx
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,  // ← أضف هذا
+    formState: { errors },
+  } = useForm<PaymentFormData>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: {
+      cardNumber: '',
+      cardName: '',
+      expiry: '',
+      cvv: '',
+      saveCard: false,
+    },
+  })
+  ```
+
+### 6️⃣ إصلاح Toast Provider — a11y + Animation (عالي — ساعة)
+
+- [ ] افتح `src/components/providers/toast-provider.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+  ```tsx
+  'use client'
+
+  import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+  import { CheckCircle2, XCircle, AlertCircle, X } from 'lucide-react'
+  import { AnimatePresence, motion } from 'framer-motion'
+
+  type ToastType = 'success' | 'error' | 'warning'
+
+  interface Toast {
+    id: string
+    type: ToastType
+    message: string
+  }
+
+  interface ToastContextValue {
+    showToast: (type: ToastType, message: string) => void
+  }
+
+  const ToastContext = createContext<ToastContextValue | null>(null)
+
+  export function ToastProvider({ children }: { children: ReactNode }) {
+    const [toasts, setToasts] = useState<Toast[]>([])
+
+    const removeToast = useCallback((id: string) => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, [])
+
+    const showToast = useCallback((type: ToastType, message: string) => {
+      const id = Math.random().toString(36).slice(2, 11)
+      setToasts((prev) => [...prev, { id, type, message }])
+
+      // Errors stay longer (8s), others 4s
+      const duration = type === 'error' ? 8000 : 4000
+      setTimeout(() => {
+        removeToast(id)
+      }, duration)
+    }, [removeToast])
+
+    return (
+      <ToastContext.Provider value={{ showToast }}>
+        {children}
+        <div
+          className="fixed bottom-4 end-4 z-[100] space-y-2"
+          style={{
+            paddingBottom: 'env(safe-area-inset-bottom, 1rem)',
+            paddingRight: 'env(safe-area-inset-right, 1rem)',
+          }}
+          role="region"
+          aria-label="Notifications"
+        >
+          <AnimatePresence>
+            {toasts.map((toast) => (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white max-w-sm ${
+                  toast.type === 'success'
+                    ? 'bg-green-600'
+                    : toast.type === 'error'
+                    ? 'bg-red-600'
+                    : 'bg-yellow-600'
+                }`}
+                role={toast.type === 'error' ? 'alert' : 'status'}
+                aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+              >
+                {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 shrink-0" />}
+                {toast.type === 'error' && <XCircle className="w-5 h-5 shrink-0" />}
+                {toast.type === 'warning' && <AlertCircle className="w-5 h-5 shrink-0" />}
+                <span className="text-sm flex-1">{toast.message}</span>
+                <button
+                  onClick={() => removeToast(toast.id)}
+                  aria-label="Close notification"
+                  className="text-white/80 hover:text-white shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </ToastContext.Provider>
+    )
+  }
+
+  export function useToast() {
+    const ctx = useContext(ToastContext)
+    if (!ctx) throw new Error('useToast must be used within ToastProvider')
+    return ctx
+  }
+  ```
+
+### 7️⃣ إصلاح أوزان الخطوط (متوسط — 10 دقائق)
+
+- [ ] افتح `src/app/fonts.ts`
+- [ ] **استبدل الكود الكامل بـ:**
+  ```typescript
+  import { Inter, Tajawal, Cormorant_Garamond, DM_Mono } from 'next/font/google'
+
+  export const inter = Inter({
+    subsets: ['latin'],
+    display: 'swap',
+    variable: '--font-inter',
+    weight: ['400', '500', '700'],  // ✅ 3 weights فقط (كانت 5)
+  })
+
+  export const tajawal = Tajawal({
+    subsets: ['arabic'],
+    display: 'swap',
+    variable: '--font-tajawal',
+    weight: ['400', '700'],  // ✅ 2 weights فقط (كانت 5)
+  })
+
+  export const cormorant = Cormorant_Garamond({
+    subsets: ['latin'],
+    display: 'swap',
+    variable: '--font-display',
+    weight: ['400', '500'],  // ✅ 2 weights فقط (كانت 5)
+    style: ['normal'],  // ✅ normal فقط (كانت normal + italic = 10 ملفات)
+  })
+
+  export const dmMono = DM_Mono({
+    subsets: ['latin'],
+    display: 'swap',
+    variable: '--font-mono',
+    weight: ['400', '500'],
+  })
+  ```
+
+### 8️⃣ إصلاح Grain Overlay — أزِل mix-blend-mode (متوسط — دقيقة)
+
+- [ ] افتح `src/app/globals.css`
+- [ ] ابحث عن `.grain-overlay::before`
+- [ ] **احذف السطر**:
+  ```css
+  mix-blend-mode: multiply;  /* ❌ احذف هذا */
+  ```
+
+### 9️⃣ إعادة تسمية `--c-gold` → `--c-brand` (متوسط — 30 دقيقة)
+
+- [ ] في `src/app/globals.css`:
+  - ابحث عن `--c-gold:` واستبدله بـ `--c-brand:`
+  - ابحث عن `.text-gold` واستبدله بـ `.text-brand`
+  - ابحث عن `.bg-gold` واستبدله بـ `.bg-brand`
+  - ابحث عن `.shadow-gold` واستبدله بـ `.shadow-brand`
+
+- [ ] في `src/app/globals.css` تحت `@theme inline`:
+  - ابحث عن `--color-gold:` واستبدله بـ `--color-brand:`
+
+- [ ] **في كل ملفات JSX** (استخدم find & replace عبر المشروع):
+  - ابحث عن `text-gold` واستبدله بـ `text-brand`
+  - ابحث عن `bg-gold` واستبدله بـ `bg-brand`
+  - ابحث عن `border-gold` واستبدله بـ `border-brand`
+  - ابحث عن `shadow-gold` واستبدله بـ `shadow-brand`
+  - ابحث عن `var(--c-gold)` واستبدله بـ `var(--c-brand)`
+
+> ⚠️ **تحذير:** استخدم `replace all` بحذر. تأكد أنك تستبدل في كل الملفات بشكل متّسق.
+
+### 🔟 إكمال DESIGN_RULES.md (مهم — ساعة)
+
+- [ ] افتح `DESIGN_RULES.md` واستبدله بالكامل بـ:
+
+```markdown
+# Last Unique Touch — Design Rules (Do Not Violate)
+
+> هذه القواعد مستخلصة من تقرير Tri-AI v3.0. أي مخالفة لها = bug مؤكد.
+
+## 1. i18n — لا نصوص hardcoded
+- ❌ لا تستخدم `'KWD/day'`, `'KWD'`, `'Subject'`, أو أي نص آخر hardcoded في JSX
+- ✅ كل النصوص تمر عبر `t('key')` من `next-intl`
+- ✅ كل مفتاح في `ar.json` يجب أن يكون في `en.json` أيضاً
+- ✅ Admin panel也不例外 — كل النصوص مترجمة
+
+## 2. الألوان — مصدر واحد للحقيقة
+- ❌ لا تخترع hex codes جديدة في JSX
+- ✅ استخدم CSS variables من `globals.css` (`--c-ink`, `--c-paper`, `--c-brand`, إلخ)
+- ❌ لا تكرر نفس اللون في 3 أنظمة متغيرات
+- ✅ استخدم متغيراً مصدراً واحداً (`--c-brand`) واجعل البقية يشيرون إليه
+
+## 3. لغة التصميم — توحيد صارم
+- ❌ لا تستخدم `rounded-xl` في صفحة و `borderRadius: '2px'` في صفحة أخرى لنفس العنصر
+- ✅ اختر لغة واحدة لكل البطاقات/الكروت وطبّقها في كل مكان
+- ❌ لا تستخدم `font-display` لعنوان في صفحة و `font-semibold` لنفس العنصر في صفحة أخرى
+- ✅ عناوين المنتجات موحّدة عبر كل الصفحات
+
+## 4. RTL — احترام الاتجاه
+- ❌ لا تستخدم `left`/`right` في CSS أو `x: '100%'` ثابت في animations
+- ✅ استخدم logical properties: `ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`
+- ✅ animations تعتمد على `locale`: `const drawerX = locale === 'ar' ? '-100%' : '100%'`
+- ✅ استخدم `ArrowLeft`/`ArrowRight` من lucide-react مع تبديل حسب الـ locale
+
+## 5. التصفّح (Navigation) — استخدم Next.js Link
+- ❌ لا تستخدم `<a href>` للروابط الداخلية
+- ✅ استخدم `Link` من `@/i18n/routing` (يحافظ على locale + client-side navigation)
+- ✅ MagneticButton وكل wrapper components يجب أن تستخدم `Link` داخلياً
+
+## 6. الصور — استخدم next/image دائماً
+- ❌ لا تستخدم `<img>` أبداً (لأسباب أداء + SEO)
+- ✅ استخدم `next/image` مع `width`, `height`, `alt`, و `sizes`
+- ✅ alt text وصفي للصور المعلوماتية، `alt=""` للزخرفية
+- ❌ لا تمرر `undefined` لـ `src` — استخدم conditional rendering
+
+## 7. الأزرار التفاعلية — cursor صحيح
+- ❌ لا تستخدم `cursor-pointer` على عناصر غير قابلة للنقر
+- ✅ `cursor-pointer` فقط للعناصر القابلة للنقر فعلاً
+- ✅ `cursor-default` أو `cursor-not-allowed` للعناصر المعطّلة
+
+## 8. A11y — قواعد إلزامية
+- ✅ كل `<button>` بأيقونة فقط يجب أن يكون له `aria-label`
+- ✅ كل `<input>` يجب أن يكون له `<label>` مرتبط (via `htmlFor` و `id`)
+- ✅ Toast container: `role="region"` + `aria-label="Notifications"`
+- ✅ Toast فردي: `role="status"` (نجاح) أو `role="alert"` (خطأ) + `aria-live`
+- ✅ Touch targets: `min-h-[44px] min-w-[44px]` (WCAG 2.5.8)
+- ✅ Form errors: `role="alert"` + icon + رسالة محددة (ليس اسم الحقل مكرراً)
+- ✅ Pagination: `aria-label` + `aria-hidden` للـ ellipsis
+- ✅ Form fields: `autoComplete` صحيح (`cc-number`, `cc-exp`, `cc-csc`, `email`, `tel`)
+- ✅ H1 واحد لكل صفحة
+- ✅ Skip to content link في كل layout
+
+## 9. React Hook Form + Radix — استخدم Controller
+- ❌ لا تستخدم `{...register('field')}` على Radix components (Checkbox, Switch, Select)
+- ✅ استخدم `<Controller control={control} name="field" render={...} />`
+- ✅ Radix يستخدم `checked` + `onCheckedChange`، وليس `value` + `onChange`
+
+## 10. Skeletons + Empty States — توحيد
+- ❌ لا تستخدم `<div className="animate-pulse">...</div>` كـ loading state
+- ✅ استخدم skeleton components (`CartSkeleton`, `CheckoutSkeleton`, `ProductsGridSkeleton`)
+- ✅ استخدم `<EmptyState>` الموحّد لكل empty states (icon + title + description + action)
+
+## 11. الكود الميت — احذفه فوراً
+- ❌ لا تترك components غير مستوردة (مثل `brand-selector.tsx` سابقاً)
+- ✅ ابحث بـ `grep -r "ComponentName" src/` قبل الحذف للتأكد
+- ✅ احذف الـ CSS الميت (كتل `dark {...}` بدون تفعيل، tokens مكررة، إلخ)
+
+## 12. Typography — أوزان محدودة
+- ❌ لا تحمّل 5+ أوزان لكل خط (يبطّئ التحميل)
+- ✅ Tajawal: `['400', '700']` فقط
+- ✅ Cormorant: `['400', '500']` فقط
+- ✅ Inter: `['400', '500', '700']` فقط
+
+## 13. Three.js — أداء
+- ✅ استخدم `frameloop="demand"` لإيقاف rAF عند عدم الحاجة
+- ✅ استخدم `dynamic` مع `ssr: false` للـ lazy load
+- ✅ وفّر `fallback` (مثل `StaticGradientBg`) عند فشل WebGL
+- ✅ استخدم `IntersectionObserver` لإيقاف الـ canvas offscreen
+
+## 14. Dead Code — لا ternaries بنفس القيمة
+- ❌ لا تكتب `cond ? 'a' : 'a'` (نفس القيمة في الفرعين)
+- ✅ راجع كل ternary — إن كانت القيمتان متطابقتين، احذف الـ ternary
+- ✅ **خاص لـ Navbar:** عند الـ scroll، يجب أن تتغير قيم النص من `text-ink` (قبل التمرير) إلى `text-paper` (بعد التمرير)
+
+## 15. الإصدار — اختبار قبل الإصدار
+- ✅ `bun run lint` — 0 errors
+- ✅ `bun run typecheck` — 0 errors
+- ✅ `bun run test` — كل الاختبارات تنجح
+- ✅ `bun run build` — ينجح بدون MISSING_MESSAGE
+- ✅ اختبر بصرياً على mobile (375px) + tablet (768px) + desktop (1280px+)
+- ✅ اختبر RTL + LTR
+
+## 16. 3D Content — قواعد إضافية
+
+- ✅ استخدم `useGLTF` من drei (يفعّل MeshoptDecoder تلقائياً)
+- ✅ اضغط ملفات GLB بـ `gltf-transform` + `EXT_meshopt_compression`
+- ✅ `dpr={[1, 1.5]}` على الموبايل (لا تستخدم `dpr={2}` أو أعلى)
+- ✅ `frameloop="always"` مع IntersectionObserver لإيقاف الـ canvas خارج viewport
+- ✅ `pointer-events-none` على أي canvas overlay
+- ✅ `THREE.MathUtils.damp` للـ framerate-independent smoothing (وليس `lerp`)
+- ✅ `useScrollStore.getState()` في `useFrame` (وليس الـ hook — يمنع re-renders)
+- ✅ `scene.clone(true)` قبل تعديل materials (لا تعدّل الـ cached scene)
+- ✅ WebGL context loss handler على iOS Safari
+- ✅ `prefers-reduced-motion` + `prefers-reduced-data` fallbacks
+- ✅ Device capability detection (`hardwareConcurrency`, `deviceMemory`)
+- ✅ `useGLTF.clear(url)` على unmount (يمنع memory leaks)
+- ✅ `useGLTF.preload(url)` لموديلات الـ hero (يبدأ التحميل فوراً)
+- ❌ لا تستخدم `<ScrollControls>` من Drei مع `pointer-events-none`
+- ❌ لا تستخدم `setState` في `useFrame` — استخدم refs أو Zustand getState
+- ❌ لا تستخدم Environment preset على الموبايل (HDRI ثقيل — استخدم ambientLight خفيف)
+- ❌ لا تستخدم `<img>` لتحميل GLB — استخدم دائماً `useGLTF` أو `useLoader(GLTFLoader)`
+```
+
+### 1️⃣1️⃣ حذف `brand-model.tsx` (مهم — 5 دقائق)
+
+- [ ] تأكد أولاً أنه غير مستخدم في أي مكان:
+  ```bash
+  grep -r "BrandModel\|brand-model" src/ --include="*.tsx" --include="*.ts"
+  ```
+- [ ] إذا لم يجد نتائج (أو فقط في نفس الملف)، احذف:
+  ```bash
+  rm src/components/landing/brand-model.tsx
+  ```
+
+---
+
+## 🎮 الجزء 2: إعادة بناء 3D Hero
+
+### 2️⃣.1️⃣ الأهداف الجديدة للـ 3D Hero
+
+1. **يعمل على PC + Mobile** (ليس موبايل فقط)
+2. **يستخدم ملفات GLB الفعلية** (وليس procedural)
+3. **النماذج تظهر كبيرة في زوايا البطاقات**
+4. **Pop-in animation منسّق مع بطاقات البراند**
+5. **Scroll animation يحترم الـ UX الصحيح**
+
+### 2️⃣.2️⃣ إعادة بناء `model-3d.tsx`
+
+- [ ] افتح `src/components/hero-3d/model-3d.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+
+```tsx
+'use client'
+
+import { useRef, useEffect, useMemo } from 'react'
+import { useGLTF } from '@react-three/drei'
+import { useFrame, useThree } from '@react-three/fiber'
+import * as THREE from 'three'
+import { useSpring, a } from '@react-spring/three'
+import { useScrollStore } from '@/stores/scroll-store'
+
+interface Model3DProps {
+  url: string
+  /** Position relative to brand card center [x, y, z] */
+  position: [number, number, number]
+  /** Initial rotation [x, y, z] in radians */
+  rotation?: [number, number, number]
+  /** Initial scale (1 = normal, larger = bigger) */
+  scale?: number
+  /** Phase offset for staggered animation (0, 1, 2...) */
+  phaseOffset?: number
+  /** Whether the model has loaded (for pop-in animation) */
+  visible: boolean
+  /** When the brand cards animation finishes (ms timestamp) */
+  cardsAnimationCompleteAt: number
+}
+
+export function Model3D({
+  url,
+  position,
+  rotation = [0, 0, 0],
+  scale = 1,
+  phaseOffset = 0,
+  visible,
+  cardsAnimationCompleteAt,
+}: Model3DProps) {
+  const groupRef = useRef<THREE.Group>(null)
+  const { scene } = useGLTF(url, true, true)  // useDraco=true, useMeshOpt=true
+  const { gl } = useThree()
+
+  // Clone scene to avoid mutating cached version
+  const clonedScene = useMemo(() => scene.clone(true), [scene])
+
+  // Make all materials transparent (for fade out)
+  useEffect(() => {
+    clonedScene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const mat = child.material as THREE.Material
+        mat.transparent = true
+        ;(mat as THREE.MeshStandardMaterial).opacity = 1
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+  }, [clonedScene])
+
+  // Pop-in spring animation (elastic bounce)
+  // ⚠️ Starts ONLY after cards animation completes + phaseOffset delay
+  const springDelay = Math.max(0, cardsAnimationCompleteAt - Date.now()) + phaseOffset * 150
+
+  const springs = useSpring({
+    scale: visible ? scale : 0,
+    opacity: visible ? 1 : 0,
+    config: {
+      tension: 280,
+      friction: 18,
+      mass: 1.2,
+      clamp: false,
+    },
+    delay: springDelay,
+  })
+
+  // Scroll-driven animation (manual damp in useFrame)
+  useFrame((_, delta) => {
+    if (!groupRef.current) return
+
+    const offset = useScrollStore.getState().offset
+    // Hero section is roughly 0 to 0.12 of total page scroll
+    const heroScrollProgress = Math.min(1, Math.max(0, (offset - phaseOffset * 0.03) / 0.12))
+
+    // Phase 1 (0-0.4): scale down from 1 to 0.6
+    const scalePhase = Math.min(1, heroScrollProgress / 0.4)
+    const targetScale = THREE.MathUtils.lerp(scale, scale * 0.5, scalePhase)
+
+    // Phase 2 (0.3-0.7): opacity fade from 1 to 0.5
+    const opacityPhase = Math.min(1, Math.max(0, (heroScrollProgress - 0.3) / 0.4))
+    const targetOpacity = THREE.MathUtils.lerp(1, 0.5, opacityPhase)
+
+    // Phase 3 (0.6-1.0): lift up + rotate
+    const liftPhase = Math.min(1, Math.max(0, (heroScrollProgress - 0.6) / 0.4))
+    const targetY = THREE.MathUtils.lerp(position[1], position[1] + 1.5, liftPhase)
+    const targetRotY = THREE.MathUtils.lerp(rotation[1], rotation[1] + Math.PI / 6, liftPhase)
+
+    // Apply with damp for smooth, framerate-independent motion
+    groupRef.current.scale.x = THREE.MathUtils.damp(
+      groupRef.current.scale.x,
+      targetScale * springs.scale.get(),
+      8,
+      delta
+    )
+    groupRef.current.scale.y = groupRef.current.scale.x
+    groupRef.current.scale.z = groupRef.current.scale.x
+
+    groupRef.current.position.y = THREE.MathUtils.damp(
+      groupRef.current.position.y,
+      targetY,
+      8,
+      delta
+    )
+
+    groupRef.current.rotation.y = THREE.MathUtils.damp(
+      groupRef.current.rotation.y,
+      targetRotY,
+      6,
+      delta
+    )
+
+    // Update material opacity (traverse once per frame)
+    const finalOpacity = targetOpacity * springs.opacity.get()
+    clonedScene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        ;(child.material as THREE.MeshStandardMaterial).opacity = finalOpacity
+      }
+    })
+  })
+
+  // WebGL context loss handler (critical for iOS 17+)
+  useEffect(() => {
+    const canvas = gl.domElement
+    const handleContextLost = (e: Event) => {
+      e.preventDefault()
+      console.warn('[Model3D] WebGL context lost — will restore on focus')
+    }
+    const handleContextRestored = () => {
+      console.log('[Model3D] WebGL context restored')
+    }
+    canvas.addEventListener('webglcontextlost', handleContextLost)
+    canvas.addEventListener('webglcontextrestored', handleContextRestored)
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost)
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored)
+    }
+  }, [gl])
+
+  return (
+    <a.group
+      ref={groupRef}
+      position={position}
+      rotation={rotation}
+      scale={springs.scale}
+    >
+      <primitive object={clonedScene} />
+    </a.group>
+  )
+}
+
+// Preload all 3 models at module load (starts download immediately)
+useGLTF.preload('/models/The_chair_and_the_table_compressed.glb')
+useGLTF.preload('/models/The_unfinished_sofa_compressed.glb')
+useGLTF.preload('/models/the_dance_floor_and_the_light_holder_compressed.glb')
+```
+
+### 2️⃣.3️⃣ إعادة بناء `hero-canvas.tsx`
+
+- [ ] افتح `src/components/hero-3d/hero-canvas.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+
+```tsx
+'use client'
+
+import { Canvas } from '@react-three/fiber'
+import { AdaptiveDpr, AdaptiveEvents, Preload } from '@react-three/drei'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { Model3D } from './model-3d'
+import { shouldEnable3D } from '@/lib/device-capabilities'
+import { useScrollStore } from '@/stores/scroll-store'
+import * as THREE from 'three'
+import { PerfMonitor } from './perf-monitor'
+
+interface HeroCanvasProps {
+  modelsVisible: boolean
+  /** Timestamp when brand cards animation completes */
+  cardsAnimationCompleteAt: number
+}
+
+export function HeroCanvas({ modelsVisible, cardsAnimationCompleteAt }: HeroCanvasProps) {
+  const [mounted, setMounted] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // IntersectionObserver to pause rendering when out of viewport
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting)
+        useScrollStore.getState().setHeroVisible(entry.isIntersecting)
+      },
+      { threshold: 0, rootMargin: '100px' }
+    )
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  // Don't render on SSR or if device can't handle 3D
+  if (!mounted || !shouldEnable3D()) return null
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 pointer-events-none z-20"
+      aria-hidden="true"
+    >
+      {isVisible && (
+        <Canvas
+          camera={{
+            position: [0, 0, 8],
+            fov: 35,
+            near: 0.1,
+            far: 100,
+          }}
+          dpr={[1, 1.5]}  // ⚠️ Critical for mobile: clamp DPR
+          frameloop="always"  // Required for Spring + damp animations
+          gl={{
+            antialias: false,  // Mobile: disable AA
+            powerPreference: 'high-performance',
+            alpha: true,  // Transparent background
+            stencil: false,
+            depth: true,
+          }}
+          onCreated={({ gl }) => {
+            gl.toneMapping = THREE.ACESFilmicToneMapping
+            gl.toneMappingExposure = 1.0
+          }}
+          style={{ background: 'transparent' }}
+        >
+          {/* Soft ambient light (preserves luxury dark theme) */}
+          <ambientLight intensity={0.4} />
+
+          {/* Subtle fill light from below (no harsh spotlights) */}
+          <directionalLight
+            position={[5, -5, 5]}
+            intensity={0.15}
+            color="#D4A574"  // Gold tint for luxury feel
+          />
+
+          <Suspense fallback={null}>
+            {/* LUT — top-left corner of LUT card (card 0 is on the left) */}
+            <Model3D
+              url="/models/The_chair_and_the_table_compressed.glb"
+              position={[-3.2, 1.5, 0]}
+              rotation={[0, -Math.PI / 8, 0]}
+              scale={1.6}  // Larger scale for prominence
+              phaseOffset={0}
+              visible={modelsVisible}
+              cardsAnimationCompleteAt={cardsAnimationCompleteAt}
+            />
+
+            {/* La Lounge — top-right corner of La Lounge card (card 1 is in the middle) */}
+            <Model3D
+              url="/models/The_unfinished_sofa_compressed.glb"
+              position={[0, 1.5, 0]}
+              rotation={[0, Math.PI / 8, 0]}
+              scale={1.4}
+              phaseOffset={1}
+              visible={modelsVisible}
+              cardsAnimationCompleteAt={cardsAnimationCompleteAt}
+            />
+
+            {/* Your Birthday — top-right corner of Birthday card (card 2 is on the right) */}
+            <Model3D
+              url="/models/the_dance_floor_and_the_light_holder_compressed.glb"
+              position={[3.2, 1.5, 0]}
+              rotation={[0, Math.PI / 6, 0]}
+              scale={1.3}
+              phaseOffset={2}
+              visible={modelsVisible}
+              cardsAnimationCompleteAt={cardsAnimationCompleteAt}
+            />
+          </Suspense>
+
+          {/* Performance optimizations */}
+          <AdaptiveDpr pixelated={false} />
+          <AdaptiveEvents />
+          <Preload all />
+          <PerfMonitor />
+        </Canvas>
+      )}
+    </div>
+  )
+}
+```
+
+### 2️⃣.4️⃣ تحديث `hero-3d-section.tsx` — يعمل على PC + Mobile
+
+- [ ] افتح `src/components/hero-3d/hero-3d-section.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+
+```tsx
+'use client'
+
+import { useEffect, useState, lazy, Suspense } from 'react'
+import { shouldEnable3D } from '@/lib/device-capabilities'
+import { initScrollTracking } from '@/stores/scroll-store'
+import { StaticHeroFallback } from './static-hero-fallback'
+
+const HeroCanvas = lazy(() =>
+  import('./hero-canvas').then((m) => ({ default: m.HeroCanvas }))
+)
+
+interface Hero3DSectionProps {
+  children: React.ReactNode
+  /** Timestamp (ms) when the brand cards finish their entrance animation */
+  cardsAnimationCompleteAt?: number
+}
+
+export function Hero3DSection({ children, cardsAnimationCompleteAt }: Hero3DSectionProps) {
+  const [enable3D, setEnable3D] = useState(false)
+  const [modelsVisible, setModelsVisible] = useState(false)
+
+  useEffect(() => {
+    const cleanup = initScrollTracking()
+    // ✅ Remove isMobileDevice() check — works on PC + Mobile now
+    setEnable3D(shouldEnable3D())
+
+    // Trigger pop-in after cards animation completes
+    const delay = cardsAnimationCompleteAt
+      ? Math.max(0, cardsAnimationCompleteAt - Date.now())
+      : 1500
+    const timer = setTimeout(() => setModelsVisible(true), delay)
+
+    return () => {
+      cleanup()
+      clearTimeout(timer)
+    }
+  }, [cardsAnimationCompleteAt])
+
+  return (
+    <section className="relative">
+      {enable3D ? (
+        <Suspense fallback={<StaticHeroFallback />}>
+          <HeroCanvas
+            modelsVisible={modelsVisible}
+            cardsAnimationCompleteAt={cardsAnimationCompleteAt ?? Date.now()}
+          />
+        </Suspense>
+      ) : (
+        <StaticHeroFallback />
+      )}
+
+      {children}
+    </section>
+  )
+}
+```
+
+### 2️⃣.5️⃣ تحديث `hero.tsx` — تنسيق الأنيميشن
+
+- [ ] افتح `src/components/landing/hero.tsx`
+- [ ] **أضف state لتتبع وقت اكتمال أنيميشن البطاقات:**
+
+في بداية الـ component:
+```tsx
+const [cardsAnimationCompleteAt, setCardsAnimationCompleteAt] = useState<number | null>(null)
+```
+
+- [ ] **احسب توقيت اكتمال أنيميشن البطاقات:**
+
+بعد `useEffect` الخاص بـ `useScroll` (أضف `useEffect` جديد):
+```tsx
+useEffect(() => {
+  // Brand cards start at delay 0.5 + idx * 0.15, and animate for 0.9s
+  // Last card (idx=2): 0.5 + 2*0.15 = 0.8s start + 0.9s duration = 1.7s
+  // Add small buffer (200ms) for visual smoothness
+  const totalAnimationTime = 1700 + 200  // 1.9s = 1900ms from mount
+  const timer = setTimeout(() => {
+    setCardsAnimationCompleteAt(Date.now())
+  }, totalAnimationTime)
+  return () => clearTimeout(timer)
+}, [])
+```
+
+- [ ] **مرّر الـ timestamp لـ `Hero3DSection`:**
+
+```tsx
+return (
+  <Hero3DSection cardsAnimationCompleteAt={cardsAnimationCompleteAt ?? 0}>
+    <section ref={ref} className="relative min-h-screen w-full overflow-hidden bg-paper flex flex-col">
+      {/* ... rest of hero content ... */}
+    </section>
+  </Hero3DSection>
+)
+```
+
+- [ ] **احذف الـ BrandModel من البطاقات** (لأن الـ 3D models الفعلية ستظهر فوقها):
+
+في كل `brand` card، ابحث عن:
+```tsx
+<motion.div
+  initial={{ opacity: 0, scale: 0 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{...}}
+  style={{...}}
+  className={`absolute z-30 ${modelPosClass} w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 pointer-events-none`}
+>
+  <Suspense fallback={null}>
+    <BrandModel type={brand.modelType} className="w-full h-full" />
+  </Suspense>
+</motion.div>
+```
+
+واستبدله بـ placeholder فارغ (أو احذفه بالكامل):
+```tsx
+{/* 3D model placeholder — actual GLB models are rendered by HeroCanvas overlay */}
+```
+
+- [ ] **احذف import BrandModel من أعلى الملف**:
+```tsx
+// ❌ احذف هذا:
+// const BrandModel = dynamic(() => import('./brand-model').then(m => m.BrandModel), {...})
+```
+
+### 2️⃣.6️⃣ تحديث `static-hero-fallback.tsx`
+
+- [ ] تأكد أن `src/components/hero-3d/static-hero-fallback.tsx` يحتوي على:
+
+```tsx
+'use client'
+
+import { useTranslations } from 'next-intl'
+
+export function StaticHeroFallback() {
+  const t = useTranslations('hero3d')
+
+  return (
+    <div
+      className="absolute inset-0 -z-10 opacity-30 pointer-events-none"
+      aria-hidden="true"
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(circle at 30% 20%, rgba(212, 165, 116, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(230, 33, 41, 0.1) 0%, transparent 50%)',
+        }}
+      />
+      <p className="sr-only">{t('reducedMotion')}</p>
+    </div>
+  )
+}
+```
+
+### 2️⃣.7️⃣ تحديث `lenis-provider.tsx` — يعمل على PC + Mobile
+
+- [ ] افتح `src/components/providers/lenis-provider.tsx`
+- [ ] **استبدل الكود الكامل بـ:**
+
+```tsx
+'use client'
+
+import { useEffect, useRef } from 'react'
+import Lenis from 'lenis'
+import { shouldEnable3D } from '@/lib/device-capabilities'
+
+export function LenisProvider({ children }: { children: React.ReactNode }) {
+  const lenisRef = useRef<Lenis | null>(null)
+
+  useEffect(() => {
+    // ✅ Enable on both PC + Mobile (was mobile-only before)
+    if (!shouldEnable3D()) return
+
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      // ⚠️ Critical: do NOT enable smoothTouch on iOS (causes jitter)
+      smoothTouch: false,
+      touchMultiplier: 1.5,
+      infinite: false,
+    })
+
+    lenisRef.current = lenis
+
+    let rafId: number
+    const raf = (time: number) => {
+      lenis.raf(time)
+      rafId = requestAnimationFrame(raf)
+    }
+    rafId = requestAnimationFrame(raf)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      lenis.destroy()
+      lenisRef.current = null
+    }
+  }, [])
+
+  return <>{children}</>
+}
+```
+
+---
+
+## ✅ قائمة التحقق النهائية
+
+### إصلاحات Tri-AI
+- [ ] 1️⃣ Navbar dead ternaries مصحوبة (text-ink/text-paper)
+- [ ] 2️⃣ RTL drawer animation يعتمد على locale
+- [ ] 3️⃣ MagneticButton يستخدم Link
+- [ ] 4️⃣ Admin confirm-delete مترجم بالكامل (i18n)
+- [ ] 5️⃣ Payment View: Controller + autoComplete
+- [ ] 6️⃣ Toast Provider: role + aria-live + AnimatePresence + close button + safe-area
+- [ ] 7️⃣ أوزان الخطوط قُلّصت
+- [ ] 8️⃣ Grain overlay: mix-blend-mode محذوف
+- [ ] 9️⃣ --c-gold → --c-brand (find & replace شامل)
+- [ ] 🔟 DESIGN_RULES.md مكتمل (16 قاعدة)
+- [ ] 1️⃣1️⃣ brand-model.tsx محذوف
+
+### 3D Hero
+- [ ] 2️⃣.1️⃣ يعمل على PC + Mobile (لا isMobileDevice check)
+- [ ] 2️⃣.2️⃣ يستخدم ملفات GLB الفعلية (3 ملفات مضغوطة)
+- [ ] 2️⃣.3️⃣ النماذج في مواضع مناسبة فوق البطاقات
+- [ ] 2️⃣.4️⃣ Pop-in animation منسّق مع بطاقات البراند
+- [ ] 2️⃣.5️⃣ Scroll animation: scale + opacity + lift + rotate
+- [ ] 2️⃣.6️⃣ WebGL context loss handler مفعّل
+- [ ] 2️⃣.7️⃣ useGLTF.preload + useGLTF.clear
+- [ ] 2️⃣.8️⃣ IntersectionObserver لإيقاف canvas
+- [ ] 2️⃣.9️⃣ dpr=[1, 1.5] + frameloop="always"
+- [ ] 2️⃣.1️⃣0️⃣ Lenis يعمل على PC + Mobile
+
+### التشغيل
+- [ ] `bun dev --webpack -p 3000` يعمل بدون أخطاء
+- [ ] `bun run lint` — 0 errors
+- [ ] `bun run typecheck` — 0 errors
+- [ ] `bun run build` — ينجح
+- [ ] `bun run test` — كل الاختبارات تنجح
+
+---
+
+## 📝 التقرير المطلوب
+
+### 1. ملخص التنفيذ
+
+### 2. قائمة الإصلاحات المُنجَزة
+| # | الإصلاح | الحالة |
+|---|---------|--------|
+| 1 | Navbar dead ternaries | ✅ / ❌ |
+| 2 | RTL drawer | ✅ / ❌ |
+| ... | ... | ... |
+
+### 3. لقطات شاشة (إلزامية)
+- لقطة للـ Navbar قبل/بعد التمرير (النص يتبدّل)
+- لقطة للـ RTL drawer في العربية (يدخل من اليسار)
+- لقطة للـ 3D Hero على PC (النماذج تظهر فوق البطاقات)
+- لقطة للـ 3D Hero على Mobile (375px)
+- لقطة للـ Pop-in animation (النماذج تظهر بعد البطاقات)
+- لقطة للـ Scroll animation (النماذج تتصاغر + تتلاشى)
+- لقطة من r3f-perf تعرض 60fps
+
+### 4. نتائج الفحوصات
+```
+bun run lint:        ✅ / ❌
+bun run typecheck:   ✅ / ❌
+bun run build:       ✅ / ❌
+bun run test:        ✅ / ❌
+```
+
+### 5. اختبارات وظيفية
+| الاختبار | النتيجة |
+|----------|---------|
+| Navbar text يتغير عند scroll | ✅ / ❌ |
+| RTL drawer في العربية + الإنجليزية | ✅ / ❌ |
+| MagneticButton بدون reload | ✅ / ❌ |
+| Admin confirm-delete بالعربية + الإنجليزية | ✅ / ❌ |
+| Save-card Checkbox يعمل | ✅ / ❌ |
+| autoComplete على card fields | ✅ / ❌ |
+| Toast مع animation + close button + role | ✅ / ❌ |
+| 3D Hero على PC | ✅ / ❌ |
+| 3D Hero على Mobile | ✅ / ❌ |
+| Pop-in بعد البطاقات | ✅ / ❌ |
+| Scroll animation (scale + opacity + lift + rotate) | ✅ / ❌ |
+| 60fps مستقرة | ✅ / ❌ |
+
+---
+
+## ⚠️ قواعد صارمة
+
+1. **اختبر كل إصلاح قبل المتابعة** — استخدم Agent Browser.
+2. **لا تخرب ميزة تعمل** — راجع كل تعديل.
+3. **استخدم `bun dev --webpack -p 3000`** لتشغيل المشروع.
+4. **التزم بـ `DESIGN_RULES.md`** المُحدّث.
+5. **اقرأ الكود الحالي قبل كل تعديل**.
+6. **اختبر على PC + Mobile**.
+7. **اختبر RTL + LTR**.
+8. **لا تستخدم `<a href>` للروابط الداخلية** — استخدم `Link`.
+9. **لا تستخدم `<img>`** — استخدم `next/image`.
+10. **كل النصوص في `messages/*.json`**.
+11. **`Controller` مع Radix** — لا `register` على Radix.
+12. **استخدم logical properties** للـ RTL.
+13. **اقرأ `dev.log` بعد كل تغيير كبير**.
+
+---
+
+## 🎯 معيار النجاح
+
+المهمة تُعتبر مكتملة إذا وفقط إذا:
+
+### إصلاحات
+1. ✅ كل الـ 11 إصلاح مُنجَز
+2. ✅ Navbar text يتبدّل بين ink/paper عند scroll
+3. ✅ RTL drawer يدخل من اليسار في العربية
+4. ✅ MagneticButton بدون reload
+5. ✅ Admin confirm-delete مترجم
+6. ✅ Save-card Checkbox يعمل مع Controller
+7. ✅ autoComplete على card fields
+8. ✅ Toast مع animation + role + close button + safe-area
+
+### 3D Hero
+9. ✅ يعمل على PC + Mobile
+10. ✅ يستخدم ملفات GLB الفعلية (3 ملفات مضغوطة)
+11. ✅ النماذج تظهر كبيرة فوق البطاقات
+12. ✅ Pop-in يبدأ بعد أنيميشن البطاقات
+13. ✅ Scroll animation: scale + opacity + lift + rotate
+14. ✅ 60fps مستقرة على PC + Mobile
+15. ✅ WebGL context loss handler مفعّل
+
+### جودة
+16. ✅ `bun run lint` — 0 errors
+17. ✅ `bun run typecheck` — 0 errors
+18. ✅ `bun run build` — ينجح
+19. ✅ `bun run test` — كل الاختبارات تنجح
+
+ابدأ الآن. ابدأ بإصلاحات Tri-AI (1-11) أولاً، ثم انتقل لإعادة بناء 3D Hero. اختبر على PC + Mobile. أبلغني فور الانتهاء بالتقرير الكامل مع لقطات الشاشة قبل/بعد.
+````
+
+---
