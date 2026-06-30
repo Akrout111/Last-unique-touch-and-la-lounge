@@ -39,7 +39,7 @@ export function Model3D({
 
   const clonedScene = useMemo(() => scene.clone(true), [scene])
 
-  // === Quality improvements ===
+  // === Quality improvements (material + shadows) — runs on visible change ===
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -59,6 +59,28 @@ export function Model3D({
       }
     })
   }, [clonedScene, visible])
+
+  // === Center the model's geometry on its origin — runs ONCE ===
+  // GLB models often have offsets between their origin and bounding-box center.
+  // This makes corner placement (28% / 72% X) visually accurate.
+  // MUST run only once — running repeatedly would shift the model cumulatively.
+  const centeredRef = useRef(false)
+  useEffect(() => {
+    if (centeredRef.current) return
+    centeredRef.current = true
+
+    const box = new THREE.Box3().setFromObject(clonedScene)
+    const size = new THREE.Vector3()
+    const center = new THREE.Vector3()
+    box.getSize(size)
+    box.getCenter(center)
+    // Only recenter if there's a meaningful offset (avoid div-by-zero on empty models)
+    if (size.lengthSq() > 0) {
+      clonedScene.position.x -= center.x
+      clonedScene.position.y -= center.y
+      clonedScene.position.z -= center.z
+    }
+  }, [clonedScene])
 
   // Pop-in animation tracking
   const popInStartRef = useRef<number>(0)

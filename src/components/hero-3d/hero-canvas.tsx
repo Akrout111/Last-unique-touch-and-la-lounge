@@ -87,7 +87,7 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
             scale={1.6}
             phaseOffset={0}
             visible={modelsVisible}
-            corner="top-left"
+            corner="top-right"
             isRTL={isRTL}
           />
           {/* La Lounge — sofa */}
