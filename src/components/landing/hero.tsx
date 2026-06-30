@@ -168,14 +168,14 @@ export function Hero() {
                       </motion.div>
                     </div>
 
-                    {/* White gradient overlay — MORE OPAQUE for solid cards */}
+                    {/* White gradient overlay — reduced opacity (more transparent) */}
                     <div
                       className="absolute inset-0 transition-opacity duration-500"
                       style={{
                         background:
                           hoveredBrand === idx
-                            ? 'linear-gradient(to top, rgba(245,245,245,0.98) 0%, rgba(245,245,245,0.85) 50%, rgba(245,245,245,0.65) 100%)'
-                            : 'linear-gradient(to top, rgba(245,245,245,0.98) 0%, rgba(245,245,245,0.88) 50%, rgba(245,245,245,0.7) 100%)',
+                            ? 'linear-gradient(to top, rgba(245,245,245,0.85) 0%, rgba(245,245,245,0.55) 50%, rgba(245,245,245,0.35) 100%)'
+                            : 'linear-gradient(to top, rgba(245,245,245,0.80) 0%, rgba(245,245,245,0.50) 50%, rgba(245,245,245,0.30) 100%)',
                       }}
                     />
 
