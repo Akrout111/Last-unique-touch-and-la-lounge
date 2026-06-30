@@ -96,14 +96,13 @@ export function Model3D({
       const rect = cardRef.current.getBoundingClientRect()
 
       // X: 28% from left (top-left corner) or 72% from left (top-right corner)
-      // This keeps the model clearly INSIDE the card, not on the edge
       const cornerX =
         corner === 'top-left'
-          ? rect.left + rect.width * 0.28 // 28% from left = inside top-left
-          : rect.left + rect.width * 0.72 // 72% from left = inside top-right
+          ? rect.left + rect.width * 0.28
+          : rect.left + rect.width * 0.72
 
-      // Y: 15% from top (upper portion of card, clearly above the text content)
-      const cornerY = rect.top + rect.height * 0.15
+      // Y: 30% from top (slightly lower to avoid being clipped at the very top edge)
+      const cornerY = rect.top + rect.height * 0.3
 
       const [wx, wy] = screenToWorld(cornerX, cornerY)
       targetX = wx

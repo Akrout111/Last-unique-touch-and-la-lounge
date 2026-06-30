@@ -30,9 +30,11 @@ export function Hero3DSection({ cardRefs, children }: Hero3DSectionProps) {
 
   // Reveal models after the card entrance animation finishes
   // (cards animate in with delay up to ~0.9s + 0.9s duration ≈ 1.8s)
+  // Faster on mobile so users see the models sooner
   useEffect(() => {
     if (!enabled) return
-    const t = setTimeout(() => setModelsVisible(true), 1500)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768
+    const t = setTimeout(() => setModelsVisible(true), isMobile ? 1000 : 1500)
     return () => clearTimeout(t)
   }, [enabled])
 

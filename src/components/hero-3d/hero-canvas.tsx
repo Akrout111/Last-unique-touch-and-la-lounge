@@ -101,7 +101,7 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
               url="/models/The_chair_and_the_table_compressed.glb"
               cardRef={cardRefs[0]}
               rotation={[0, -Math.PI / 6, 0]}
-              scale={0.6}
+              scale={1.6}
               phaseOffset={0}
               visible={modelsVisible}
               corner="top-left"
@@ -111,7 +111,7 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
               url="/models/The_unfinished_sofa_compressed.glb"
               cardRef={cardRefs[1]}
               rotation={[0, Math.PI / 6, 0]}
-              scale={0.55}
+              scale={1.4}
               phaseOffset={1}
               visible={modelsVisible}
               corner="top-right"
@@ -121,7 +121,7 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
               url="/models/the_dance_floor_and_the_light_holder_compressed.glb"
               cardRef={cardRefs[2]}
               rotation={[0, Math.PI / 4, 0]}
-              scale={0.5}
+              scale={1.3}
               phaseOffset={2}
               visible={modelsVisible}
               corner="top-right"
