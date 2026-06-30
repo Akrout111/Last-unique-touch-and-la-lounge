@@ -15,6 +15,8 @@ interface Model3DProps {
   visible: boolean
   /** Which corner INSIDE the card to position at */
   corner: 'top-left' | 'top-right'
+  /** When true (Arabic/RTL), the visual left/right is flipped */
+  isRTL?: boolean
 }
 
 // Reusable temp vectors (avoid GC pressure)
@@ -29,6 +31,7 @@ export function Model3D({
   phaseOffset = 0,
   visible,
   corner,
+  isRTL = false,
 }: Model3DProps) {
   const groupRef = useRef<THREE.Group>(null)
   const { scene } = useGLTF(url, true, true)
@@ -68,11 +71,19 @@ export function Model3D({
   }, [visible, phaseOffset])
 
   /**
-   * Convert screen coordinates (px) to 3D world coordinates at z=0 plane.
+   * Convert viewport coordinates (px) to 3D world coordinates at z=0 plane.
+   * NOTE: clientX/clientY are viewport-relative (from getBoundingClientRect),
+   * but the canvas may not cover the full viewport (it's `absolute inset-0`
+   * inside the hero section). So we subtract the canvas's own viewport offset
+   * to convert to canvas-relative coordinates before computing NDC.
    */
   function screenToWorld(clientX: number, clientY: number): [number, number, number] {
-    _ndc.x = (clientX / size.width) * 2 - 1
-    _ndc.y = -(clientY / size.height) * 2 + 1
+    const canvasRect = gl.domElement.getBoundingClientRect()
+    const canvasX = clientX - canvasRect.left
+    const canvasY = clientY - canvasRect.top
+
+    _ndc.x = (canvasX / size.width) * 2 - 1
+    _ndc.y = -(canvasY / size.height) * 2 + 1
     _ndc.z = 0
 
     _worldPos.copy(_ndc)
@@ -96,8 +107,15 @@ export function Model3D({
       const rect = cardRef.current.getBoundingClientRect()
 
       // X: 28% from left (top-left corner) or 72% from left (top-right corner)
+      // In RTL (Arabic), the visual left/right is flipped, so swap corners
+      const effectiveCorner = isRTL
+        ? corner === 'top-left'
+          ? 'top-right'
+          : 'top-left'
+        : corner
+
       const cornerX =
-        corner === 'top-left'
+        effectiveCorner === 'top-left'
           ? rect.left + rect.width * 0.28
           : rect.left + rect.width * 0.72
 

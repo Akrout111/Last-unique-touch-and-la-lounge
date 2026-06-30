@@ -123,7 +123,7 @@ export function Hero() {
       </motion.div>
 
       {/* === UNIFIED Hero: 3D enabled on ALL devices === */}
-      <div className="relative z-20 flex-1 flex items-center px-3 sm:px-6 lg:px-8 py-2">
+      <div className="relative flex-1 flex items-center px-3 sm:px-6 lg:px-8 py-2">
         <Hero3DSection cardRefs={cardRefs}>
           <div className="w-full max-w-7xl mx-auto">
             {/* Mobile: vertical stack with small gap. Desktop: 3 columns */}
