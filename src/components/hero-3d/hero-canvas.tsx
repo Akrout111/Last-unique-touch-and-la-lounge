@@ -2,11 +2,9 @@
 
 import { Canvas } from '@react-three/fiber'
 import { AdaptiveDpr, AdaptiveEvents, Preload, Environment } from '@react-three/drei'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense } from 'react'
 import { useLocale } from 'next-intl'
 import { Model3D } from './model-3d'
-import { WaveLines, Particles } from './wave-content'
-import { shouldEnable3D } from '@/lib/device-capabilities'
 import * as THREE from 'three'
 import { PerfMonitor } from './perf-monitor'
 
@@ -16,22 +14,8 @@ interface HeroCanvasProps {
 }
 
 export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
-  const [mounted, setMounted] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
   const locale = useLocale()
   const isRTL = locale === 'ar'
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    const handleVisibility = () => setIsVisible(!document.hidden)
-    document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [])
-
-  if (!mounted || !shouldEnable3D()) return null
 
   return (
     <Canvas
@@ -74,11 +58,7 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
 
       <Environment preset="studio" background={false} />
 
-      <WaveLines />
-      <Particles />
-
-      {isVisible && (
-        <Suspense fallback={null}>
+      <Suspense fallback={null}>
           {/* LUT — chair and table */}
           <Model3D
             url="/models/The_chair_and_the_table_compressed.glb"
@@ -112,8 +92,7 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
             corner="top-right"
             isRTL={isRTL}
           />
-        </Suspense>
-      )}
+      </Suspense>
 
       <AdaptiveDpr pixelated={false} />
       <AdaptiveEvents />
