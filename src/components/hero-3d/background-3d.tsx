@@ -224,6 +224,11 @@ interface Background3DProps {
 export function Background3D({ active = true }: Background3DProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [enabled, setEnabled] = useState(false)
+  // ⚠️ CRITICAL: Keep the Canvas mounted at all times (never unmount via inView).
+  // Unmounting/remounting the <Canvas> causes "WebGL Context Lost" errors which
+  // produce the visual glitches/flicker the user sees on page entry + scroll.
+  // Instead, we toggle `frameloop` between "always" (rendering) and "never"
+  // (frozen, GPU idle) when the hero scrolls out of view — no context churn.
   const [inView, setInView] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -238,7 +243,10 @@ export function Background3D({ active = true }: Background3DProps) {
   useEffect(() => {
     if (!enabled || !containerRef.current) return
     const el = containerRef.current
-    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.05 })
+    // Use a lower threshold (1%) so the canvas doesn't flip on/off rapidly
+    // during small scroll movements. Combined with keeping it mounted,
+    // this eliminates the WebGL context loss cycle.
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.01 })
     io.observe(el)
     return () => io.disconnect()
   }, [enabled])
@@ -247,21 +255,22 @@ export function Background3D({ active = true }: Background3DProps) {
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-      {inView && (
-        <Canvas
-          camera={{ position: [0, 0, 0], fov: 45 }}
-          style={{ pointerEvents: 'none' }}
-          // DPR: mobile gets 1.5x for sharper 3D shapes (was 1x = blurry),
-          // desktop gets 1.5x too. Balanced for quality + performance.
-          dpr={[1, 1.5]}
-          frameloop="always"
-          gl={{
-            antialias: true, // Re-enabled for smoother 3D shape edges on mobile
-            powerPreference: 'high-performance',
-            alpha: false,
-            stencil: false,
-            depth: true,
-          }}
+      <Canvas
+        camera={{ position: [0, 0, 0], fov: 45 }}
+        style={{ pointerEvents: 'none' }}
+        dpr={[1, 1.5]}
+        // ⚠️ Toggle frameloop instead of unmounting — prevents context loss.
+        // "always" = animate (hero visible), "never" = frozen (hero off-screen).
+        frameloop={inView ? 'always' : 'never'}
+        gl={{
+          antialias: true,
+          powerPreference: 'high-performance',
+          alpha: false,
+          stencil: false,
+          depth: true,
+          // ⚠️ Prevent context loss when tab is backgrounded
+          preserveDrawingBuffer: false,
+        }}
         >
           <color attach="background" args={['#050505']} />
           <fog attach="fog" args={['#050505', 25, 75]} />
@@ -281,7 +290,6 @@ export function Background3D({ active = true }: Background3DProps) {
               lamp bulb glow into a full-screen flare. The lamp bulbs still
               glow via meshBasicMaterial, just without the bloom halo. */}
         </Canvas>
-      )}
     </div>
   )
 }

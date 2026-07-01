@@ -29,24 +29,31 @@ export function Hero3DSection({ cardRefs, children }: Hero3DSectionProps) {
   useEffect(() => {
     if (!enabled || !sectionRef.current) return
     const el = sectionRef.current
+    // ⚠️ Lower threshold (1%) to avoid rapid on/off toggling that caused
+    // WebGL context loss glitches on scroll.
     const io = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.05 },
+      { threshold: 0.01 },
     )
     io.observe(el)
     return () => io.disconnect()
   }, [enabled])
 
   return (
-    // ⚠️ الحاوي الرئيسي — relative ليحتوي كل شيء
     <div ref={sectionRef} className="relative w-full h-full">
-      {/* 1. البطاقات (children) — z-10 (في القاع بصرياً) */}
+      {/* 1. Cards (children) — z-10 */}
       <div className="relative z-10 w-full h-full">{children}</div>
 
-      {/* 2. Canvas — absolute, z-20, pointer-events-none (فوق البطاقات بصرياً، لكن يسمح بالنقر) */}
-      {enabled && inView && (
-        <div className="absolute inset-0 z-20 pointer-events-none" aria-hidden="true">
-          <HeroCanvas modelsVisible={modelsVisible} cardRefs={cardRefs} />
+      {/* 2. Canvas — always mounted while enabled (prevents WebGL context loss).
+          Visibility is gated by `modelsVisible` (pop-in) + `inView` controls
+          the frameloop inside HeroCanvas via the `visible` prop. */}
+      {enabled && (
+        <div
+          className="absolute inset-0 z-20 pointer-events-none"
+          aria-hidden="true"
+          style={{ visibility: inView ? 'visible' : 'hidden' }}
+        >
+          <HeroCanvas modelsVisible={modelsVisible && inView} cardRefs={cardRefs} />
         </div>
       )}
     </div>
