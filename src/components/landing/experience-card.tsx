@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { ArrowRight, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,18 +29,53 @@ export function ExperienceCard({
   delay = 0,
   index,
   accentColor,
+  locale,
   onClick,
 }: ExperienceCardProps) {
   const cardIdx = Math.max(0, parseInt(index, 10) - 1)
+  const cardRef = useRef<HTMLDivElement>(null)
+  // Track scroll direction + visibility to drive the exit/enter animation.
+  // 'enter' = card is in view (animate in), 'exit' = scrolled past (animate out).
+  const [animState, setAnimState] = useState<'enter' | 'exit'>('enter')
+  const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+
+    // Determine the exit/enter direction based on scroll position:
+    // - Card 'exits' (slides out) once it has scrolled UP past the viewport top
+    //   (i.e., its bottom edge is above the viewport top).
+    // - Card 'enters' (slides back in) when it returns into view.
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight
+      // Exit when the card's bottom is above ~15% of viewport height
+      // (card has mostly scrolled out of view at the top)
+      const isExiting = rect.bottom < vh * 0.15
+      setAnimState(isExiting ? 'exit' : 'enter')
+      lastScrollY.current = window.scrollY
+    }
+
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [])
 
   return (
     <div
+      ref={cardRef}
       onClick={onClick}
       className={cn(
-        'mobile-card-slide relative w-full h-[150px] sm:h-[170px] md:h-[280px] lg:h-[320px] group flex items-center',
+        'mobile-card-slide card-scroll-anim relative w-full h-[150px] sm:h-[170px] md:h-[280px] lg:h-[320px] group flex items-center',
         isComingSoon ? 'cursor-default' : 'cursor-pointer',
+        `card-scroll-${animState}`,
       )}
-      style={{ ['--card-idx' as string]: cardIdx }}
+      style={{ ['--card-idx' as string]: cardIdx } as React.CSSProperties}
     >
       {/* 1. Holo-Chamber (circular bezel — image pops out) */}
       <div

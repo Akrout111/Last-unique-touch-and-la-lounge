@@ -566,3 +566,40 @@
     animation: none; opacity: 1; transform: none;
   }
 }
+
+/* ========================================
+   SCROLL-DRIVEN CARD EXIT/ENTER ANIMATION
+   - Cards exit (slide out) when scrolled past, re-enter when scrolled back.
+   - LTR (English): exit to RIGHT, enter from RIGHT
+   - RTL (Arabic):  exit to LEFT,  enter from LEFT
+   - Staggered via --card-idx (0/1/2) so cards leave one after another.
+   - Works on both desktop + mobile (mobile keeps its initial slide-in
+     on load via .mobile-card-slide; this scroll class takes over after).
+   ======================================== */
+.card-scroll-anim {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease-out;
+  transition-delay: calc(var(--card-idx, 0) * 0.08s);
+  will-change: transform, opacity;
+}
+
+/* LTR (English) — exit RIGHT, enter from RIGHT (back to center) */
+[dir="ltr"] .card-scroll-exit {
+  transform: translateX(120vw);
+  opacity: 0;
+}
+[dir="ltr"] .card-scroll-enter {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* RTL (Arabic) — exit LEFT, enter from LEFT (back to center) */
+[dir="rtl"] .card-scroll-exit {
+  transform: translateX(-120vw);
+  opacity: 0;
+}
+[dir="rtl"] .card-scroll-enter {
+  transform: translateX(0);
+  opacity: 1;
+}
