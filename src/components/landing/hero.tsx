@@ -93,14 +93,15 @@ export function Hero() {
           <ExperienceCard
             category="Modern"
             title={t('brandSelector.lalounge.name')}
-            actionText={locale === 'ar' ? 'قريباً' : 'Coming Soon'}
+            actionText={locale === 'ar' ? 'استكشف' : 'Explore'}
             productImageUrl="/products/lut_heritage.webp"
             logoUrl="/logo-lalounge.jpg"
-            isComingSoon={true}
+            isComingSoon={false}
             delay={0.02}
             index="02"
             accentColor="modern"
             locale={locale}
+            onClick={() => router.push('/la-lounge')}
           />
           <ExperienceCard
             category="Atelier"
