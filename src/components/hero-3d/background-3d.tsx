@@ -3,11 +3,10 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Sparkles } from '@react-three/drei'
-import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import { shouldEnable3D } from '@/lib/device-capabilities'
 
-const ITEM_COUNT = 40
+const ITEM_COUNT = 18
 const TUNNEL_LENGTH = 70
 const SPEED = 3.5
 
@@ -194,7 +193,7 @@ function InfiniteTunnel({ isMobile }: { isMobile: boolean }) {
   return (
     <group>
       {items.map((_, i) => (<TunnelItem key={i} isMobile={isMobile} />))}
-      <Sparkles count={isMobile ? 80 : 150} scale={[20, 20, TUNNEL_LENGTH]} position={[0, 0, -TUNNEL_LENGTH / 2]} size={isMobile ? 1.5 : 2.5} speed={0.4} opacity={0.3} color="#d4af37" />
+      <Sparkles count={isMobile ? 40 : 60} scale={[20, 20, TUNNEL_LENGTH]} position={[0, 0, -TUNNEL_LENGTH / 2]} size={isMobile ? 1.5 : 2.5} speed={0.4} opacity={0.3} color="#d4af37" />
     </group>
   )
 }
@@ -249,21 +248,38 @@ export function Background3D({ active = true }: Background3DProps) {
   return (
     <div ref={containerRef} className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
       {inView && (
-        <Canvas camera={{ position: [0, 0, 0], fov: 45 }} style={{ pointerEvents: 'none' }}>
+        <Canvas
+          camera={{ position: [0, 0, 0], fov: 45 }}
+          style={{ pointerEvents: 'none' }}
+          // Lower DPR cap for the background — it's behind cards so doesn't need
+          // to be razor-sharp. This cuts GPU fill rate by ~60%.
+          dpr={[1, isMobile ? 1 : 1.5]}
+          frameloop="always"
+          gl={{
+            antialias: false, // Tunnel is blurry/dark anyway — MSAA not needed
+            powerPreference: 'high-performance',
+            alpha: false,
+            stencil: false,
+            depth: true,
+          }}
+        >
           <color attach="background" args={['#050505']} />
           <fog attach="fog" args={['#050505', 25, 75]} />
-          <ambientLight intensity={0.35} />
-          <spotLight position={[15, 10, 5]} angle={0.5} penumbra={1} intensity={8} color="#ffedd6" />
-          <directionalLight position={[-10, -5, -5]} intensity={2.5} color="#4f6d8f" />
-          <spotLight position={[0, -5, -25]} angle={0.7} penumbra={0.8} intensity={12} color="#d4af37" />
-          <spotLight position={[-5, 5, -20]} angle={0.6} penumbra={1} intensity={9} color="#8e1600" />
-          <pointLight position={[0, 0, 5]} intensity={3} color="#ffffff" distance={20} />
+          {/* Simplified lighting — fewer lights = fewer shader passes + no overlighting.
+              Was: ambient(0.35) + spotLight(8) + spotLight(12) + spotLight(9) + directional(2.5) + pointLight(3) = ~35 intensity
+              Now: ambient(0.5) + directional(3) + directional(2) + pointLight(4) = ~9.5 intensity
+              Plus Bloom is removed (was amplifying the lamp glow into harsh flare on mobile). */}
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 8, 5]} intensity={3} color="#ffedd6" />
+          <directionalLight position={[-8, -4, -8]} intensity={2} color="#4f6d8f" />
+          <pointLight position={[0, 0, 5]} intensity={4} color="#d4af37" distance={25} />
           <InfiniteTunnel isMobile={isMobile} />
           <CameraRig />
           <Environment preset="studio" />
-          <EffectComposer enableNormalPass={false} multisampling={4}>
-            <Bloom luminanceThreshold={0.35} mipmapBlur intensity={0.8} />
-          </EffectComposer>
+          {/* Bloom removed — it was the #1 GPU bottleneck AND caused the
+              "too bright/harsh light" symptom on mobile by amplifying the
+              lamp bulb glow into a full-screen flare. The lamp bulbs still
+              glow via meshBasicMaterial, just without the bloom halo. */}
         </Canvas>
       )}
     </div>
