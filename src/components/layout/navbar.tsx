@@ -37,11 +37,8 @@ export function Navbar() {
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -80 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
+      <nav
+        className={`navbar-slide-in fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
           scrolled
             ? 'glass-dark py-3'
             : 'bg-transparent py-5'
@@ -129,7 +126,7 @@ export function Navbar() {
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile drawer */}
       <AnimatePresence>
