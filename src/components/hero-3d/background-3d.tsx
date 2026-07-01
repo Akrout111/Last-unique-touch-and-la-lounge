@@ -158,7 +158,7 @@ function TunnelItem({ isMobile }: { isMobile: boolean }) {
     const x = Math.cos(angle) * radius
     const y = Math.sin(angle) * radius
     const z = -(Math.random() * TUNNEL_LENGTH)
-    const scale = (0.4 + Math.random() * 0.6) * (isMobile ? 0.6 : 1)
+    const scale = (0.4 + Math.random() * 0.6) * (isMobile ? 0.8 : 1)
     const rotSpeedX = (Math.random() - 0.5) * 0.4
     const rotSpeedY = (Math.random() - 0.5) * 0.6
     const rotSpeedZ = (Math.random() - 0.5) * 0.4
@@ -251,12 +251,12 @@ export function Background3D({ active = true }: Background3DProps) {
         <Canvas
           camera={{ position: [0, 0, 0], fov: 45 }}
           style={{ pointerEvents: 'none' }}
-          // Lower DPR cap for the background — it's behind cards so doesn't need
-          // to be razor-sharp. This cuts GPU fill rate by ~60%.
-          dpr={[1, isMobile ? 1 : 1.5]}
+          // DPR: mobile gets 1.5x for sharper 3D shapes (was 1x = blurry),
+          // desktop gets 1.5x too. Balanced for quality + performance.
+          dpr={[1, 1.5]}
           frameloop="always"
           gl={{
-            antialias: false, // Tunnel is blurry/dark anyway — MSAA not needed
+            antialias: true, // Re-enabled for smoother 3D shape edges on mobile
             powerPreference: 'high-performance',
             alpha: false,
             stencil: false,
