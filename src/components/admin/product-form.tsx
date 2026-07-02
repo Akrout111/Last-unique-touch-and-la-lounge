@@ -19,6 +19,7 @@ import { Plus, Trash2, Loader2 } from 'lucide-react'
 import type { Category } from '@prisma/client'
 import type { ProductWithImages } from '@/lib/products'
 import { createProductAction, updateProductAction } from '@/app/[locale]/admin/(dashboard)/products/actions'
+import { useToast } from '@/components/providers/toast-provider'
 
 interface ProductFormProps {
   categories: Category[]
@@ -37,6 +38,7 @@ export function ProductForm({ categories, product, mode }: ProductFormProps) {
   const t = useTranslations()
   const locale = useLocale()
   const router = useRouter()
+  const { showToast } = useToast()
   const [submitting, setSubmitting] = useState(false)
   const [images, setImages] = useState<string[]>(
     product?.images ?? ['']
@@ -86,7 +88,13 @@ export function ProductForm({ categories, product, mode }: ProductFormProps) {
       router.refresh()
     } else {
       setSubmitting(false)
-      // Error is handled by the action (redirect on success)
+      const errorCode = result.error ?? 'internal_error'
+      const errorKey = `admin.errors.${errorCode}`
+      try {
+        showToast('error', t(errorKey))
+      } catch {
+        showToast('error', t('admin.errors.internal_error'))
+      }
     }
   }
 
@@ -234,7 +242,7 @@ export function ProductForm({ categories, product, mode }: ProductFormProps) {
               <Input
                 value={img}
                 onChange={(e) => updateImage(index, e.target.value)}
-                placeholder="https://..."
+                placeholder={t('admin.products.form.imageUrlPlaceholder')}
                 dir="ltr"
                 className="bg-card"
               />
@@ -299,7 +307,7 @@ export function ProductForm({ categories, product, mode }: ProductFormProps) {
           {submitting ? (
             <>
               <Loader2 className="w-4 h-4 me-2 animate-spin" />
-              ...
+              {t('common.saving')}
             </>
           ) : (
             t('admin.products.form.submit')

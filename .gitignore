@@ -37,3 +37,17 @@ worklog.md
 # IDE
 .vscode
 .idea
+
+# Test coverage
+coverage/
+
+# PNGs (keep public assets tracked, ignore others)
+*.png
+!public/**/*.png
+
+# Agent scratch / tool results
+tool-results/
+upload/
+
+# Production env
+.env.production

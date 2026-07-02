@@ -10,7 +10,8 @@
   "brand": {
     "lut": "Last Unique Touch",
     "lalounge": "La Lounge",
-    "birthday": "Your Birthday"
+    "birthday": "Your Birthday",
+    "lutShort": "LUT"
   },
   "hero": {
     "title": "Elegance that",
@@ -105,7 +106,9 @@
     "notFound": "Page not found",
     "comingSoon": "Coming soon",
     "phaseLabel": "Phase {phase} — Foundation complete",
-    "noImage": "No image"
+    "noImage": "No image",
+    "close": "Close",
+    "saving": "Saving..."
   },
   "a11y": {
     "skipToContent": "Skip to main content"
@@ -155,7 +158,7 @@
       "title": "Select Rental Period",
       "startDate": "Start Date",
       "endDate": "End Date",
-      "checking": "Checking...",
+      "checking": "Checking availability...",
       "available": "Available for selected period",
       "unavailable": "Unavailable — overlapping booking exists",
       "selectDates": "Select dates to check availability"
@@ -197,6 +200,7 @@
       "title": "Login",
       "password": "Password",
       "submit": "Login",
+      "submitting": "Signing in...",
       "invalid": "Invalid password",
       "devHint": "In development, use password \"dev\""
     },
@@ -246,6 +250,7 @@
         "stock": "Stock",
         "images": "Images (URLs)",
         "addImage": "Add Image",
+        "imageUrlPlaceholder": "https://example.com/image.jpg",
         "model3dUrl": "3D Model URL (optional)",
         "isActive": "Active",
         "slug": "Slug",
@@ -266,7 +271,8 @@
       "actions": "Actions",
       "cannotDelete": "Cannot delete a category with products",
       "saved": "Category saved",
-      "deleted": "Category deleted"
+      "deleted": "Category deleted",
+      "edit": "Edit"
     },
     "bookings": {
       "title": "Bookings",
@@ -311,7 +317,9 @@
         "complete": "Complete"
       },
       "statusChanged": "Booking status changed",
-      "invalidTransition": "Cannot change status this way"
+      "invalidTransition": "Cannot change status this way",
+      "noActionsAvailable": "No actions available for this booking",
+      "view": "View"
     },
     "common": {
       "save": "Save",
@@ -374,7 +382,18 @@
       "city": "City",
       "notes": "Notes (optional)",
       "submit": "Confirm Order",
-      "submitting": "Confirming order..."
+      "submitting": "Confirming order...",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 3 characters",
+        "phoneRequired": "Phone number is required",
+        "phoneInvalid": "Invalid phone number",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email address",
+        "addressRequired": "Address is required",
+        "addressMinLength": "Address must be at least 10 characters",
+        "cityRequired": "City is required"
+      }
     },
     "summary": {
       "title": "Your Order Summary",
@@ -497,7 +516,18 @@
       "submit": "Send",
       "submitting": "Sending...",
       "success": "Your message has been sent! We'll reply soon.",
-      "sendAnother": "Send another message"
+      "sendAnother": "Send another message",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 3 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email address",
+        "phoneInvalid": "Invalid phone number",
+        "subjectRequired": "Subject is required",
+        "subjectMinLength": "Subject must be at least 5 characters",
+        "messageRequired": "Message is required",
+        "messageMinLength": "Message must be at least 20 characters"
+      }
     },
     "info": {
       "address": "Address",

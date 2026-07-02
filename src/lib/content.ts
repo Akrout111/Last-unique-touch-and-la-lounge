@@ -2,6 +2,16 @@ import fs from 'fs/promises'
 import path from 'path'
 
 /**
+ * Simple in-memory cache for content files.
+ * Keyed by absolute file path; values are the raw file contents.
+ * Markdown content rarely changes in production, so we cache aggressively
+ * to avoid hitting the filesystem on every request. The cache survives
+ * for the lifetime of the server process (cleared on restart / redeploy
+ * by Next.js).
+ */
+const cache = new Map<string, string>()
+
+/**
  * Read a markdown content file for the given locale and page name.
  * Falls back to Arabic if the requested locale file doesn't exist.
  */
@@ -13,11 +23,25 @@ export async function getContent(
   const localeDir = locale === 'en' ? 'en' : 'ar'
   const filePath = path.join(basePath, localeDir, `${page}.md`)
 
+  // Check in-memory cache first
+  const cached = cache.get(filePath)
+  if (cached !== undefined) {
+    return cached
+  }
+
   try {
-    return await fs.readFile(filePath, 'utf-8')
+    const content = await fs.readFile(filePath, 'utf-8')
+    cache.set(filePath, content)
+    return content
   } catch {
     // Fallback to Arabic
     const fallbackPath = path.join(basePath, 'ar', `${page}.md`)
-    return await fs.readFile(fallbackPath, 'utf-8')
+    const fallbackCached = cache.get(fallbackPath)
+    if (fallbackCached !== undefined) {
+      return fallbackCached
+    }
+    const fallbackContent = await fs.readFile(fallbackPath, 'utf-8')
+    cache.set(fallbackPath, fallbackContent)
+    return fallbackContent
   }
 }

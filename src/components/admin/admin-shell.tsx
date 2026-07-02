@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Link, usePathname } from '@/i18n/routing'
+import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { LayoutDashboard, Package, FolderTree, CalendarDays, LogOut, Menu, X, ExternalLink } from 'lucide-react'
 import { logoutAction } from '@/app/[locale]/admin/login/actions'
-import { useRouter } from '@/i18n/routing'
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations()
@@ -37,8 +36,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 bg-bg-dark text-white shrink-0">
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-lut">Last Unique Touch</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+            <span className="text-lg font-bold text-lut">{t('brand.lut')}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-brand" />
           </div>
           <p className="text-xs text-white/50 mt-1">{t('admin.title')}</p>
         </div>
@@ -87,10 +86,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-lut">LUT</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                <span className="text-lg font-bold text-lut">{t('brand.lutShort')}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-brand" />
               </div>
-              <button onClick={() => setSidebarOpen(false)}>
+              <button onClick={() => setSidebarOpen(false)} aria-label={t('common.close')}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -133,11 +132,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <button
             className="md:hidden p-2 text-foreground"
             onClick={() => setSidebarOpen(true)}
+            aria-label={t('nav.menu')}
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="hidden md:block" />
-          <a
+          <Link
             href="/"
             target="_blank"
             rel="noopener noreferrer"
@@ -145,7 +145,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             {t('admin.nav.viewSite')}
             <ExternalLink className="w-4 h-4" />
-          </a>
+          </Link>
         </header>
 
         {/* Page content */}

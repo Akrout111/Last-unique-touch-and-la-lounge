@@ -167,13 +167,17 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/products/${product.id}/edit`}
+                          aria-label={t('admin.products.edit')}
                           className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <Pencil className="w-4 h-4" />
                         </Link>
                         <ConfirmDelete
                           trigger={
-                            <span className="p-2 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block">
+                            <span
+                              aria-label={t('admin.products.delete')}
+                              className="p-2 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </span>
                           }

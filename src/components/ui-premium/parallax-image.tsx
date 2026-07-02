@@ -21,11 +21,14 @@ export function ParallaxImage({
   })
 
   const y = useTransform(scrollYProgress, [0, 1], [-offset / 2, offset / 2])
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1.1, 1, 1.1])
+  // Scale stays at/above 1.15 to prevent edge gaps when the inner div is
+  // translated vertically by `y` (the absolute inset-0 layer must always
+  // overflow the parent).
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1.25, 1.15, 1.25])
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
-      <motion.div style={{ y, scale }} className="h-full w-full">
+      <motion.div style={{ y, scale }} className="absolute inset-0 w-full h-full">
         {children}
       </motion.div>
     </div>

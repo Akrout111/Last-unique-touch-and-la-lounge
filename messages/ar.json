@@ -10,7 +10,8 @@
   "brand": {
     "lut": "Last Unique Touch",
     "lalounge": "La Lounge",
-    "birthday": "Your Birthday"
+    "birthday": "Your Birthday",
+    "lutShort": "LUT"
   },
   "hero": {
     "title": "أناقة تُلهم",
@@ -105,7 +106,9 @@
     "notFound": "الصفحة غير موجودة",
     "comingSoon": "قريباً",
     "phaseLabel": "المرحلة {phase} — التأسيس مكتمل",
-    "noImage": "لا توجد صورة"
+    "noImage": "لا توجد صورة",
+    "close": "إغلاق",
+    "saving": "جارٍ الحفظ..."
   },
   "a11y": {
     "skipToContent": "تخطّي إلى المحتوى الرئيسي"
@@ -155,7 +158,7 @@
       "title": "اختر فترة الإيجار",
       "startDate": "تاريخ البداية",
       "endDate": "تاريخ النهاية",
-      "checking": "جارٍ الفحص...",
+      "checking": "جارٍ التحقق من التوفر...",
       "available": "متاح للفترة المختارة",
       "unavailable": "غير متاح — يوجد حجز متداخل",
       "selectDates": "اختر التواريخ للتحقق من التوافر"
@@ -197,6 +200,7 @@
       "title": "تسجيل الدخول",
       "password": "كلمة المرور",
       "submit": "دخول",
+      "submitting": "جارٍ تسجيل الدخول...",
       "invalid": "كلمة المرور غير صحيحة",
       "devHint": "في التطوير، استخدم كلمة المرور \"dev\""
     },
@@ -246,6 +250,7 @@
         "stock": "المخزون",
         "images": "صور (URLs)",
         "addImage": "إضافة صورة",
+        "imageUrlPlaceholder": "https://example.com/image.jpg",
         "model3dUrl": "URL نموذج 3D (اختياري)",
         "isActive": "نشط",
         "slug": "Slug",
@@ -266,7 +271,8 @@
       "actions": "إجراءات",
       "cannotDelete": "لا يمكن حذف فئة تحتوي على منتجات",
       "saved": "تم حفظ الفئة",
-      "deleted": "تم حذف الفئة"
+      "deleted": "تم حذف الفئة",
+      "edit": "تعديل"
     },
     "bookings": {
       "title": "الحجوزات",
@@ -311,7 +317,9 @@
         "complete": "إكمال"
       },
       "statusChanged": "تم تغيير حالة الحجز",
-      "invalidTransition": "لا يمكن تغيير الحالة بهذا الشكل"
+      "invalidTransition": "لا يمكن تغيير الحالة بهذا الشكل",
+      "noActionsAvailable": "لا توجد إجراءات متاحة لهذا الحجز",
+      "view": "عرض"
     },
     "common": {
       "save": "حفظ",
@@ -374,7 +382,18 @@
       "city": "المدينة",
       "notes": "ملاحظات (اختياري)",
       "submit": "تأكيد الطلب",
-      "submitting": "جارٍ تأكيد الطلب..."
+      "submitting": "جارٍ تأكيد الطلب...",
+      "errors": {
+        "nameRequired": "الاسم مطلوب",
+        "nameMinLength": "الاسم يجب أن يكون 3 أحرف على الأقل",
+        "phoneRequired": "رقم الهاتف مطلوب",
+        "phoneInvalid": "رقم الهاتف غير صالح",
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "البريد الإلكتروني غير صالح",
+        "addressRequired": "العنوان مطلوب",
+        "addressMinLength": "العنوان يجب أن يكون 10 أحرف على الأقل",
+        "cityRequired": "المدينة مطلوبة"
+      }
     },
     "summary": {
       "title": "ملخص طلبك",
@@ -497,7 +516,18 @@
       "submit": "إرسال",
       "submitting": "جارٍ الإرسال...",
       "success": "تم إرسال رسالتك بنجاح! سنرد عليك قريباً.",
-      "sendAnother": "إرسال رسالة أخرى"
+      "sendAnother": "إرسال رسالة أخرى",
+      "errors": {
+        "nameRequired": "الاسم مطلوب",
+        "nameMinLength": "الاسم يجب أن يكون 3 أحرف على الأقل",
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "البريد الإلكتروني غير صالح",
+        "phoneInvalid": "رقم الهاتف غير صالح",
+        "subjectRequired": "الموضوع مطلوب",
+        "subjectMinLength": "الموضوع يجب أن يكون 5 أحرف على الأقل",
+        "messageRequired": "الرسالة مطلوبة",
+        "messageMinLength": "الرسالة يجب أن تكون 20 حرفًا على الأقل"
+      }
     },
     "info": {
       "address": "العنوان",

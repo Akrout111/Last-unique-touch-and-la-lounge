@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 const SITE_NAME = 'Last Unique Touch'
 
 const DEFAULT_DESCRIPTION = {

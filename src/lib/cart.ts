@@ -13,7 +13,7 @@ export interface CartItem {
   total: number
 }
 
-const CART_KEY = 'lut_cart'
+export const CART_KEY = 'lut_cart'
 
 export function getCart(): CartItem[] {
   if (typeof window === 'undefined') return []

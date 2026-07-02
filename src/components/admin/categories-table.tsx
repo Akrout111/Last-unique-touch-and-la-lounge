@@ -145,13 +145,14 @@ export function CategoriesTable({ categories, locale }: CategoriesTableProps) {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setEditingCategory(cat)}
+                              aria-label={t('admin.categories.edit')}
                               className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <ConfirmDelete
                               trigger={
-                                <span className="p-2 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block">
+                                <span aria-label={t('admin.products.delete')} className="p-2 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block">
                                   <Trash2 className="w-4 h-4" />
                                 </span>
                               }
@@ -201,7 +202,7 @@ function CategoryForm({ category, onSubmit, onCancel, submitting }: CategoryForm
         <h3 className="font-semibold text-foreground">
           {category ? t('admin.products.edit') : t('admin.categories.add')}
         </h3>
-        <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={onCancel} aria-label={t('common.close')} className="text-muted-foreground hover:text-foreground">
           <X className="w-4 h-4" />
         </button>
       </div>

@@ -39,7 +39,7 @@ export function LoginPageView() {
             <span className="text-2xl font-bold text-lut">
               {t('brand.lut')}
             </span>
-            <span className="w-2 h-2 rounded-full bg-gold" />
+            <span className="w-2 h-2 rounded-full bg-brand" />
           </div>
           <p className="text-sm text-white/60">{t('admin.title')}</p>
         </div>
@@ -70,6 +70,7 @@ export function LoginPageView() {
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               autoFocus
               required
               className="bg-background"
@@ -84,7 +85,7 @@ export function LoginPageView() {
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                ...
+                {t('admin.login.submitting')}
               </>
             ) : (
               t('admin.login.submit')

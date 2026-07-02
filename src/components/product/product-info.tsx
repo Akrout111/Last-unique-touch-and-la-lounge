@@ -128,7 +128,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
     <div className="space-y-5">
       {/* Category + Name */}
       <div>
-        <Badge variant="outline" className="mb-3 border-gold/40 text-gold bg-gold/5">
+        <Badge variant="outline" className="mb-3 border-brand/40 text-brand bg-brand/5">
           {categoryName}
         </Badge>
         <h1 className="text-3xl font-bold text-foreground mb-2">{productName}</h1>
@@ -166,10 +166,11 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </h2>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">
+            <label htmlFor="startDate" className="block text-xs text-muted-foreground mb-1">
               {t('product.rental.startDate')}
             </label>
             <input
+              id="startDate"
               type="date"
               min={today}
               value={startDate}
@@ -179,10 +180,11 @@ export function ProductInfo({ product }: ProductInfoProps) {
             />
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">
+            <label htmlFor="endDate" className="block text-xs text-muted-foreground mb-1">
               {t('product.rental.endDate')}
             </label>
             <input
+              id="endDate"
               type="date"
               min={startDate || today}
               value={endDate}
@@ -213,7 +215,12 @@ export function ProductInfo({ product }: ProductInfoProps) {
           </div>
         )}
         {availability === 'idle' && startDate && endDate && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
+            {t('product.rental.checking')}
+          </p>
+        )}
+        {availability === 'idle' && (!startDate || !endDate) && (
+          <p className="text-sm text-muted-foreground">
             {t('product.rental.selectDates')}
           </p>
         )}

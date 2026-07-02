@@ -67,6 +67,10 @@
   --sidebar-ring: #E62129;
 }
 
+/* TODO: Dark mode is not currently exposed in the UI (no theme toggle).
+   Commented out to avoid shipping dead tokens. Re-enable when a dark
+   mode toggle is added. */
+/*
 .dark {
   --background: #0A0A0A;
   --foreground: #FFFFFF;
@@ -87,6 +91,7 @@
   --input: #222222;
   --ring: #E62129;
 }
+*/
 
 @theme inline {
   --color-background: var(--background);
@@ -415,9 +420,9 @@
   position: relative;
   background: linear-gradient(
     135deg,
-    rgba(212, 175, 55, 0.35) 0%,
+    rgba(230, 33, 41, 0.35) 0%,
     rgba(255, 255, 255, 0.12) 40%,
-    rgba(212, 175, 55, 0.25) 100%
+    rgba(230, 33, 41, 0.25) 100%
   );
   padding: 1.5px;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
@@ -428,13 +433,13 @@
   transform: translateY(-10px) scale(1.02);
   background: linear-gradient(
     135deg,
-    rgba(212, 175, 55, 0.8) 0%,
+    rgba(230, 33, 41, 0.8) 0%,
     rgba(255, 255, 255, 0.2) 40%,
-    rgba(212, 175, 55, 0.55) 100%
+    rgba(230, 33, 41, 0.55) 100%
   );
   box-shadow:
     0 30px 70px -15px rgba(0, 0, 0, 0.7),
-    0 0 50px -8px rgba(212, 175, 55, 0.3);
+    0 0 50px -8px rgba(230, 33, 41, 0.3);
 }
 .glass-card-inner {
   background: rgba(8, 8, 12, 0.62);

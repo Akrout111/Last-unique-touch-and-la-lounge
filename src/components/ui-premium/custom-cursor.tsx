@@ -23,7 +23,8 @@ export function CustomCursor() {
       cursorY.set(e.clientY - 8)
       setIsVisible(true)
 
-      const target = e.target as HTMLElement
+      if (!(e.target instanceof HTMLElement)) return
+      const target = e.target
       const isInteractive =
         target.closest('a, button, [role="button"], input, textarea, select, .cursor-pointer') !== null
       setIsPointer(isInteractive)

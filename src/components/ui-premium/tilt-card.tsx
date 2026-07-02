@@ -58,25 +58,26 @@ export function TiltCard({
   }
 
   return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: 'preserve-3d',
-        perspective: 1000,
-      }}
-      className={`relative ${className}`}
-    >
-      {children}
-      {glare && (
-        <motion.div
-          className="pointer-events-none absolute inset-0 rounded-[inherit]"
-          style={{ background: glareBg }}
-        />
-      )}
-    </motion.div>
+    <div className={className} style={{ perspective: 1000 }}>
+      <motion.div
+        ref={ref}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          rotateX,
+          rotateY,
+          transformStyle: 'preserve-3d',
+        }}
+        className="relative"
+      >
+        {children}
+        {glare && (
+          <motion.div
+            className="pointer-events-none absolute inset-0 rounded-[inherit]"
+            style={{ background: glareBg }}
+          />
+        )}
+      </motion.div>
+    </div>
   )
 }

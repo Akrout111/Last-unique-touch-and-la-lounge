@@ -74,7 +74,7 @@ export function ProductCard({ product }: { product: ProductWithImages }) {
             {productName}
           </h3>
           <p className={`font-bold text-sm ${isOutOfStock ? 'text-muted-foreground' : 'text-lut'}`}>
-            {product.rentalPricePerDay} {t('featured.perDay')}
+            {product.rentalPricePerDay.toFixed(3)} {t('featured.perDay')}
           </p>
         </div>
       </div>

@@ -1,12 +1,11 @@
 'use client'
 
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { shouldEnable3D } from '@/lib/device-capabilities'
 
-const ITEM_COUNT = 18
 const TUNNEL_LENGTH = 70
 const SPEED = 3.5
 
@@ -147,38 +146,48 @@ function Sideboard({ color }: { color: string }) {
   )
 }
 
-function TunnelItem({ isMobile }: { isMobile: boolean }) {
-  const meshRef = useRef<THREE.Group>(null)
-  const data = useMemo(() => {
-    const type = Math.floor(Math.random() * 5)
-    const color = PALETTE[Math.floor(Math.random() * PALETTE.length)]
-    const angle = Math.random() * Math.PI * 2
-    const innerRadius = isMobile ? 2.5 : 5.5
-    const radius = innerRadius + Math.random() * (isMobile ? 3.5 : 6)
-    const x = Math.cos(angle) * radius
-    const y = Math.sin(angle) * radius
-    const z = -(Math.random() * TUNNEL_LENGTH)
-    const scale = (0.4 + Math.random() * 0.6) * (isMobile ? 0.8 : 1)
-    const rotSpeedX = (Math.random() - 0.5) * 0.4
-    const rotSpeedY = (Math.random() - 0.5) * 0.6
-    const rotSpeedZ = (Math.random() - 0.5) * 0.4
-    return { type, color, x, y, z, scale, rotSpeedX, rotSpeedY, rotSpeedZ }
-  }, [isMobile])
-  const initialRot = useMemo(
-    () => [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI] as [number, number, number],
-    [],
-  )
-  useFrame((state, delta) => {
-    if (!meshRef.current) return
-    meshRef.current.position.z += SPEED * delta
-    meshRef.current.position.y = data.y + Math.sin(state.clock.elapsedTime * 1.5 + data.x) * 0.3
-    meshRef.current.rotation.x += data.rotSpeedX * delta
-    meshRef.current.rotation.y += data.rotSpeedY * delta
-    meshRef.current.rotation.z += data.rotSpeedZ * delta
-    if (meshRef.current.position.z > 5) meshRef.current.position.z -= TUNNEL_LENGTH
-  })
+interface TunnelItemData {
+  index: number
+  type: number
+  color: string
+  x: number
+  y: number
+  z: number
+  scale: number
+  rotSpeedX: number
+  rotSpeedY: number
+  rotSpeedZ: number
+  initialRot: [number, number, number]
+}
+
+/**
+ * Presentational only — no per-item useFrame. The parent InfiniteTunnel drives
+ * all animation via a single useFrame over its itemsRef array (1 callback for
+ * N items instead of N callbacks, cutting per-frame overhead significantly).
+ * Rotation speeds + baseline positions are stashed on mesh.userData so the
+ * parent can read them without re-querying React state.
+ */
+function TunnelItem({
+  data,
+  registerRef,
+}: {
+  data: TunnelItemData
+  registerRef: (index: number, ref: THREE.Group | null) => void
+}) {
   return (
-    <group ref={meshRef} position={[data.x, data.y, data.z]} scale={data.scale} rotation={initialRot}>
+    <group
+      ref={(ref) => registerRef(data.index, ref)}
+      position={[data.x, data.y, data.z]}
+      scale={data.scale}
+      rotation={data.initialRot}
+      userData={{
+        baseY: data.y,
+        phaseX: data.x,
+        rotSpeedX: data.rotSpeedX,
+        rotSpeedY: data.rotSpeedY,
+        rotSpeedZ: data.rotSpeedZ,
+      }}
+    >
       {data.type === 0 && <ModernChair color={data.color} />}
       {data.type === 1 && <LuxurySofa color={data.color} />}
       {data.type === 2 && <RoundTable color={data.color} />}
@@ -189,10 +198,83 @@ function TunnelItem({ isMobile }: { isMobile: boolean }) {
 }
 
 function InfiniteTunnel({ isMobile }: { isMobile: boolean }) {
-  const items = useMemo(() => new Array(ITEM_COUNT).fill(0), [])
+  // Mobile renders ~45% fewer items — big perf win on low-end GPUs.
+  const itemCount = isMobile ? 10 : 18
+  const itemsRef = useRef<THREE.Group[]>([])
+
+  const items = useMemo<TunnelItemData[]>(() => {
+    const arr: TunnelItemData[] = []
+    for (let i = 0; i < itemCount; i++) {
+      const type = Math.floor(Math.random() * 5)
+      const color = PALETTE[Math.floor(Math.random() * PALETTE.length)]
+      const angle = Math.random() * Math.PI * 2
+      const innerRadius = isMobile ? 2.5 : 5.5
+      const radius = innerRadius + Math.random() * (isMobile ? 3.5 : 6)
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      const z = -(Math.random() * TUNNEL_LENGTH)
+      const scale = (0.4 + Math.random() * 0.6) * (isMobile ? 0.8 : 1)
+      const rotSpeedX = (Math.random() - 0.5) * 0.4
+      const rotSpeedY = (Math.random() - 0.5) * 0.6
+      const rotSpeedZ = (Math.random() - 0.5) * 0.4
+      const initialRot: [number, number, number] = [
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+      ]
+      arr.push({
+        index: i, type, color, x, y, z, scale,
+        rotSpeedX, rotSpeedY, rotSpeedZ, initialRot,
+      })
+    }
+    return arr
+  }, [itemCount, isMobile])
+
+  const registerRef = useCallback(
+    (index: number, ref: THREE.Group | null) => {
+      if (ref) {
+        itemsRef.current[index] = ref
+      } else {
+        delete itemsRef.current[index]
+      }
+    },
+    [],
+  )
+
+  // Single useFrame drives all N items — replaces N per-item useFrames.
+  useFrame((state, delta) => {
+    const t = state.clock.elapsedTime
+    const meshes = itemsRef.current
+    for (let i = 0; i < meshes.length; i++) {
+      const mesh = meshes[i]
+      if (!mesh) continue
+      const ud = mesh.userData as {
+        baseY: number
+        phaseX: number
+        rotSpeedX: number
+        rotSpeedY: number
+        rotSpeedZ: number
+      }
+      mesh.position.z += SPEED * delta
+      mesh.position.y = ud.baseY + Math.sin(t * 1.5 + ud.phaseX) * 0.3
+      mesh.rotation.x += ud.rotSpeedX * delta
+      mesh.rotation.y += ud.rotSpeedY * delta
+      mesh.rotation.z += ud.rotSpeedZ * delta
+      if (mesh.position.z > 5) mesh.position.z -= TUNNEL_LENGTH
+    }
+  })
+
   return (
     <group>
-      {items.map((_, i) => (<TunnelItem key={i} isMobile={isMobile} />))}
+      {items.map((data) => (
+        <TunnelItem
+          // Force remount on mobile/desktop switch so userData is freshly set
+          // on a new mesh instance (avoids stale props after R3F reconcile).
+          key={`${isMobile ? 'm' : 'd'}-${data.index}`}
+          data={data}
+          registerRef={registerRef}
+        />
+      ))}
       <Sparkles count={isMobile ? 40 : 60} scale={[20, 20, TUNNEL_LENGTH]} position={[0, 0, -TUNNEL_LENGTH / 2]} size={isMobile ? 1.5 : 2.5} speed={0.4} opacity={0.3} color="#d4af37" />
     </group>
   )
@@ -234,10 +316,22 @@ export function Background3D({ active = true }: Background3DProps) {
 
   useEffect(() => {
     setEnabled(shouldEnable3D())
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
+    // Initial check is synchronous so the first paint uses the right item count;
+    // subsequent resize events are debounced (250ms) to avoid thrashing the
+    // Canvas with rapid isMobile toggles during drag-resize.
+    setIsMobile(window.innerWidth < 768)
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    const checkMobile = () => {
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        setIsMobile(window.innerWidth < 768)
+      }, 250)
+    }
     window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+      window.removeEventListener('resize', checkMobile)
+    }
   }, [])
 
   useEffect(() => {

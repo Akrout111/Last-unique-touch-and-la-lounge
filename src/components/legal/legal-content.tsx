@@ -50,13 +50,15 @@ const components: Components = {
   a: ({ children, href }) => (
     <a
       href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       className="text-lut underline hover:opacity-80 transition-opacity"
     >
       {children}
     </a>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-s-4 border-gold ps-4 py-2 mb-4 italic text-muted-foreground">
+    <blockquote className="border-s-4 border-brand ps-4 py-2 mb-4 italic text-muted-foreground">
       {children}
     </blockquote>
   ),

@@ -47,7 +47,7 @@ export default function LaLoungeView() {
           initial={{ opacity: 0, filter: 'blur(10px)', y: 10 }}
           animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
           transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
-          className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-purple-950 tracking-widest drop-shadow-sm pointer-events-none"
+          className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-purple-950 tracking-widest drop-shadow-sm"
         >
           La Lounge
         </motion.h1>

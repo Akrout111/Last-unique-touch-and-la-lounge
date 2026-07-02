@@ -3,13 +3,12 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import {
   type CartItem,
+  CART_KEY,
   getCart,
   addToCart as storageAdd,
   removeFromCart as storageRemove,
   clearCart as storageClear,
 } from '@/lib/cart'
-
-const CART_KEY = 'lut_cart'
 
 interface CartContextValue {
   items: CartItem[]

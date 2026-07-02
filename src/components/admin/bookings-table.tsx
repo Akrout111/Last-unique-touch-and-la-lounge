@@ -139,6 +139,7 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
                     <td className="py-3 px-4">
                       <Link
                         href={`/admin/bookings/${booking.id}`}
+                        aria-label={t('admin.bookings.view')}
                         className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors inline-flex"
                       >
                         <Eye className="w-4 h-4" />

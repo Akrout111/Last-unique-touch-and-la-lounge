@@ -108,6 +108,7 @@ export function ProductsFilters({
           <Input
             type="text"
             placeholder={t('products.searchPlaceholder')}
+            aria-label={t('products.searchPlaceholder')}
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             className="ps-10 bg-card"
