@@ -106,14 +106,15 @@ export function Hero() {
           <ExperienceCard
             category="Atelier"
             title={t('brandSelector.birthday.name')}
-            actionText={t('hero.comingSoon')}
+            actionText={t('hero.explore')}
             productImageUrl="/products/birthday_atelier.webp"
             logoUrl="/logo-birthday.jpg"
-            isComingSoon={true}
+            isComingSoon={false}
             delay={0.03}
             index="03"
             accentColor="atelier"
             locale={locale}
+            onClick={() => router.push('/your-birthday')}
           />
         </div>
       </div>

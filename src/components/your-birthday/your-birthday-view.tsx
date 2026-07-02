@@ -1,0 +1,765 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Check,
+  Phone,
+  User,
+  MapPin,
+  Mail,
+  CheckCircle2,
+  X,
+  Languages,
+  CalendarDays,
+  PartyPopper
+} from 'lucide-react'
+import { BirthdayVisualizer } from './birthday-visualizer'
+import { BirthdayLoadingScreen } from './loading-screen'
+import { TextScramble } from './text-scramble'
+import { translations } from './translations'
+
+interface YourBirthdayViewProps {
+  onBack: () => void
+}
+
+export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
+  const [locale, setLocale] = useState<'ar' | 'en'>('ar')
+  const isRTL = locale === 'ar'
+  const t = translations[locale]
+  const [loading, setLoading] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
+
+  // Custom booking modal state
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [selectedPkgName, setSelectedPkgName] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    date: '',
+    location: '',
+    notes: ''
+  })
+  const [formSuccess, setFormSuccess] = useState(false)
+
+  const titleRef = useRef<HTMLSpanElement>(null)
+
+  // Track page scroll to apply glass effect to navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // TextScramble for Title (Arabic & English)
+  useEffect(() => {
+    if (loading || !titleRef.current) return
+
+    // Pre-initialize title elements with the target language to avoid mixed-language scramble transition
+    titleRef.current.innerText = isRTL ? 'عيد ميلادك' : 'YOUR BIRTHDAY'
+
+    const fx = new TextScramble(titleRef.current)
+    const words = isRTL
+      ? ['احتفل معنا', 'يومك المميز', 'بأبهى حلة', 'عيد ميلادك']
+      : ['CELEBRATE', 'YOUR DAY', 'IN STYLE', 'YOUR BIRTHDAY']
+
+    let counter = 0
+    let timeoutId: ReturnType<typeof setTimeout>
+
+    const next = () => {
+      if (!titleRef.current) return
+      fx.setText(words[counter]).then(() => {
+        timeoutId = setTimeout(next, 3000)
+      })
+      counter = (counter + 1) % words.length
+    }
+
+    timeoutId = setTimeout(next, 500)
+    return () => {
+      clearTimeout(timeoutId)
+      fx.cancel()
+    }
+  }, [loading, isRTL])
+
+  // Smooth scroll to top
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const toggleLocale = () => {
+    setLocale((prev) => (prev === 'ar' ? 'en' : 'ar'))
+  }
+
+  const BackIcon = isRTL ? ArrowLeft : ArrowRight
+
+  const handleBookingClick = (pkgName: string) => {
+    setSelectedPkgName(pkgName)
+    setBookingOpen(true)
+    setFormSuccess(false)
+  }
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Simulated API call success
+    setFormSuccess(true)
+    setTimeout(() => {
+      setBookingOpen(false)
+      setFormSuccess(false)
+      setFormData({ name: '', phone: '', email: '', date: '', location: '', notes: '' })
+    }, 2500)
+  }
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        {loading && (
+          <BirthdayLoadingScreen
+            key="loader"
+            locale={locale}
+            onComplete={() => setLoading(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <div
+        className={`min-h-screen bg-[#020204] text-white overflow-x-hidden transition-opacity duration-500 ${
+          loading ? 'opacity-0' : 'opacity-100'
+        }`}
+        style={{
+          fontFamily: isRTL
+            ? 'var(--font-birthday-arabic), Cairo, sans-serif'
+            : 'var(--font-birthday-body), Inter, sans-serif',
+          direction: isRTL ? 'rtl' : 'ltr'
+        }}
+      >
+        {/* === NAVBAR === */}
+        <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${
+          scrolled
+            ? 'backdrop-blur-lg bg-[#020204]/80 py-3 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)]'
+            : 'backdrop-blur-md bg-[#020204]/40 py-5 border-white/5'
+        }`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+
+            {/* Back Button */}
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors group cursor-pointer"
+            >
+              <BackIcon className={`w-4 h-4 transform transition-transform ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+              <span className="font-semibold">{t.nav.back}</span>
+            </button>
+
+            {/* Brand Title */}
+            <h1
+              onClick={scrollToTop}
+              className="text-lg md:text-2xl font-black tracking-wider cursor-pointer"
+              style={{
+                fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
+                background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Your Birthday
+            </h1>
+
+            {/* Language Toggle & Up Arrow */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleLocale}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-semibold tracking-wider transition-all cursor-pointer"
+              >
+                <Languages className="w-3.5 h-3.5 text-[#00F3FF]" />
+                <span>{isRTL ? 'English' : 'عربي'}</span>
+              </button>
+
+              <button
+                onClick={scrollToTop}
+                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-[#EC4899] transition-colors cursor-pointer"
+                aria-label={t.nav.top}
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {/* === HERO SECTION === */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          {/* 3D Background */}
+          <BirthdayVisualizer />
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 z-1 bg-gradient-to-t from-[#020204] via-transparent to-[#020204]/50 pointer-events-none" />
+
+          {/* Content */}
+          <div className="relative z-10 max-w-4xl mx-auto px-4 text-center pointer-events-none">
+            <div className="pointer-events-auto mt-16 md:mt-0">
+
+              {/* Tagline Badge */}
+              <div className="mb-8 inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/5 border border-[#00F3FF]/30 backdrop-blur-md shadow-[0_0_15px_rgba(0,243,255,0.15)]">
+                <span className="w-2.5 h-2.5 bg-[#00F3FF] rounded-full animate-ping" />
+                <span
+                  className="text-xs font-bold tracking-[0.25em] text-[#00F3FF] uppercase font-mono"
+                  style={{ fontFamily: 'var(--font-birthday-sub), Rajdhani, sans-serif' }}
+                >
+                  {t.hero.tagline}
+                </span>
+              </div>
+
+              {/* Title with TextScramble (Arabic & English) */}
+              <div className="mb-6">
+                <h1
+                  className={`text-5xl sm:text-7xl lg:text-8xl font-black leading-none py-2 ${
+                    isRTL ? 'tracking-tight' : 'tracking-tighter'
+                  }`}
+                  style={{
+                    fontFamily: isRTL
+                      ? 'var(--font-birthday-arabic), Cairo, sans-serif'
+                      : 'var(--font-birthday-headline), Orbitron, sans-serif'
+                  }}
+                >
+                  <span ref={titleRef} className="bg-gradient-to-r from-white via-purple-200 to-pink-300 bg-clip-text text-transparent">
+                    {t.hero.title1}
+                  </span>
+                </h1>
+              </div>
+
+              {/* Subtitle */}
+              <p
+                className="text-base sm:text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed"
+                style={{ fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)' }}
+              >
+                {t.hero.subtitle}
+              </p>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button
+                  onClick={() => handleBookingClick(t.packages.premium.name)}
+                  className="w-full sm:w-auto px-8 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(139,92,246,0.4)]"
+                  style={{
+                    background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                    fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
+                  }}
+                >
+                  {t.hero.cta1}
+                </button>
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('packages-section')
+                    el?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="w-full sm:w-auto px-8 py-4 rounded-full font-bold text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all backdrop-blur-sm cursor-pointer"
+                  style={{
+                    fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
+                  }}
+                >
+                  {t.hero.cta2}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* === SERVICES SECTION === */}
+        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent via-[#05050a]/90 to-[#020204]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+
+            <div className="text-center mb-16 space-y-4">
+              <h2
+                className="text-3xl md:text-5xl font-black uppercase tracking-wider"
+                style={{
+                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
+                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {t.services.title}
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#00F3FF] mx-auto rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                { icon: '🎂', title: t.services.item1.title, desc: t.services.item1.desc, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.15)' },
+                { icon: '🎈', title: t.services.item2.title, desc: t.services.item2.desc, color: '#EC4899', glow: 'rgba(236, 72, 153, 0.15)' },
+                { icon: '🎵', title: t.services.item3.title, desc: t.services.item3.desc, color: '#00F3FF', glow: 'rgba(0, 243, 255, 0.15)' },
+              ].map((service, i) => (
+                <div
+                  key={i}
+                  className="group relative p-8 rounded-3xl bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
+                  style={{
+                    boxShadow: `0 10px 30px -10px rgba(0, 0, 0, 0.7)`,
+                  }}
+                >
+                  {/* Hover ambient spotlight glow */}
+                  <div
+                    className="absolute -right-20 -top-20 w-40 h-40 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{ background: service.color }}
+                  />
+
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300"
+                    style={{
+                      background: `${service.color}15`,
+                      border: `1px solid ${service.color}40`,
+                      boxShadow: `0 0 15px ${service.color}20`
+                    }}
+                  >
+                    {service.icon}
+                  </div>
+                  <h3
+                    className="text-xl font-bold mb-3 tracking-wide"
+                    style={{ fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)' }}
+                  >
+                    {service.title}
+                  </h3>
+                  <p className="text-white/60 text-sm leading-relaxed">{service.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* === PACKAGES SECTION === */}
+        <section id="packages-section" className="relative z-10 py-24 bg-[#020204]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+
+            <div className="text-center mb-16 space-y-4">
+              <h2
+                className="text-3xl md:text-5xl font-black uppercase tracking-wider"
+                style={{
+                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
+                  background: 'linear-gradient(135deg, #F97316, #EC4899)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {t.packages.title}
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-[#F97316] to-[#EC4899] mx-auto rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+              {[
+                {
+                  name: t.packages.basic.name,
+                  price: '150',
+                  color: '#8B5CF6',
+                  popular: false,
+                  shadow: 'rgba(139, 92, 246, 0.1)',
+                  features: [
+                    t.packages.basic.feature1,
+                    t.packages.basic.feature2,
+                    t.packages.basic.feature3,
+                    t.packages.basic.feature4,
+                  ]
+                },
+                {
+                  name: t.packages.premium.name,
+                  price: '350',
+                  color: '#EC4899',
+                  popular: true,
+                  shadow: 'rgba(236, 72, 153, 0.25)',
+                  features: [
+                    t.packages.premium.feature1,
+                    t.packages.premium.feature2,
+                    t.packages.premium.feature3,
+                    t.packages.premium.feature4,
+                  ]
+                },
+                {
+                  name: t.packages.luxury.name,
+                  price: '750',
+                  color: '#00F3FF',
+                  popular: false,
+                  shadow: 'rgba(0, 243, 255, 0.1)',
+                  features: [
+                    t.packages.luxury.feature1,
+                    t.packages.luxury.feature2,
+                    t.packages.luxury.feature3,
+                    t.packages.luxury.feature4,
+                  ]
+                },
+              ].map((pkg, i) => (
+                <div
+                  key={i}
+                  className={`relative p-8 rounded-3xl border transition-all duration-500 backdrop-blur-md flex flex-col justify-between overflow-hidden ${
+                    pkg.popular
+                      ? 'bg-[#0e0a16]/90 border-2 scale-105 z-10 shadow-[0_15px_40px_-5px_rgba(236,72,153,0.3)]'
+                      : 'bg-[#07070d]/80 border-white/5 hover:border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:scale-[1.02]'
+                  }`}
+                  style={pkg.popular ? { borderColor: pkg.color } : {}}
+                >
+                  {pkg.popular && (
+                    <div
+                      className="absolute -top-1 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-b-xl text-[10px] sm:text-xs font-black text-white uppercase tracking-widest"
+                      style={{ background: 'linear-gradient(135deg, #EC4899, #8B5CF6)' }}
+                    >
+                      {t.packages.popular}
+                    </div>
+                  )}
+
+                  <div>
+                    <h3
+                      className="text-2xl font-bold mb-4 tracking-wide"
+                      style={{ fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)' }}
+                    >
+                      {pkg.name}
+                    </h3>
+                    <div className="mb-8 flex items-baseline gap-1">
+                      <span className="text-5xl font-black tracking-tight" style={{ color: pkg.color }}>
+                        {pkg.price}
+                      </span>
+                      <span className="text-white/50 text-sm font-semibold"> {t.packages.currency}</span>
+                    </div>
+
+                    <ul className="space-y-4 mb-8">
+                      {pkg.features.map((feature, fIdx) => (
+                        <li key={fIdx} className="flex items-center gap-3 text-sm text-white/80">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-white/5 border border-white/10" style={{ color: pkg.color }}>
+                            <Check className="w-3.5 h-3.5" />
+                          </div>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => handleBookingClick(pkg.name)}
+                    className="w-full py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+                    style={{
+                      background: pkg.popular ? `linear-gradient(135deg, #EC4899, #8B5CF6)` : '#ffffff10',
+                      border: pkg.popular ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                      fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
+                    }}
+                  >
+                    {t.packages.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* === GALLERY SECTION === */}
+        <section className="relative z-10 py-24 bg-gradient-to-b from-[#020204] via-[#05050a]/90 to-[#020204]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+
+            <div className="text-center mb-16 space-y-4">
+              <h2
+                className="text-3xl md:text-5xl font-black uppercase tracking-wider"
+                style={{
+                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
+                  background: 'linear-gradient(135deg, #00F3FF, #8B5CF6)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {t.gallery.title}
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-[#00F3FF] to-[#8B5CF6] mx-auto rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { n: 1, label: isRTL ? 'قوس البالونات العضوي' : 'Organic Balloon Arch', grad: 'from-[#8B5CF6] to-[#EC4899]' },
+                { n: 2, label: isRTL ? 'تنسيق منصة الكيك' : 'Cake Pedestal Styling', grad: 'from-[#EC4899] to-[#F97316]' },
+                { n: 3, label: isRTL ? 'إضاءة المسرح الملونة' : 'Vivid Stage Lighting', grad: 'from-[#F97316] to-[#00F3FF]' },
+                { n: 4, label: isRTL ? 'طاولات الأكريليك الشفافة' : 'Clear Acrylic Pedestals', grad: 'from-[#00F3FF] to-[#8B5CF6]' },
+                { n: 5, label: isRTL ? 'كراسي المعازيم الفاخرة' : 'Transparent Tiffany Seating', grad: 'from-[#8B5CF6] to-[#00F3FF]' },
+                { n: 6, label: isRTL ? 'بوفيه الحلويات الأنيق' : 'Luxury Dessert Buffet', grad: 'from-[#00F3FF] to-[#EC4899]' },
+                { n: 7, label: isRTL ? 'كتابة النيون المخصصة' : 'Custom Neon Signage', grad: 'from-[#EC4899] to-[#F97316]' },
+                { n: 8, label: isRTL ? 'تغطية فوتوغرافية كاملة' : 'Professional Photography', grad: 'from-[#F97316] to-[#8B5CF6]' }
+              ].map((item) => (
+                <div
+                  key={item.n}
+                  className="aspect-square rounded-2xl overflow-hidden group relative border border-white/5 cursor-pointer shadow-lg"
+                >
+                  {/* Decorative gradient overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${item.grad} opacity-30 group-hover:opacity-60 transition-opacity duration-500`} />
+
+                  {/* Geometric outline decoration */}
+                  <div className="absolute inset-4 border border-white/10 group-hover:border-white/30 rounded-xl transition-colors duration-500 flex flex-col justify-end p-4">
+                    <span className="text-xs font-mono text-white/40 tracking-widest uppercase">EXP // 0{item.n}</span>
+                    <h4 className="text-base font-bold text-white tracking-wide mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                      {item.label}
+                    </h4>
+                  </div>
+
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* === TESTIMONIALS SECTION === */}
+        <section className="relative z-10 py-24 bg-[#020204]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6">
+
+            <div className="text-center mb-16 space-y-4">
+              <h2
+                className="text-3xl md:text-5xl font-black uppercase tracking-wider"
+                style={{
+                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
+                  background: 'linear-gradient(135deg, #EC4899, #F97316)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {t.testimonials.title}
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-[#EC4899] to-[#F97316] mx-auto rounded-full" />
+            </div>
+
+            <div className="space-y-8">
+              {[
+                { num: 1, name: t.testimonials.item1.name, role: t.testimonials.item1.role, text: t.testimonials.item1.text, grad: 'from-[#8B5CF6] to-[#EC4899]' },
+                { num: 2, name: t.testimonials.item2.name, role: t.testimonials.item2.role, text: t.testimonials.item2.text, grad: 'from-[#EC4899] to-[#F97316]' },
+                { num: 3, name: t.testimonials.item3.name, role: t.testimonials.item3.role, text: t.testimonials.item3.text, grad: 'from-[#00F3FF] to-[#8B5CF6]' },
+              ].map((item) => (
+                <div
+                  key={item.num}
+                  className="p-8 rounded-3xl bg-[#09090f]/80 border border-white/5 backdrop-blur-md shadow-lg"
+                >
+                  <p className="text-white/80 text-base md:text-lg mb-6 leading-relaxed italic">
+                    &ldquo;{item.text}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-full bg-gradient-to-br ${item.grad} flex items-center justify-center text-white text-lg font-bold shadow-md`}
+                    >
+                      {item.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-base">{item.name}</p>
+                      <p className="text-white/40 text-xs mt-0.5">{item.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* === CTA SECTION === */}
+        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent to-[#05050b]">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+            <div
+              className="p-8 sm:p-14 rounded-[2.5rem] border border-white/10 backdrop-blur-md relative overflow-hidden shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(236, 72, 153, 0.08), rgba(0, 243, 255, 0.08))',
+              }}
+            >
+              {/* Pulsing neon circles in background */}
+              <div className="absolute -left-20 -bottom-20 w-60 h-60 rounded-full bg-[#8B5CF6] opacity-10 blur-[80px]" />
+              <div className="absolute -right-20 -top-20 w-60 h-60 rounded-full bg-[#EC4899] opacity-10 blur-[80px]" />
+
+              <h2
+                className="text-3xl md:text-5xl font-black mb-4 uppercase tracking-wider"
+                style={{
+                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
+                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {t.cta.title}
+              </h2>
+              <p className="text-white/60 mb-8 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t.cta.subtitle}</p>
+              <button
+                onClick={() => handleBookingClick(t.packages.luxury.name)}
+                className="px-10 py-4.5 rounded-full font-bold text-white text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(236,72,153,0.3)]"
+                style={{
+                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
+                }}
+              >
+                {t.cta.button}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* === FOOTER === */}
+        <footer className="relative z-10 py-16 px-4 border-t border-white/5 bg-[#020204]">
+          <div className="max-w-6xl mx-auto text-center space-y-6">
+            <h3
+              className="text-2xl md:text-3xl font-black tracking-widest uppercase"
+              style={{
+                fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
+                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Your Birthday
+            </h3>
+            <p className="text-white/50 text-sm max-w-md mx-auto">{t.footer.tagline}</p>
+            <div className="w-16 h-[1px] bg-white/10 mx-auto" />
+            <p className="text-white/30 text-xs tracking-wider uppercase font-mono">{t.footer.rights}</p>
+          </div>
+        </footer>
+      </div>
+
+      {/* === BOOKING DIALOG === */}
+      <AnimatePresence>
+        {bookingOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setBookingOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md rounded-3xl bg-[#09090f] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden text-white z-10"
+              style={{ direction: isRTL ? 'rtl' : 'ltr' }}
+            >
+              {/* Decorative glows */}
+              <div className="absolute -left-16 -top-16 w-36 h-36 rounded-full bg-[#8B5CF6] opacity-10 blur-3xl pointer-events-none" />
+              <div className="absolute -right-16 -bottom-16 w-36 h-36 rounded-full bg-[#EC4899] opacity-10 blur-3xl pointer-events-none" />
+
+              <button
+                onClick={() => setBookingOpen(false)}
+                className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
+                style={isRTL ? { left: '16px', right: 'auto' } : {}}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {formSuccess ? (
+                <div className="text-center py-10 space-y-4">
+                  <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto text-green-400">
+                    <CheckCircle2 className="w-10 h-10 animate-pulse" />
+                  </div>
+                  <h3 className="text-2xl font-bold tracking-wide">
+                    {isRTL ? 'تم استلام طلبك بنجاح' : 'Order Received Successfully'}
+                  </h3>
+                  <p className="text-white/60 text-sm">
+                    {isRTL
+                      ? 'سيتواصل معك فريق منسقي الحفلات لدينا قريباً لتأكيد تفاصيل حفل عيد ميلادك.'
+                      : 'Our party planning coordinators will contact you shortly to finalize details.'}
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleFormSubmit} className="space-y-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <PartyPopper className="w-6 h-6 text-[#EC4899]" />
+                    <div>
+                      <h3 className="text-xl font-bold">
+                        {isRTL ? 'حجز باقة عيد الميلاد' : 'Book Birthday Package'}
+                      </h3>
+                      {selectedPkgName && (
+                        <p className="text-xs text-white/60 font-medium tracking-wide mt-0.5">
+                          {isRTL ? 'الباقة المحددة:' : 'Selected Package:'} <span className="text-[#00F3FF] font-bold">{selectedPkgName}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Input Fields */}
+                  <div className="space-y-3.5 text-black">
+                    <div className="relative">
+                      <User className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <input
+                        type="text"
+                        required
+                        placeholder={isRTL ? 'الاسم الكامل' : 'Full Name'}
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <Phone className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <input
+                        type="tel"
+                        required
+                        placeholder={isRTL ? 'رقم الهاتف' : 'Phone Number'}
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <Mail className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <input
+                        type="email"
+                        placeholder={isRTL ? 'البريد الإلكتروني (اختياري)' : 'Email Address (Optional)'}
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <CalendarDays className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <input
+                        type="date"
+                        required
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <MapPin className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <input
+                        type="text"
+                        required
+                        placeholder={isRTL ? 'موقع الحفلة (مثال: السالمية)' : 'Event Location (e.g., Salmiya)'}
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                      />
+                    </div>
+
+                    <textarea
+                      rows={2}
+                      placeholder={isRTL ? 'طلبات أو ملاحظات إضافية' : 'Additional custom requests'}
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      className="w-full p-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, #EC4899, #8B5CF6)',
+                    }}
+                  >
+                    {isRTL ? 'إرسال طلب الحجز' : 'Submit Reservation Order'}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
