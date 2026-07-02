@@ -32,7 +32,7 @@
   },
   "brandSelector": {
     "title": "Choose Your Experience",
-    "subtitle": "Three brands, one journey",
+    "subtitle": "Three Brands · One Journey",
     "lut": {
       "name": "Last Unique Touch",
       "desc": "Furniture & event equipment rental"
@@ -46,12 +46,13 @@
       "name": "Your Birthday",
       "desc": "Birthday celebrations",
       "comingSoon": "Coming soon"
-    }
+    },
+    "comingSoon": "Coming Soon"
   },
   "featured": {
     "title": "Featured Products",
     "viewAll": "View All",
-    "perDay": "KWD / day"
+    "perDay": "KWD/day"
   },
   "whyUs": {
     "title": "Why Last Unique Touch?",
@@ -319,7 +320,8 @@
       "statusChanged": "Booking status changed",
       "invalidTransition": "Cannot change status this way",
       "noActionsAvailable": "No actions available for this booking",
-      "view": "View"
+      "view": "View",
+      "terminalState": "This booking is in a final state and cannot be modified"
     },
     "common": {
       "save": "Save",
@@ -430,7 +432,8 @@
     "title": "Secure Payment",
     "orderSummary": "Order Summary",
     "orderId": "Order ID: #{id}",
-    "total": "Total: {amount} KWD",
+    "total": "{amount} KWD",
+    "emptyCart": "Your cart is empty — cannot checkout",
     "displayNote": "This is a display interface — you will be redirected to the official payment gateway",
     "form": {
       "cardNumber": "Card Number",
@@ -451,7 +454,9 @@
       "invalid_expiry": "Invalid expiry date",
       "invalid_cvv": "Invalid CVV",
       "payment_failed": "Payment failed — please try again",
-      "order_not_found": "Order not found"
+      "order_not_found": "Order not found",
+      "nameRequired": "Name on card is required",
+      "nameMinLength": "Name must be at least 3 characters"
     },
     "backToCart": "Back to Cart"
   },

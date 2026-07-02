@@ -209,7 +209,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
           )}
           {(booking.status === 'CANCELLED' || booking.status === 'COMPLETED') && (
             <p className="text-sm text-muted-foreground">
-              {t('admin.bookings.invalidTransition')}
+              {t('admin.bookings.terminalState')}
             </p>
           )}
         </div>

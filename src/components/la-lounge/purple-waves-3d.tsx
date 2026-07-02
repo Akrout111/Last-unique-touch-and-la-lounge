@@ -99,7 +99,7 @@ function EventArchitecture() {
     }
   });
 
-  const { elements, nodes } = useMemo(() => {
+  const { elements, nodes, materials } = useMemo(() => {
     const items = [];
     const technicalNodes = [];
     
@@ -281,8 +281,18 @@ function EventArchitecture() {
       technicalNodes.push(new THREE.Vector3(px, h, pz));
     }
 
-    return { elements: items, nodes: technicalNodes };
+    return { elements: items, nodes: technicalNodes, materials: { matBold, matMain, matSub, matAccent } };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      // Dispose materials created in this component
+      materials.matBold.dispose()
+      materials.matMain.dispose()
+      materials.matSub.dispose()
+      materials.matAccent.dispose()
+    }
+  }, [materials])
 
   return (
     <group ref={groupRef}>

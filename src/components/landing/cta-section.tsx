@@ -58,7 +58,7 @@ export function CTASection() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <MagneticButton href={`/${locale}/products`}>
+            <MagneticButton href="/products">
               <span className="group inline-flex items-center gap-3 px-10 py-4 bg-lut text-paper rounded-none hover:bg-lut/90 transition-colors duration-300">
                 <span className="text-sm font-medium tracking-wide">
                   {t('cta.primary')}
@@ -67,7 +67,7 @@ export function CTASection() {
               </span>
             </MagneticButton>
 
-            <MagneticButton href={`/${locale}/contact`}>
+            <MagneticButton href="/contact">
               <span className="group inline-flex items-center gap-3 px-10 py-4 border border-gold/40 text-gold hover:bg-gold/10 transition-colors duration-300">
                 <span className="text-sm font-medium tracking-wide">
                   {t('cta.secondary')}

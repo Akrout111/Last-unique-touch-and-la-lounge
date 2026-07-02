@@ -32,7 +32,7 @@
   },
   "brandSelector": {
     "title": "اختر تجربتك",
-    "subtitle": "ثلاث علامات، رحلة واحدة",
+    "subtitle": "ثلاث علامات · رحلة واحدة",
     "lut": {
       "name": "Last Unique Touch",
       "desc": "تأجير الأثاث ومعدات الأيفنتات"
@@ -46,12 +46,13 @@
       "name": "Your Birthday",
       "desc": "حفلات أعياد الميلاد",
       "comingSoon": "قريباً"
-    }
+    },
+    "comingSoon": "قريباً"
   },
   "featured": {
     "title": "منتجات مختارة",
     "viewAll": "عرض الكل",
-    "perDay": "د.ك / يوم"
+    "perDay": "د.ك/يوم"
   },
   "whyUs": {
     "title": "لماذا Last Unique Touch؟",
@@ -319,7 +320,8 @@
       "statusChanged": "تم تغيير حالة الحجز",
       "invalidTransition": "لا يمكن تغيير الحالة بهذا الشكل",
       "noActionsAvailable": "لا توجد إجراءات متاحة لهذا الحجز",
-      "view": "عرض"
+      "view": "عرض",
+      "terminalState": "هذا الحجز في حالته النهائية ولا يمكن تعديله"
     },
     "common": {
       "save": "حفظ",
@@ -430,7 +432,8 @@
     "title": "الدفع الآمن",
     "orderSummary": "ملخص الطلب",
     "orderId": "رقم الطلب: #{id}",
-    "total": "الإجمالي: {amount} د.ك",
+    "total": "{amount} د.ك",
+    "emptyCart": "سلتك فارغة — لا يمكن إتمام الدفع",
     "displayNote": "هذه واجهة عرض فقط — سيتم توجيهك لبوابة الدفع الرسمية",
     "form": {
       "cardNumber": "رقم البطاقة",
@@ -451,7 +454,9 @@
       "invalid_expiry": "تاريخ الانتهاء غير صالح",
       "invalid_cvv": "CVV غير صالح",
       "payment_failed": "فشل الدفع — يرجى المحاولة مرة أخرى",
-      "order_not_found": "الطلب غير موجود"
+      "order_not_found": "الطلب غير موجود",
+      "nameRequired": "الاسم على البطاقة مطلوب",
+      "nameMinLength": "الاسم يجب أن يكون 3 أحرف على الأقل"
     },
     "backToCart": "العودة للسلة"
   },

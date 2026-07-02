@@ -32,7 +32,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
-                aria-label="Instagram"
+                aria-label={t('contact.info.instagram')}
               >
                 <Instagram className="w-4 h-4" strokeWidth={1.3} />
               </a>
@@ -41,7 +41,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
-                aria-label="WhatsApp"
+                aria-label={t('contact.info.whatsapp')}
               >
                 <Phone className="w-4 h-4" strokeWidth={1.3} />
               </a>

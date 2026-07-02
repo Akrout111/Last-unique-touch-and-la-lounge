@@ -59,7 +59,7 @@ export function BrandSelector() {
         <div className="flex items-center justify-center gap-3 mb-6">
           <span className="w-8 h-px bg-gold" />
           <span className="eyebrow text-gold">
-            {locale === 'ar' ? 'ثلاث علامات · رحلة واحدة' : 'Three Brands · One Journey'}
+            {t('brandSelector.subtitle')}
           </span>
           <span className="w-8 h-px bg-gold" />
         </div>
@@ -167,7 +167,7 @@ export function BrandSelector() {
                       {brand.active ? (
                         <div className="flex items-center gap-2 text-paper group-hover:gap-4 transition-all duration-300">
                           <span className="eyebrow" style={{ color: brand.accent }}>
-                            {locale === 'ar' ? 'استكشف' : 'Explore'}
+                            {t('hero.explore')}
                           </span>
                           <ArrowIcon className="w-4 h-4" style={{ color: brand.accent }} />
                         </div>
@@ -175,7 +175,7 @@ export function BrandSelector() {
                         <div className="flex items-center gap-2 text-paper/40">
                           <Plus className="w-4 h-4" />
                           <span className="eyebrow">
-                            {locale === 'ar' ? 'قريباً' : 'Coming Soon'}
+                            {t('brandSelector.comingSoon')}
                           </span>
                         </div>
                       )}

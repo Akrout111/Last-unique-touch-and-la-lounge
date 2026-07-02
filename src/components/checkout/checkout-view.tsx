@@ -150,7 +150,14 @@ export function CheckoutView() {
                   className="bg-background"
                 />
                 {errors.customerName && (
-                  <p className="text-xs text-lut">{t('checkout.form.name')} *</p>
+                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      {errors.customerName?.type === 'required'
+                        ? t('checkout.form.errors.nameRequired')
+                        : t('checkout.form.errors.nameMinLength')}
+                    </span>
+                  </p>
                 )}
               </div>
 
@@ -169,7 +176,14 @@ export function CheckoutView() {
                     className="bg-background"
                   />
                   {errors.customerPhone && (
-                    <p className="text-xs text-lut">{t('checkout.form.phone')} *</p>
+                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {errors.customerPhone?.type === 'required'
+                          ? t('checkout.form.errors.phoneRequired')
+                          : t('checkout.form.errors.phoneInvalid')}
+                      </span>
+                    </p>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -185,7 +199,14 @@ export function CheckoutView() {
                     className="bg-background"
                   />
                   {errors.customerEmail && (
-                    <p className="text-xs text-lut">{t('checkout.form.email')} *</p>
+                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {errors.customerEmail?.type === 'required'
+                          ? t('checkout.form.errors.emailRequired')
+                          : t('checkout.form.errors.emailInvalid')}
+                      </span>
+                    </p>
                   )}
                 </div>
               </div>
@@ -203,7 +224,14 @@ export function CheckoutView() {
                   className="bg-background"
                 />
                 {errors.address && (
-                  <p className="text-xs text-lut">{t('checkout.form.address')} *</p>
+                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      {errors.address?.type === 'required'
+                        ? t('checkout.form.errors.addressRequired')
+                        : t('checkout.form.errors.addressMinLength')}
+                    </span>
+                  </p>
                 )}
               </div>
 
@@ -219,7 +247,10 @@ export function CheckoutView() {
                   className="bg-background"
                 />
                 {errors.city && (
-                  <p className="text-xs text-lut">{t('checkout.form.city')} *</p>
+                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{t('checkout.form.errors.cityRequired')}</span>
+                  </p>
                 )}
               </div>
 

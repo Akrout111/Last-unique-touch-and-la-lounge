@@ -70,7 +70,15 @@ export function ExperienceCard({
   return (
     <div
       ref={cardRef}
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.()
+        }
+      }}
       className={cn(
         'mobile-card-slide card-scroll-anim relative w-full h-[150px] sm:h-[170px] md:h-[280px] lg:h-[320px] group flex items-center',
         isComingSoon ? 'cursor-default' : 'cursor-pointer',
@@ -159,7 +167,7 @@ export function ExperienceCard({
         </div>
 
         {/* Bottom Section */}
-        <div className="flex flex-col items-end gap-1.5 md:gap-2 transform transition-transform duration-700 group-hover:-translate-x-1.5 relative z-10">
+        <div className="flex flex-col items-end gap-1.5 md:gap-2 transform transition-transform duration-700 group-hover:-translate-x-1.5 rtl:group-hover:translate-x-1.5 relative z-10">
           <div className="flex items-center gap-2">
             <span className="text-[8px] md:text-[10px] lg:text-[11px] font-bold tracking-[0.4em] text-white/50 uppercase">{category}</span>
             <div className={cn(

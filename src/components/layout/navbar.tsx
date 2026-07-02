@@ -70,7 +70,7 @@ export function Navbar() {
                 >
                   {link.label}
                   <span
-                    className={`absolute -bottom-1.5 left-0 h-px bg-gold transition-all duration-300 ${
+                    className={`absolute -bottom-1.5 start-0 h-px bg-gold transition-all duration-300 ${
                       pathname === link.href ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}
                   />
@@ -83,7 +83,7 @@ export function Navbar() {
               {/* Cart */}
               <Link
                 href="/cart"
-                className={`relative p-2 transition-colors ${
+                className={`relative p-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${
                   scrolled ? 'text-paper/70 hover:text-gold' : 'text-ink/70 hover:text-gold'
                 }`}
                 aria-label={t('nav.cart')}
@@ -104,7 +104,7 @@ export function Navbar() {
               <MagneticButton strength={0.2}>
                 <button
                   onClick={switchLocale}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-xs font-medium transition-colors ${
                     scrolled
                       ? 'text-paper/70 hover:text-gold'
                       : 'text-ink/70 hover:text-gold'
@@ -152,7 +152,7 @@ export function Navbar() {
                 </span>
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="text-paper/60 hover:text-paper"
+                  className="text-paper/60 hover:text-paper min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   <X className="w-5 h-5" />
                 </button>

@@ -17,7 +17,9 @@
 
   /* === Brand Accent (LUT Red) === */
   --c-gold: #E62129;           /* LUT brand red — replaces gold */
+  --c-brand: #E62129;          /* Alias for brand red */
   --c-gold-soft: #FF3B3B;      /* Lighter red for hover states */
+  --c-brand-soft: #FF3B3B;     /* Alias for brand soft */
   --c-copper: #990000;         /* Deep dark red */
 
   /* === Expressive Accents === */
@@ -130,6 +132,7 @@
   --color-ink: #0A0A0A;
   --color-paper: #FFFFFF;
   --color-gold: #E62129;
+  --color-brand: #E62129;
   --color-copper: #990000;
   --color-wine: #4A0000;
   --color-lut: #E62129;

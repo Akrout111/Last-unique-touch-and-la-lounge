@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRouter, usePathname, Link } from '@/i18n/routing'
@@ -38,11 +38,16 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [searchValue, setSearchValue] = useState('')
+  const [searchValue, setSearchValue] = useState(searchParams.get('q') ?? '')
+  const isFirstRender = useRef(true)
 
   const statusFilters = ['all', 'PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams)
       if (searchValue) {

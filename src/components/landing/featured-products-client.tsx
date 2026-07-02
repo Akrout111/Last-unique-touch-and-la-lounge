@@ -154,7 +154,7 @@ export function FeaturedProductsClient({ products }: { products: ProductWithImag
                             <span className="font-display text-lg text-ink tabular-nums">
                               {product.rentalPricePerDay.toFixed(3)}
                             </span>
-                            <span className="font-mono text-[10px] text-stone">KWD/day</span>
+                            <span className="font-mono text-[10px] text-stone">{t('featured.perDay')}</span>
                           </div>
                         </div>
 

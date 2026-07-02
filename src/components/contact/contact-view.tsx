@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, CheckCircle2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram } from 'lucide-react'
+import { Loader2, CheckCircle2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram, AlertCircle } from 'lucide-react'
 
 const contactSchema = z.object({
   name: z.string().min(3).max(100),
@@ -100,7 +100,14 @@ export function ContactView() {
                     className="bg-background"
                   />
                   {errors.name && (
-                    <p className="text-xs text-lut">{t('contact.form.name')} *</p>
+                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {errors.name?.type === 'required'
+                          ? t('contact.form.errors.nameRequired')
+                          : t('contact.form.errors.nameMinLength')}
+                      </span>
+                    </p>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -115,7 +122,14 @@ export function ContactView() {
                     className="bg-background"
                   />
                   {errors.email && (
-                    <p className="text-xs text-lut">{t('contact.form.email')} *</p>
+                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {errors.email?.type === 'required'
+                          ? t('contact.form.errors.emailRequired')
+                          : t('contact.form.errors.emailInvalid')}
+                      </span>
+                    </p>
                   )}
                 </div>
               </div>
@@ -144,7 +158,14 @@ export function ContactView() {
                     className="bg-background"
                   />
                   {errors.subject && (
-                    <p className="text-xs text-lut">{t('contact.form.subject')} *</p>
+                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {errors.subject?.type === 'required'
+                          ? t('contact.form.errors.subjectRequired')
+                          : t('contact.form.errors.subjectMinLength')}
+                      </span>
+                    </p>
                   )}
                 </div>
               </div>
@@ -161,7 +182,14 @@ export function ContactView() {
                   className="bg-background"
                 />
                 {errors.message && (
-                  <p className="text-xs text-lut">{t('contact.form.message')} *</p>
+                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      {errors.message?.type === 'required'
+                        ? t('contact.form.errors.messageRequired')
+                        : t('contact.form.errors.messageMinLength')}
+                    </span>
+                  </p>
                 )}
               </div>
 

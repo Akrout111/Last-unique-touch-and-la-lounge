@@ -216,7 +216,14 @@ export function PaymentView({ orderId }: PaymentViewProps) {
                 className="bg-background"
               />
               {errors.cardName && (
-                <p className="text-xs text-lut">{t('payment.form.cardName')} *</p>
+                <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    {errors.cardName?.type === 'required'
+                      ? t('payment.errors.nameRequired')
+                      : t('payment.errors.nameMinLength')}
+                  </span>
+                </p>
               )}
             </div>
 
@@ -366,7 +373,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground mb-4">
-                {t('cart.item.quantity')}: 0
+                {t('payment.emptyCart')}
               </p>
             )}
 
@@ -376,7 +383,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
                 {t('checkout.summary.total')}
               </span>
               <span className="text-xl font-bold text-lut">
-                {total.toFixed(3)} KWD
+                {t('payment.total', { amount: total.toFixed(3) })}
               </span>
             </div>
 

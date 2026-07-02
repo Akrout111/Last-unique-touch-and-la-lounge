@@ -49,7 +49,7 @@ export default function LaLoungeView() {
           transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
           className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-purple-950 tracking-widest drop-shadow-sm"
         >
-          La Lounge
+          {t('brandSelector.lalounge.name')}
         </motion.h1>
 
         <motion.p
