@@ -228,7 +228,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           <button
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={isOutOfStock || quantity <= 1}
-            className="w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label={t('product.quantity.decrease')}
           >
             <Minus className="w-4 h-4" />
@@ -239,7 +239,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           <button
             onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
             disabled={isOutOfStock || quantity >= maxQty}
-            className="w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label={t('product.quantity.increase')}
           >
             <Plus className="w-4 h-4" />

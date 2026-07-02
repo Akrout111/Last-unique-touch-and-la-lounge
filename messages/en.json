@@ -3,7 +3,9 @@
     "home": "Home",
     "products": "Products",
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "cart": "Cart",
+    "menu": "Menu"
   },
   "brand": {
     "lut": "Last Unique Touch",
@@ -16,7 +18,16 @@
     "subtitle": "A luxury platform for furniture and event equipment rental in Kuwait",
     "ctaPrimary": "Browse Products",
     "ctaSecondary": "About Us",
-    "stat": "+500 luxury items"
+    "stat": "+500 luxury items",
+    "eyebrow": "Luxury Rental Platform · Kuwait",
+    "chooseExperience": "Choose Your Experience",
+    "explore": "Explore",
+    "comingSoon": "Coming Soon",
+    "statLabels": {
+      "luxuryItems": "Luxury Items",
+      "events": "Events",
+      "years": "Years"
+    }
   },
   "brandSelector": {
     "title": "Choose Your Experience",
@@ -60,26 +71,32 @@
         "title": "3D Preview",
         "desc": "View products from every angle before booking"
       }
-    }
+    },
+    "eyebrow": "Why Us"
   },
   "cta": {
     "title": "Ready for your next event?",
     "subtitle": "Browse our luxury collection and book now",
     "primary": "Get Started",
-    "secondary": "Contact Us"
+    "secondary": "Contact Us",
+    "eyebrow": "Get Started"
   },
   "footer": {
     "tagline": "A luxury platform for furniture and event equipment rental",
     "quickLinks": "Quick Links",
     "sisterBrands": "Sister Brands",
     "contact": "Contact",
+    "cart": "Cart",
+    "menu": "Menu",
     "phone": "+965 1234 5678",
     "email": "info@lastuniquetouch.com",
     "address": "Kuwait",
     "rights": "© 2026 Last Unique Touch. All rights reserved.",
     "terms": "Terms & Conditions",
     "privacy": "Privacy Policy",
-    "refund": "Refund Policy"
+    "refund": "Refund Policy",
+    "legal": "Legal",
+    "craftedIn": "Crafted with passion in Kuwait"
   },
   "common": {
     "loading": "Loading...",
@@ -314,7 +331,15 @@
       "not_found": "Not found",
       "internal_error": "An error occurred — please try again later",
       "unauthorized": "Unauthorized"
-    }
+    },
+    "confirmDelete": {
+      "title": "Confirm Delete",
+      "message": "Are you sure you want to delete \"{name}\"?",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "processing": "Deleting..."
+    },
+    "dir": "ltr"
   },
   "cart": {
     "title": "Shopping Cart",
@@ -471,7 +496,8 @@
       "message": "Message",
       "submit": "Send",
       "submitting": "Sending...",
-      "success": "Your message has been sent! We'll reply soon."
+      "success": "Your message has been sent! We'll reply soon.",
+      "sendAnother": "Send another message"
     },
     "info": {
       "address": "Address",
@@ -485,5 +511,15 @@
       "whatsapp": "WhatsApp",
       "instagram": "Instagram"
     }
+  },
+  "laLounge": {
+    "back": "Back",
+    "subtitle": "Modern luxury designs for events and exhibitions",
+    "explore": "Explore"
+  },
+  "featuredProducts": {
+    "eyebrow": "Curated For This Season",
+    "subtitle": "Carefully selected pieces to add a luxurious touch to your events",
+    "viewDetails": "View Details"
   }
 }

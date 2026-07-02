@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Check, X, CheckCheck, Loader2 } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Check, X, CheckCheck, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/providers/toast-provider'
 import { updateBookingStatusAction } from '@/app/[locale]/admin/(dashboard)/bookings/actions'
 import { localizedName } from '@/lib/products'
@@ -41,6 +41,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
   const { showToast } = useToast()
   const router = useRouter()
   const [updating, setUpdating] = useState(false)
+  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   const days = Math.max(
     1,
@@ -75,7 +76,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
         href="/admin/bookings"
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-lut transition-colors"
       >
-        <ArrowRight className="w-4 h-4 rotate-180" />
+        <ArrowIcon className="w-4 h-4 rotate-180" />
         {t('admin.bookings.title')}
       </Link>
 

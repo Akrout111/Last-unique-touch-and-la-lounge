@@ -43,6 +43,8 @@ export function Model3D({
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        // Clone the material so we don't mutate the cached GLTF scene's materials
+        child.material = (child.material as THREE.Material).clone()
         const mat = child.material as THREE.MeshStandardMaterial
         mat.transparent = true
         mat.opacity = visible ? 1 : 0

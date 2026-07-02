@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import {
   type CartItem,
   getCart,
@@ -78,34 +78,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([])
   }, [])
 
-  const count = items.reduce((sum, i) => sum + i.quantity, 0)
-  const rentalTotal = items.reduce(
-    (sum, i) => sum + i.rentalPricePerDay * i.days * i.quantity,
-    0
+  const count = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items])
+  const rentalTotal = useMemo(
+    () => items.reduce((sum, i) => sum + i.rentalPricePerDay * i.days * i.quantity, 0),
+    [items]
   )
-  const depositTotal = items.reduce(
-    (sum, i) => sum + i.securityDeposit * i.quantity,
-    0
+  const depositTotal = useMemo(
+    () => items.reduce((sum, i) => sum + i.securityDeposit * i.quantity, 0),
+    [items]
   )
-  const total = rentalTotal + depositTotal
+  const total = useMemo(() => rentalTotal + depositTotal, [rentalTotal, depositTotal])
+
+  const value = useMemo(
+    () => ({
+      items,
+      count,
+      total,
+      rentalTotal,
+      depositTotal,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clear,
+      hydrated,
+    }),
+    [items, count, total, rentalTotal, depositTotal, addItem, removeItem, updateQuantity, clear, hydrated]
+  )
 
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        count,
-        total,
-        rentalTotal,
-        depositTotal,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clear,
-        hydrated,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+    <CartContext.Provider value={value}>{children}</CartContext.Provider>
   )
 }
 

@@ -54,7 +54,7 @@ export function Hero() {
         >
           <span className="w-6 sm:w-8 h-px bg-gold/50" />
           <span className="eyebrow text-gold/80 text-[10px] sm:text-xs">
-            {locale === 'ar' ? 'منصة تأجير فاخرة · الكويت' : 'Luxury Rental Platform · Kuwait'}
+            {t('hero.eyebrow')}
           </span>
           <span className="w-6 sm:w-8 h-px bg-gold/50" />
         </div>
@@ -70,7 +70,7 @@ export function Hero() {
           className="animate-hero-in text-xs sm:text-sm text-paper/60 mt-1"
           style={{ animationDelay: '0.5s' }}
         >
-          {locale === 'ar' ? 'اختر تجربتك' : 'Choose Your Experience'}
+          {t('hero.chooseExperience')}
         </p>
       </motion.div>
 
@@ -80,7 +80,7 @@ export function Hero() {
           <ExperienceCard
             category="Heritage"
             title={t('brandSelector.lut.name')}
-            actionText={locale === 'ar' ? 'استكشف' : 'Explore'}
+            actionText={t('hero.explore')}
             productImageUrl="/products/lalounge_modern.webp"
             logoUrl="/logo-lut.jpg"
             isComingSoon={false}
@@ -93,7 +93,7 @@ export function Hero() {
           <ExperienceCard
             category="Modern"
             title={t('brandSelector.lalounge.name')}
-            actionText={locale === 'ar' ? 'استكشف' : 'Explore'}
+            actionText={t('hero.explore')}
             productImageUrl="/products/lut_heritage.webp"
             logoUrl="/logo-lalounge.jpg"
             isComingSoon={false}
@@ -106,7 +106,7 @@ export function Hero() {
           <ExperienceCard
             category="Atelier"
             title={t('brandSelector.birthday.name')}
-            actionText={locale === 'ar' ? 'قريباً' : 'Coming Soon'}
+            actionText={t('hero.comingSoon')}
             productImageUrl="/products/birthday_atelier.webp"
             logoUrl="/logo-birthday.jpg"
             isComingSoon={true}
@@ -126,9 +126,9 @@ export function Hero() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-4 sm:gap-12">
             {[
-              { value: '500+', label: locale === 'ar' ? 'منتج فاخر' : 'Luxury Items' },
-              { value: '2000+', label: locale === 'ar' ? 'حدث ناجح' : 'Events' },
-              { value: '5', label: locale === 'ar' ? 'سنوات خبرة' : 'Years' },
+              { value: '500+', label: t('hero.statLabels.luxuryItems') },
+              { value: '2000+', label: t('hero.statLabels.events') },
+              { value: '5', label: t('hero.statLabels.years') },
             ].map((stat, i) => (
               <div
                 key={i}

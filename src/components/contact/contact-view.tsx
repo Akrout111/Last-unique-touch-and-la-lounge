@@ -80,7 +80,7 @@ export function ContactView() {
                 variant="outline"
                 className="mt-4 border-border"
               >
-                {t('contact.form.subject') !== 'Subject' ? 'إرسال رسالة أخرى' : 'Send another message'}
+                {t('contact.form.sendAnother')}
               </Button>
             </div>
           ) : (

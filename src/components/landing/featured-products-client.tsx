@@ -47,16 +47,14 @@ export function FeaturedProductsClient({ products }: { products: ProductWithImag
             <div className="flex items-center gap-3 mb-4">
               <span className="w-8 h-px bg-gold" />
               <span className="eyebrow text-gold">
-                {locale === 'ar' ? 'مختارات لهذا الموسم' : 'Curated For This Season'}
+                {t('featuredProducts.eyebrow')}
               </span>
             </div>
             <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-ink leading-tight">
               {t('featured.title')}
             </h2>
             <p className="text-stone text-base mt-4 max-w-lg">
-              {locale === 'ar'
-                ? 'قطع مختارة بعناية لإضافة لمسة فاخرة إلى مناسباتك'
-                : 'Carefully selected pieces to add a luxurious touch to your events'}
+              {t('featuredProducts.subtitle')}
             </p>
           </div>
           <div className="md:col-span-4 text-start md:text-end">
@@ -182,7 +180,7 @@ export function FeaturedProductsClient({ products }: { products: ProductWithImag
                         <div className="flex items-center justify-between mt-3">
                           <div className="w-8 h-px bg-gold group-hover:w-16 transition-all duration-500" />
                           <span className="eyebrow text-taupe opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                            {locale === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                            {t('featuredProducts.viewDetails')}
                           </span>
                         </div>
                       </div>

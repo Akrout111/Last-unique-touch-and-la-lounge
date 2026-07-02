@@ -119,7 +119,7 @@ export function CartView() {
                       <button
                         onClick={() => updateQuantity(index, item.quantity - 1)}
                         disabled={item.quantity <= 1}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         aria-label={t('product.quantity.decrease')}
                       >
                         <Minus className="w-3 h-3" />
@@ -129,7 +129,7 @@ export function CartView() {
                       </span>
                       <button
                         onClick={() => updateQuantity(index, item.quantity + 1)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary transition-colors"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary transition-colors"
                         aria-label={t('product.quantity.increase')}
                       >
                         <Plus className="w-3 h-3" />

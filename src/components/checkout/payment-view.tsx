@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslations, useLocale } from 'next-intl'
@@ -43,6 +43,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
   } = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
@@ -191,6 +192,8 @@ export function PaymentView({ orderId }: PaymentViewProps) {
               <Input
                 id="cardNumber"
                 dir="ltr"
+                autoComplete="cc-number"
+                inputMode="numeric"
                 placeholder="0000 0000 0000 0000"
                 {...register('cardNumber')}
                 onChange={handleCardNumberChange}
@@ -208,6 +211,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
               </Label>
               <Input
                 id="cardName"
+                autoComplete="cc-name"
                 {...register('cardName')}
                 className="bg-background"
               />
@@ -225,6 +229,8 @@ export function PaymentView({ orderId }: PaymentViewProps) {
                 <Input
                   id="expiry"
                   dir="ltr"
+                  autoComplete="cc-exp"
+                  inputMode="numeric"
                   placeholder="MM/YY"
                   {...register('expiry')}
                   onChange={handleExpiryChange}
@@ -242,6 +248,8 @@ export function PaymentView({ orderId }: PaymentViewProps) {
                   id="cvv"
                   type="password"
                   dir="ltr"
+                  autoComplete="cc-csc"
+                  inputMode="numeric"
                   placeholder="•••"
                   {...register('cvv')}
                   onChange={handleCvvChange}
@@ -255,7 +263,17 @@ export function PaymentView({ orderId }: PaymentViewProps) {
 
             {/* Save card (UI only) */}
             <div className="flex items-center gap-2">
-              <Checkbox id="saveCard" {...register('saveCard')} />
+              <Controller
+                control={control}
+                name="saveCard"
+                render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                    id="saveCard"
+                    checked={value ?? false}
+                    onCheckedChange={(c) => onChange(!!c)}
+                  />
+                )}
+              />
               <Label htmlFor="saveCard" className="text-sm text-muted-foreground cursor-pointer">
                 {t('payment.form.saveCard')}
               </Label>
@@ -364,7 +382,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
 
             <Button asChild variant="outline" className="w-full mt-4 border-border">
               <Link href="/cart">
-                <ArrowLeft className="w-4 h-4 me-2" />
+                <ArrowIcon className="w-4 h-4 me-2" />
                 {t('payment.backToCart')}
               </Link>
             </Button>

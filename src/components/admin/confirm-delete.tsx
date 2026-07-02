@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, X } from 'lucide-react'
 
@@ -11,6 +12,7 @@ interface ConfirmDeleteProps {
 }
 
 export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeleteProps) {
+  const t = useTranslations('admin.confirmDelete')
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -24,16 +26,33 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
     }
   }
 
+  useEffect(() => {
+    if (!open) return
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !deleting) setOpen(false)
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [open, deleting])
+
   return (
     <>
-      <div onClick={() => setOpen(true)} className="cursor-pointer">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="cursor-pointer bg-transparent border-0 p-0"
+        aria-label={t('title')}
+      >
         {trigger}
-      </div>
+      </button>
 
       {open && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
           onClick={() => !deleting && setOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('title')}
         >
           <div
             className="bg-card rounded-xl shadow-xl max-w-sm w-full p-6"
@@ -44,18 +63,18 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <button
+                type="button"
                 onClick={() => !deleting && setOpen(false)}
                 className="text-muted-foreground hover:text-foreground"
+                aria-label={t('cancel')}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <h3 className="text-lg font-bold text-foreground mb-2">
-              تأكيد الحذف
-            </h3>
+            <h3 className="text-lg font-bold text-foreground mb-2">{t('title')}</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              هل أنت متأكد من حذف &ldquo;{itemName}&rdquo;؟
+              {t('message', { name: itemName })}
             </p>
 
             <div className="flex gap-3">
@@ -65,14 +84,14 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
                 onClick={() => setOpen(false)}
                 disabled={deleting}
               >
-                إلغاء
+                {t('cancel')}
               </Button>
               <Button
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleConfirm}
                 disabled={deleting}
               >
-                {deleting ? 'جارٍ الحذف...' : 'حذف'}
+                {deleting ? t('processing') : t('confirm')}
               </Button>
             </div>
           </div>

@@ -44,7 +44,7 @@ export function CTASection() {
           <div className="flex items-center justify-center gap-3 mb-8">
             <span className="w-8 h-px bg-gold" />
             <span className="eyebrow text-gold">
-              {locale === 'ar' ? 'ابدأ الآن' : 'Get Started'}
+              {t('cta.eyebrow')}
             </span>
             <span className="w-8 h-px bg-gold" />
           </div>

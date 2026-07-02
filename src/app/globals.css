@@ -482,23 +482,9 @@
 }
 
 /* ========================================
-   HERO ENTRANCE ANIMATIONS (CSS-based)
+   HERO ENTRANCE ANIMATIONS — defined once above (line ~371).
+   Duplicate removed to avoid CSS conflicts.
    ======================================== */
-@keyframes hero-fade-down {
-  from { opacity: 0; transform: translateY(-30px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes hero-fade-up {
-  from { opacity: 0; transform: translateY(50px) scale(0.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes hero-fade-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-.animate-hero-down { opacity: 0; animation: hero-fade-down 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-hero-up { opacity: 0; animation: hero-fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-hero-in { opacity: 0; animation: hero-fade-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 /* ========================================
    NAVBAR SLIDE-IN

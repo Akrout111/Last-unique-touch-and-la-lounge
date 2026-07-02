@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+
 export default function GlobalError({
   error,
   reset,
@@ -7,13 +9,24 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  useEffect(() => {
+    console.error(error)
+  }, [error])
+
+  // Detect locale from URL
+  const isArabic = typeof window !== 'undefined' && window.location.pathname.includes('/ar')
+
   return (
-    <html lang="ar" dir="rtl">
+    <html lang={isArabic ? 'ar' : 'en'} dir={isArabic ? 'rtl' : 'ltr'}>
       <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0, padding: '20px' }}>
         <div style={{ maxWidth: '500px', margin: '50px auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>حدث خطأ حرج</h2>
+          <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>
+            {isArabic ? 'حدث خطأ حرج' : 'Critical Error'}
+          </h2>
           <p style={{ color: '#666', marginBottom: '24px' }}>
-            نعتذر — حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.
+            {isArabic
+              ? 'نعتذر — حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'
+              : 'We apologize — an unexpected error occurred. Please try again.'}
           </p>
           {error.digest && (
             <p style={{ fontSize: '12px', color: '#999', marginBottom: '16px', fontFamily: 'monospace' }}>
@@ -33,7 +46,7 @@ export default function GlobalError({
               fontWeight: 600,
             }}
           >
-            إعادة المحاولة
+            {isArabic ? 'إعادة المحاولة' : 'Try again'}
           </button>
         </div>
       </body>

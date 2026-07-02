@@ -145,6 +145,7 @@ export function CheckoutView() {
                 </Label>
                 <Input
                   id="customerName"
+                  autoComplete="name"
                   {...register('customerName')}
                   className="bg-background"
                 />
@@ -163,6 +164,7 @@ export function CheckoutView() {
                     id="customerPhone"
                     type="tel"
                     dir="ltr"
+                    autoComplete="tel"
                     {...register('customerPhone')}
                     className="bg-background"
                   />
@@ -178,6 +180,7 @@ export function CheckoutView() {
                     id="customerEmail"
                     type="email"
                     dir="ltr"
+                    autoComplete="email"
                     {...register('customerEmail')}
                     className="bg-background"
                   />
@@ -195,6 +198,7 @@ export function CheckoutView() {
                 <Textarea
                   id="address"
                   rows={2}
+                  autoComplete="street-address"
                   {...register('address')}
                   className="bg-background"
                 />
@@ -210,6 +214,7 @@ export function CheckoutView() {
                 </Label>
                 <Input
                   id="city"
+                  autoComplete="address-level2"
                   {...register('city')}
                   className="bg-background"
                 />

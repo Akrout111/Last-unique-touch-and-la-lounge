@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ExperienceCardProps {
@@ -34,6 +34,7 @@ export function ExperienceCard({
 }: ExperienceCardProps) {
   const cardIdx = Math.max(0, parseInt(index, 10) - 1)
   const cardRef = useRef<HTMLDivElement>(null)
+  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
   // Track scroll direction + visibility to drive the exit/enter animation.
   // 'enter' = card is in view (animate in), 'exit' = scrolled past (animate out).
   const [animState, setAnimState] = useState<'enter' | 'exit'>('enter')
@@ -174,7 +175,7 @@ export function ExperienceCard({
             isComingSoon ? 'text-white/30' : 'text-white/60 group-hover:text-white',
           )}>
             <span>{actionText}</span>
-            <span>{isComingSoon ? <Plus className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}</span>
+            <span>{isComingSoon ? <Plus className="w-4 h-4" /> : <ArrowIcon className="w-4 h-4" />}</span>
           </div>
         </div>
       </div>

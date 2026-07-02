@@ -31,6 +31,7 @@ export function initScrollTracking(heroEl: HTMLElement | null): () => void {
 
   let rafId = 0
   let heroVisible = true
+  let lastOffset = -1
 
   const update = () => {
     const rect = heroEl.getBoundingClientRect()
@@ -45,11 +46,33 @@ export function initScrollTracking(heroEl: HTMLElement | null): () => void {
       heroVisible = visible
       useScrollStore.getState().setHeroVisible(visible)
     }
-    useScrollStore.getState().setOffset(offset)
 
+    // Only call setOffset when the value actually changes
+    if (offset !== lastOffset) {
+      lastOffset = offset
+      useScrollStore.getState().setOffset(offset)
+    }
+
+    // Stop the RAF loop once the hero is no longer visible — the scroll
+    // listener below will restart it if the hero comes back into view.
+    if (!heroVisible) {
+      rafId = 0
+      return
+    }
     rafId = requestAnimationFrame(update)
   }
 
+  const onScroll = () => {
+    if (!rafId) {
+      rafId = requestAnimationFrame(update)
+    }
+  }
+
   rafId = requestAnimationFrame(update)
-  return () => cancelAnimationFrame(rafId)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  return () => {
+    if (rafId) cancelAnimationFrame(rafId)
+    rafId = 0
+    window.removeEventListener('scroll', onScroll)
+  }
 }

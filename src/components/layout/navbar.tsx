@@ -49,7 +49,7 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0 group">
               <span className={`font-display text-2xl font-semibold transition-colors ${
-                scrolled ? 'text-paper' : 'text-paper'
+                scrolled ? 'text-paper' : 'text-ink'
               }`}>
                 {t('brand.lut')}
               </span>
@@ -65,7 +65,7 @@ export function Navbar() {
                   className={`relative text-sm font-medium tracking-wide transition-colors duration-300 group ${
                     pathname === link.href
                       ? 'text-gold'
-                      : scrolled ? 'text-paper/70 hover:text-paper' : 'text-paper/70 hover:text-paper'
+                      : scrolled ? 'text-paper/70 hover:text-paper' : 'text-ink/70 hover:text-ink'
                   }`}
                 >
                   {link.label}
@@ -84,9 +84,9 @@ export function Navbar() {
               <Link
                 href="/cart"
                 className={`relative p-2 transition-colors ${
-                  scrolled ? 'text-paper/70 hover:text-gold' : 'text-paper/70 hover:text-gold'
+                  scrolled ? 'text-paper/70 hover:text-gold' : 'text-ink/70 hover:text-gold'
                 }`}
-                aria-label="Cart"
+                aria-label={t('nav.cart')}
               >
                 <ShoppingCart className="w-5 h-5" strokeWidth={1.3} />
                 {hydrated && count > 0 && (
@@ -107,7 +107,7 @@ export function Navbar() {
                   className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
                     scrolled
                       ? 'text-paper/70 hover:text-gold'
-                      : 'text-paper/70 hover:text-gold'
+                      : 'text-ink/70 hover:text-gold'
                   }`}
                 >
                   <Globe className="w-4 h-4" strokeWidth={1.3} />
@@ -117,9 +117,9 @@ export function Navbar() {
 
               {/* Mobile menu button */}
               <button
-                className="md:hidden text-paper p-2"
+                className="md:hidden text-paper p-2 min-w-[44px] min-h-[44px]"
                 onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Menu"
+                aria-label={t('nav.menu')}
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -140,9 +140,9 @@ export function Navbar() {
               onClick={() => setMobileOpen(false)}
             />
             <motion.div
-              initial={{ x: '100%' }}
+              initial={{ x: locale === 'ar' ? '-100%' : '100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
+              exit={{ x: locale === 'ar' ? '-100%' : '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed top-0 end-0 bottom-0 z-50 w-80 max-w-[85vw] bg-ink md:hidden flex flex-col"
             >

@@ -1,7 +1,10 @@
-import { useRef, useMemo, useEffect } from 'react';
+'use client';
+
+import { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PointMaterial, Html } from '@react-three/drei';
+import { PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
+import { shouldEnable3D } from '@/lib/device-capabilities';
 
 function BlueprintGrid() {
   const gridGroup = useRef<THREE.Group>(null);
@@ -325,9 +328,34 @@ function CameraRig() {
 }
 
 export default function PurpleWaves3D() {
+  const [enabled, setEnabled] = useState(false)
+  const [inView, setInView] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setEnabled(shouldEnable3D())
+  }, [])
+
+  useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInView(entry.isIntersecting)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  if (!enabled) return null
+
   return (
-    <div className="absolute inset-0 w-full h-full pointer-events-none bg-[#fafafa] z-0 overflow-hidden">
-      <Canvas camera={{ position: [0, 40, 60], fov: 45 }}>
+    <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-none bg-[#fafafa] z-0 overflow-hidden">
+      <Canvas frameloop={inView ? 'always' : 'never'} camera={{ position: [0, 40, 60], fov: 45 }}>
         <fog attach="fog" args={['#fafafa', 50, 180]} />
         <CameraRig />
         <BlueprintGrid />

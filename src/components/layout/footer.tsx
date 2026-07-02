@@ -1,12 +1,11 @@
 'use client'
 
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Instagram, Phone } from 'lucide-react'
 
 export function Footer() {
   const t = useTranslations()
-  const locale = useLocale()
 
   return (
     <footer className="bg-ink text-paper/60 relative overflow-hidden">
@@ -77,7 +76,7 @@ export function Footer() {
           {/* Legal */}
           <div className="md:col-span-2">
             <h4 className="eyebrow text-gold mb-6">
-              {locale === 'ar' ? 'قانوني' : 'Legal'}
+              {t('footer.legal')}
             </h4>
             <ul className="space-y-3">
               {[
@@ -120,7 +119,7 @@ export function Footer() {
             {t('footer.rights')}
           </p>
           <p className="eyebrow text-paper/30">
-            {locale === 'ar' ? 'صُنع بشغف في الكويت' : 'Crafted with passion in Kuwait'}
+            {t('footer.craftedIn')}
           </p>
         </div>
       </div>

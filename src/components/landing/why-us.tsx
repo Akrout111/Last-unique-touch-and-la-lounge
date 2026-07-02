@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Armchair, CalendarDays, Truck, Box } from 'lucide-react'
 
 const features = [
@@ -13,7 +13,6 @@ const features = [
 
 export function WhyUs() {
   const t = useTranslations()
-  const locale = useLocale()
 
   return (
     <section className="relative py-32 bg-ink overflow-hidden">
@@ -47,7 +46,7 @@ export function WhyUs() {
           <div className="flex items-center justify-center gap-3 mb-6">
             <span className="w-8 h-px bg-gold" />
             <span className="eyebrow text-gold">
-              {locale === 'ar' ? 'لماذا نحن' : 'Why Us'}
+              {t('whyUs.eyebrow')}
             </span>
             <span className="w-8 h-px bg-gold" />
           </div>

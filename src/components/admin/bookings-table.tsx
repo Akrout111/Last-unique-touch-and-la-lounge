@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRouter, usePathname, Link } from '@/i18n/routing'
 import { Search, Eye } from 'lucide-react'
@@ -32,30 +33,38 @@ const statusColors: Record<string, string> = {
   COMPLETED: 'bg-blue-100 text-blue-700',
 }
 
-export function BookingsTable({ bookings, currentStatus, currentSearch, locale: _locale }: BookingsTableProps) {
+export function BookingsTable({ bookings, currentStatus, currentSearch: _currentSearch, locale: _locale }: BookingsTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
-  const [search, setSearch] = useState(currentSearch)
+  const searchParams = useSearchParams()
+  const [searchValue, setSearchValue] = useState('')
 
   const statusFilters = ['all', 'PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']
 
-  const updateUrl = (status: string, q: string) => {
-    const params = new URLSearchParams()
-    if (status !== 'all') params.set('status', status)
-    if (q.trim()) params.set('q', q.trim())
-    const qs = params.toString()
-    router.replace(`${pathname}${qs ? `?${qs}` : ''}`)
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams)
+      if (searchValue) {
+        params.set('q', searchValue)
+      } else {
+        params.delete('q')
+      }
+      params.delete('page')
+      router.replace(`${pathname}?${params.toString()}`)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchValue, searchParams, router, pathname])
 
   const handleStatusChange = (status: string) => {
-    updateUrl(status, search)
-  }
-
-  const handleSearch = (value: string) => {
-    setSearch(value)
-    const timer = setTimeout(() => updateUrl(currentStatus, value), 400)
-    return () => clearTimeout(timer)
+    const params = new URLSearchParams(searchParams)
+    if (status !== 'all') {
+      params.set('status', status)
+    } else {
+      params.delete('status')
+    }
+    params.delete('page')
+    router.replace(`${pathname}?${params.toString()}`)
   }
 
   return (
@@ -66,8 +75,8 @@ export function BookingsTable({ bookings, currentStatus, currentSearch, locale: 
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder={t('admin.bookings.table.customer') + ' / ' + t('admin.bookings.detail.phone') + ' / ' + t('admin.bookings.detail.email')}
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             className="ps-10 bg-card"
           />
         </div>

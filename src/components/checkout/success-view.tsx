@@ -1,7 +1,7 @@
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, ArrowLeft, Phone, Package, Truck, CheckCheck, Mail, CalendarPlus } from 'lucide-react'
+import { CheckCircle2, ArrowLeft, ArrowRight, Phone, Package, Truck, CheckCheck, Mail, CalendarPlus } from 'lucide-react'
 
 interface SuccessViewProps {
   orderId?: string
@@ -9,6 +9,8 @@ interface SuccessViewProps {
 
 export function SuccessView({ orderId }: SuccessViewProps) {
   const t = useTranslations()
+  const locale = useLocale()
+  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   const steps = [
     { icon: Package, key: 'step1' as const },
@@ -71,7 +73,7 @@ export function SuccessView({ orderId }: SuccessViewProps) {
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Button asChild className="bg-lut hover:bg-lut/90 text-white">
           <Link href="/">
-            <ArrowLeft className="w-4 h-4 me-2" />
+            <ArrowIcon className="w-4 h-4 me-2" />
             {t('checkout.success.goHome')}
           </Link>
         </Button>

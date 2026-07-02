@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -122,7 +122,7 @@ export function CategoriesTable({ categories, locale }: CategoriesTableProps) {
                 </tr>
               ) : (
                 categories.map((cat) => (
-                  <>
+                  <Fragment key={cat.id}>
                     {editingCategory?.id === cat.id ? (
                       <tr key={cat.id}>
                         <td colSpan={4} className="p-4">
@@ -162,7 +162,7 @@ export function CategoriesTable({ categories, locale }: CategoriesTableProps) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))
               )}
             </tbody>

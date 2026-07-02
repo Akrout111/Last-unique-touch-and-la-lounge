@@ -2,6 +2,7 @@
 
 import { useRef, type ReactNode, type MouseEvent } from 'react'
 import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { Link } from '@/i18n/routing'
 
 interface MagneticButtonProps {
   children: ReactNode
@@ -55,9 +56,9 @@ export function MagneticButton({
 
   if (href) {
     return (
-      <a href={href} onClick={onClick} className="inline-block">
+      <Link href={href} onClick={onClick} className="inline-block">
         {content}
-      </a>
+      </Link>
     )
   }
 

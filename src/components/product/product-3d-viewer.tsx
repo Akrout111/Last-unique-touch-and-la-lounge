@@ -19,11 +19,10 @@ const ModelCanvas = dynamic(
 )
 
 interface Product3DViewerProps {
-  modelUrl: string
   productSlug: string
 }
 
-export function Product3DViewer({ modelUrl: _modelUrl, productSlug }: Product3DViewerProps) {
+export function Product3DViewer({ productSlug }: Product3DViewerProps) {
   const t = useTranslations()
   const [enabled, setEnabled] = useState(false)
 
