@@ -44,11 +44,9 @@ export default function HomePage() {
       <CustomCursor />
       <Navbar />
       <main id="main-content">
-        {/* Hero now includes the 3 brand selector cards — visible immediately, no scroll */}
+        {/* Landing page — 3 brand selector cards over the 3D furniture tunnel.
+            Each card navigates to its own dedicated page. */}
         <Hero />
-        <FeaturedProducts />
-        <WhyUs />
-        <CTASection />
       </main>
       <Footer />
     </div>

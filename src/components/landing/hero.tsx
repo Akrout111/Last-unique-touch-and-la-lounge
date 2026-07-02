@@ -63,18 +63,18 @@ export function Hero() {
           className="animate-hero-down font-display text-xl sm:text-3xl md:text-4xl text-paper"
           style={{ animationDelay: '0.3s' }}
         >
-          {t('brand.lut')}
+          {t('hero.chooseExperience')}
         </h1>
 
         <p
           className="animate-hero-in text-xs sm:text-sm text-paper/60 mt-1"
           style={{ animationDelay: '0.5s' }}
         >
-          {t('hero.chooseExperience')}
+          {locale === 'ar' ? 'اختر تجربتك الفاخرة' : 'Choose your luxury experience'}
         </p>
       </motion.div>
 
-      {/* === Holo-Chamber Cards === */}
+      {/* === Holo-Chamber Cards (3 brand entries — not branded as any single brand) === */}
       <div className="relative z-20 flex-1 flex items-center px-3 sm:px-6 lg:px-8 py-2">
         <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 md:gap-6 lg:gap-8">
           <ExperienceCard
@@ -88,7 +88,7 @@ export function Hero() {
             index="01"
             accentColor="heritage"
             locale={locale}
-            onClick={() => router.push('/products')}
+            onClick={() => router.push('/last-unique-touch')}
           />
           <ExperienceCard
             category="Modern"
