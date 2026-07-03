@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
 import PurpleWaves3D from './purple-waves-3d'
@@ -16,14 +16,45 @@ export default function LaLoungeView() {
     router.push('/')
   }
 
-  return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-white flex flex-col items-center justify-center">
-      {/* High-fidelity 3D Wires Background */}
-      <div className="absolute inset-0 z-0">
-        <PurpleWaves3D />
-      </div>
+  const services = locale === 'ar' ? [
+    {
+      title: 'التخطيط والتجهيز',
+      desc: 'تخطيط كامل للفعاليات من الفكرة إلى التنفيذ — تصاميم مبتكرة، إدارة موقع، وتنسيق متكامل',
+      icon: '📋',
+    },
+    {
+      title: 'توفير الأثاث',
+      desc: 'تشكيلة واسعة من الأثاث الفاخر للفعاليات — كراسي، طاولات، أرائك، خيام، وأنظمة إضاءة',
+      icon: '🪑',
+    },
+    {
+      title: 'صنع أثاث مخصص',
+      desc: 'تصميم وتصنيع أثاث مخصص حسب طلبك لفعالية معينة — قطع فريدة تعكس هوية مناسبتك',
+      icon: '✨',
+    },
+  ] : [
+    {
+      title: 'Planning & Setup',
+      desc: 'Complete event planning from concept to execution — innovative designs, site management, and full coordination',
+      icon: '📋',
+    },
+    {
+      title: 'Furniture Supply',
+      desc: 'Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems',
+      icon: '🪑',
+    },
+    {
+      title: 'Custom Furniture Making',
+      desc: 'Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion',
+      icon: '✨',
+    },
+  ]
 
-      {/* Floating Back Button */}
+  return (
+    <div className="relative w-full min-h-screen overflow-hidden bg-white flex flex-col">
+      <PurpleWaves3D />
+
+      {/* Back button */}
       <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
         <motion.button
           initial={{ opacity: 0, x: locale === 'ar' ? 20 : -20 }}
@@ -36,18 +67,29 @@ export default function LaLoungeView() {
         >
           <ArrowIcon className="w-4 h-4" />
           <span className="font-sans font-medium tracking-wide">
-            {t('laLounge.back')}
+            {locale === 'ar' ? 'العودة' : 'Back'}
           </span>
         </motion.button>
       </div>
 
-      {/* Centered Luxury Brand Title Block */}
-      <main className="relative z-10 flex flex-col items-center text-center px-4">
+      {/* Hero + Services */}
+      <main className="relative z-10 flex flex-col items-center text-center px-4 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="flex items-center gap-2 mb-4"
+        >
+          <span className="text-purple-300 text-xs tracking-[0.3em] uppercase">
+            {locale === 'ar' ? 'تجهيز الفعاليات' : 'Event Solutions'}
+          </span>
+        </motion.div>
+
         <motion.h1
           initial={{ opacity: 0, filter: 'blur(10px)', y: 10 }}
           animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
-          transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
-          className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-purple-950 tracking-widest drop-shadow-sm"
+          transition={{ duration: 1.5, delay: 0.5, ease: 'easeOut' }}
+          className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-purple-950 tracking-widest drop-shadow-sm mb-4"
         >
           {t('brandSelector.lalounge.name')}
         </motion.h1>
@@ -55,22 +97,42 @@ export default function LaLoungeView() {
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.9, ease: 'easeOut' }}
-          className="mt-4 text-sm sm:text-base text-purple-700/70 font-sans tracking-wide max-w-md"
+          transition={{ duration: 1, delay: 0.9 }}
+          className="text-sm sm:text-base text-purple-700/70 font-sans tracking-wide max-w-lg mb-12"
         >
-          {t('laLounge.subtitle')}
+          {locale === 'ar'
+            ? 'حلول متكاملة للفعاليات — من التخطيط إلى التنفيذ، مع أثاث فاخر وتصاميم مخصصة'
+            : 'Complete event solutions — from planning to execution, with luxury furniture and custom designs'}
         </motion.p>
 
+        {/* Services grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full mb-12">
+          {services.map((service, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 1.0 + i * 0.2 }}
+              className="bg-white/60 backdrop-blur-md border border-purple-100/40 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow"
+            >
+              <div className="text-4xl mb-4">{service.icon}</div>
+              <h3 className="font-serif text-xl text-purple-950 mb-3">{service.title}</h3>
+              <p className="text-sm text-purple-700/60 leading-relaxed">{service.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* CTA */}
         <motion.button
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 1.2, ease: 'easeOut' }}
+          transition={{ duration: 1, delay: 1.8 }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => router.push('/products')}
-          className="mt-8 px-10 py-3.5 bg-purple-700 hover:bg-purple-800 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] hover:shadow-[0_6px_25px_rgba(126,34,206,0.4)] transition-all cursor-pointer border border-purple-500/30"
+          onClick={() => router.push('/contact')}
+          className="px-10 py-3.5 bg-purple-700 hover:bg-purple-800 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] hover:shadow-[0_6px_25px_rgba(126,34,206,0.4)] transition-all cursor-pointer border border-purple-500/30"
         >
-          {t('laLounge.explore')}
+          {locale === 'ar' ? 'تواصل معنا' : 'Contact Us'}
         </motion.button>
       </main>
     </div>

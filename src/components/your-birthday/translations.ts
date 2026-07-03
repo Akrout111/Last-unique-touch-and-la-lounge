@@ -19,10 +19,10 @@ export const translations = {
       langToggle: 'English',
     },
     hero: {
-      tagline: 'حيث تبدأ الليالي الأسطورية',
+      tagline: 'أدوات الحفلات وتجهيزها',
       title1: 'عيد ميلادك',
       subtitle:
-        'نحوّل يومك إلى تجربة احتفالية لا تُنسى — من الديكور الفاخر إلى الإضاءة والموسيقى والتصوير الفوتوغرافي.',
+        'منصة تأجير أدوات الحفلات وأعياد الميلاد وتجهيزها — رقصات مضيئة، أنظمة صوت، إضاءة، ديكور، والمزيد',
       cta1: 'احجز الباقة المميزة',
       cta2: 'استكشف الباقات',
       // Words cycled through by the TextScramble effect on the hero title
@@ -148,10 +148,10 @@ export const translations = {
       langToggle: 'عربي',
     },
     hero: {
-      tagline: 'Where Legendary Nights Begin',
+      tagline: 'Party Equipment & Setup',
       title1: 'YOUR BIRTHDAY',
       subtitle:
-        'We turn your day into an unforgettable celebration — from luxurious decor to lighting, music, and photography.',
+        'Party & birthday equipment rental and setup — LED dance floors, sound systems, lighting, decor, and more',
       cta1: 'Book Premium Package',
       cta2: 'Explore Packages',
       // Words cycled through by the TextScramble effect on the hero title
