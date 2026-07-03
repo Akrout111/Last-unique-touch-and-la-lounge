@@ -265,7 +265,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       {/* Price Summary */}
       {priceCalc && (
-        <div className="p-4 rounded-xl bg-bg-light border border-border space-y-2">
+        <div className="p-4 rounded-xl bg-stone-50 border border-border space-y-2">
           <h3 className="text-sm font-semibold text-foreground mb-2">
             {t('product.priceSummary.title')}
           </h3>

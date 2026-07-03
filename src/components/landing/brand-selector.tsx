@@ -19,18 +19,18 @@ const brands = [
   },
   {
     key: 'lalounge' as const,
-    href: null,
+    href: '/la-lounge',
     image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1200&q=80',
     accent: 'var(--c-lalounge)',
-    active: false,
+    active: true,
     tag: 'MODERN',
   },
   {
     key: 'birthday' as const,
-    href: null,
+    href: '/your-birthday',
     image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&q=80',
     accent: 'var(--c-birthday)',
-    active: false,
+    active: true,
     tag: 'ATELIER',
   },
 ]

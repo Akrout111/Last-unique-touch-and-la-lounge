@@ -138,7 +138,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         style={{
           fontFamily: isRTL
             ? 'var(--font-birthday-arabic), Cairo, sans-serif'
-            : 'var(--font-birthday-body), Inter, sans-serif',
+            : 'var(--font-birthday-sub), Inter, sans-serif',
           direction: isRTL ? 'rtl' : 'ltr'
         }}
       >
@@ -648,6 +648,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
               <button
                 onClick={() => setBookingOpen(false)}
+                aria-label={t.booking.close}
                 className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
                 style={isRTL ? { left: '16px', right: 'auto' } : {}}
               >
@@ -685,10 +686,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   {/* Input Fields */}
                   <div className="space-y-3.5 text-black">
                     <div className="relative">
+                      <label htmlFor="booking-name" className="sr-only">{t.booking.form.name}</label>
                       <User className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
                       <input
+                        id="booking-name"
                         type="text"
                         required
+                        aria-required="true"
                         placeholder={t.booking.form.name}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -697,10 +701,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                     </div>
 
                     <div className="relative">
+                      <label htmlFor="booking-phone" className="sr-only">{t.booking.form.phone}</label>
                       <Phone className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
                       <input
+                        id="booking-phone"
                         type="tel"
                         required
+                        aria-required="true"
                         placeholder={t.booking.form.phone}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -709,8 +716,10 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                     </div>
 
                     <div className="relative">
+                      <label htmlFor="booking-email" className="sr-only">{t.booking.form.email}</label>
                       <Mail className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
                       <input
+                        id="booking-email"
                         type="email"
                         placeholder={t.booking.form.email}
                         value={formData.email}
@@ -720,10 +729,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                     </div>
 
                     <div className="relative">
+                      <label htmlFor="booking-date" className="sr-only">{isRTL ? 'تاريخ الحفلة' : 'Event date'}</label>
                       <CalendarDays className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
                       <input
+                        id="booking-date"
                         type="date"
                         required
+                        aria-required="true"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                         className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
@@ -731,10 +743,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                     </div>
 
                     <div className="relative">
+                      <label htmlFor="booking-location" className="sr-only">{t.booking.form.location}</label>
                       <MapPin className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
                       <input
+                        id="booking-location"
                         type="text"
                         required
+                        aria-required="true"
                         placeholder={t.booking.form.location}
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
@@ -742,13 +757,17 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       />
                     </div>
 
-                    <textarea
-                      rows={2}
-                      placeholder={t.booking.form.notes}
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full p-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm"
-                    />
+                    <div className="relative">
+                      <label htmlFor="booking-notes" className="sr-only">{t.booking.form.notes}</label>
+                      <textarea
+                        id="booking-notes"
+                        rows={2}
+                        placeholder={t.booking.form.notes}
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        className="w-full p-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm"
+                      />
+                    </div>
                   </div>
 
                   <button

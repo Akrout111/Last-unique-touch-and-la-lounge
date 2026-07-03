@@ -63,6 +63,7 @@ enum BookingStatus {
   CONFIRMED
   CANCELLED
   COMPLETED
+  PAYMENT_FAILED
 }
 
 model Booking {
@@ -77,11 +78,15 @@ model Booking {
   customerEmail String
   totalAmount   Float
   currency      String        @default("KWD")
+  address       String?
+  city          String?
+  notes         String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   @@index([productId, startDate, endDate])
   @@index([status])
+  @@unique([productId, startDate, endDate], name: "no_double_booking")
 }
 
 // ===== Security Event Log =====

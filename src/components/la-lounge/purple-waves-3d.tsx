@@ -378,7 +378,7 @@ export default function PurpleWaves3D() {
 
   return (
     <div ref={containerRef} aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none bg-[#fafafa] z-0 overflow-hidden">
-      <Canvas frameloop={inView ? 'always' : 'never'} camera={{ position: [0, 40, 60], fov: 45 }}>
+      <Canvas frameloop={inView ? 'always' : 'never'} camera={{ position: [0, 40, 60], fov: 45 }} dpr={[1, 1.5]}>
         <fog attach="fog" args={['#fafafa', 50, 180]} />
         <CameraRig />
         <BlueprintGrid />

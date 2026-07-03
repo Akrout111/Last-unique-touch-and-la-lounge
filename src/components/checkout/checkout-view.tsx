@@ -290,7 +290,7 @@ export function CheckoutView() {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 p-6 rounded-xl bg-bg-light border border-border">
+          <div className="sticky top-24 p-6 rounded-xl bg-stone-50 border border-border">
             <h2 className="text-lg font-bold text-foreground mb-4">
               {t('checkout.summary.title')}
             </h2>

@@ -148,7 +148,7 @@ export function ExperienceCard({
         <div className="flex justify-between items-center w-full relative z-10">
           <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] lg:text-[11px] text-white/40 tracking-[0.2em] font-medium uppercase bg-white/[0.03] border border-white/5 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full">
             <span>EXP</span>
-            <span className="text-red-500">//</span>
+            <span className="text-red-500">{'//'}</span>
             <span>{index}</span>
           </div>
           {/* Brand Logo */}

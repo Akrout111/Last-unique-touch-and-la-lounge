@@ -48,6 +48,10 @@ coverage/
 # Agent scratch / tool results
 tool-results/
 upload/
+.zscripts/dev.pid
 
 # Production env
 .env.production
+prisma/db/*.db
+prisma/db/*.db-journal
+.env

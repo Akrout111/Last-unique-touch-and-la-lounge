@@ -69,6 +69,34 @@
   --sidebar-ring: #E62129;
 }
 
+/* ========================================
+   PER-BRAND THEMING (C18)
+   - `data-brand` is set on <html> by BrandThemeSetter
+     (src/components/providers/brand-theme-setter.tsx).
+   - Default :root matches LUT so SSR / no-JS falls back to LUT colors.
+   - Only --primary, --accent, --ring are overridden per brand; all other
+     tokens (background, foreground, borders, etc.) are inherited from :root.
+   ======================================== */
+
+:root,
+:root[data-brand="lut"] {
+  --primary: #E62129;
+  --accent: #E62129;
+  --ring: #E62129;
+}
+
+:root[data-brand="lalounge"] {
+  --primary: #FF1493;
+  --accent: #FF1493;
+  --ring: #FF1493;
+}
+
+:root[data-brand="birthday"] {
+  --primary: #8B5CF6;
+  --accent: #F97316;
+  --ring: #8B5CF6;
+}
+
 /* TODO: Dark mode is not currently exposed in the UI (no theme toggle).
    Commented out to avoid shipping dead tokens. Re-enable when a dark
    mode toggle is added. */
@@ -131,7 +159,7 @@
   /* LUT custom colors */
   --color-ink: #0A0A0A;
   --color-paper: #FFFFFF;
-  --color-gold: #E62129;
+  --color-gold: var(--color-brand);
   --color-brand: #E62129;
   --color-copper: #990000;
   --color-wine: #4A0000;

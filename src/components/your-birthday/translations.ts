@@ -120,6 +120,7 @@ export const translations = {
     booking: {
       modalTitle: 'حجز باقة عيد الميلاد',
       selectedPackageLabel: 'الباقة المحددة:',
+      close: 'إغلاق',
       submit: 'إرسال طلب الحجز',
       form: {
         name: 'الاسم الكامل',
@@ -249,6 +250,7 @@ export const translations = {
     booking: {
       modalTitle: 'Book Birthday Package',
       selectedPackageLabel: 'Selected Package:',
+      close: 'Close',
       submit: 'Submit Reservation Order',
       form: {
         name: 'Full Name',

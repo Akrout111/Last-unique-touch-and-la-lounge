@@ -144,7 +144,7 @@ export function ProductsFilters({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-lut text-white'
-                  : 'bg-bg-light text-foreground hover:bg-secondary'
+                  : 'bg-stone-50 text-foreground hover:bg-secondary'
               }`}
             >
               {chip.label}

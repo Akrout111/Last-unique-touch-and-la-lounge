@@ -45,7 +45,7 @@ export function SuccessView({ orderId }: SuccessViewProps) {
       </p>
 
       {/* Next steps card */}
-      <div className="p-6 rounded-xl bg-bg-light border border-border text-start mb-8">
+      <div className="p-6 rounded-xl bg-stone-50 border border-border text-start mb-8">
         <h2 className="text-lg font-bold text-foreground mb-4 text-center">
           {t('checkout.success.nextSteps.title')}
         </h2>

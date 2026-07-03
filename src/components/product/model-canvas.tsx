@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment, ContactShadows, Float } from '@react-three/drei'
+import { OrbitControls, Environment, ContactShadows, Float, useGLTF } from '@react-three/drei'
 import { Suspense, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -172,13 +172,31 @@ function FurnitureModel({ productSlug }: { productSlug: string }) {
   )
 }
 
-export function ModelCanvas({ modelUrl: _modelUrl, productSlug }: ModelCanvasProps) {
+/**
+ * Loads and renders an actual GLB/GLTF model from the given URL.
+ * Falls back to the procedural FurnitureModel if modelUrl is empty.
+ */
+function GLBModel({ modelUrl }: { modelUrl: string }) {
+  const { scene } = useGLTF(modelUrl)
+  const groupRef = useRef<THREE.Group>(null)
+
+  return (
+    <group ref={groupRef} scale={1}>
+      <primitive object={scene} />
+    </group>
+  )
+}
+
+export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
+  const hasModel = Boolean(modelUrl && modelUrl.trim().length > 0)
+
   return (
     <Canvas
       shadows
       camera={{ position: [3, 2, 4], fov: 45 }}
       gl={{ antialias: true, alpha: true }}
       style={{ background: 'transparent' }}
+      dpr={[1, 1.5]}
     >
       <ambientLight intensity={0.4} />
       <directionalLight
@@ -192,7 +210,11 @@ export function ModelCanvas({ modelUrl: _modelUrl, productSlug }: ModelCanvasPro
 
       <Suspense fallback={null}>
         <Float speed={2} rotationIntensity={0.3} floatIntensity={0.5}>
-          <FurnitureModel productSlug={productSlug} />
+          {hasModel ? (
+            <GLBModel modelUrl={modelUrl} />
+          ) : (
+            <FurnitureModel productSlug={productSlug} />
+          )}
         </Float>
         <ContactShadows
           position={[0, -1.2, 0]}

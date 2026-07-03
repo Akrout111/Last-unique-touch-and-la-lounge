@@ -11,7 +11,7 @@ export default async function PaymentPage({ searchParams }: PageProps) {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background">
+      <main id="main-content" className="min-h-screen bg-background">
         <PaymentView orderId={order} />
       </main>
       <Footer />

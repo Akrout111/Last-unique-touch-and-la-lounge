@@ -220,7 +220,7 @@ export function ContactView() {
 
         {/* Contact info */}
         <div className="lg:col-span-1">
-          <div className="p-6 rounded-xl bg-bg-light border border-border space-y-6">
+          <div className="p-6 rounded-xl bg-stone-50 border border-border space-y-6">
             {contactInfo.map((info, idx) => {
               const Icon = info.icon
               return (

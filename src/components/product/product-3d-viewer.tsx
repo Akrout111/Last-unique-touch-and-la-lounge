@@ -20,9 +20,10 @@ const ModelCanvas = dynamic(
 
 interface Product3DViewerProps {
   productSlug: string
+  model3dUrl: string | null | undefined
 }
 
-export function Product3DViewer({ productSlug }: Product3DViewerProps) {
+export function Product3DViewer({ productSlug, model3dUrl }: Product3DViewerProps) {
   const t = useTranslations()
   const [enabled, setEnabled] = useState(false)
 
@@ -68,7 +69,7 @@ export function Product3DViewer({ productSlug }: Product3DViewerProps) {
             </div>
           }
         >
-          <ModelCanvas modelUrl="" productSlug={productSlug} />
+          <ModelCanvas modelUrl={model3dUrl ?? ''} productSlug={productSlug} />
         </Suspense>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">

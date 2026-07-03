@@ -2,9 +2,11 @@ import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { MotionConfig } from 'framer-motion'
 import { routing } from '@/i18n/routing'
 import { CartProvider } from '@/components/providers/cart-provider'
 import { ToastProvider } from '@/components/providers/toast-provider'
+import { BrandThemeSetter } from '@/components/providers/brand-theme-setter'
 import { inter, tajawal, cormorant, dmMono, orbitron, rajdhani, cairo } from '@/app/fonts'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,10 +45,13 @@ export default async function LocaleLayout({
     notFound()
   }
 
+  const t = await getTranslations()
+
   return (
     <html
       lang={locale}
       dir={locale === 'ar' ? 'rtl' : 'ltr'}
+      data-brand="lut"
       className={`${inter.variable} ${tajawal.variable} ${cormorant.variable} ${dmMono.variable} ${orbitron.variable} ${rajdhani.variable} ${cairo.variable}`}
       suppressHydrationWarning
     >
@@ -55,11 +60,24 @@ export default async function LocaleLayout({
         <meta name="theme-color" content="#E62129" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
-        <NextIntlClientProvider>
-          <CartProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </CartProvider>
-        </NextIntlClientProvider>
+        {/* Skip-to-content link (WCAG 2.4.1 / C14) — first focusable element */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:rounded-md focus:shadow-lg"
+        >
+          {t('a11y.skipToContent')}
+        </a>
+
+        <MotionConfig reducedMotion="user">
+          <NextIntlClientProvider>
+            <CartProvider>
+              <ToastProvider>
+                <BrandThemeSetter />
+                {children}
+              </ToastProvider>
+            </CartProvider>
+          </NextIntlClientProvider>
+        </MotionConfig>
       </body>
     </html>
   )

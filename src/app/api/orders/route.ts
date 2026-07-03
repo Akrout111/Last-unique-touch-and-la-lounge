@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { checkProductAvailability } from '@/lib/products'
 
 const itemSchema = z.object({
   productId: z.string().min(1),
@@ -33,6 +32,36 @@ const orderSchema = z.object({
   idempotencyKey: z.string().min(10),
 })
 
+/**
+ * Check product availability inside a transaction using the transaction client.
+ * Returns true if no overlapping CONFIRMED or PENDING booking exists.
+ *
+ * Inlined here (instead of reusing checkProductAvailability from @/lib/products)
+ * so it runs against the transaction's view of the data with the requested
+ * isolation level (Serializable) — see C5.
+ */
+async function checkProductAvailabilityInTx(
+  tx: Parameters<Parameters<typeof db.$transaction>[0]>[0],
+  productId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<boolean> {
+  const conflictingBookings = await tx.booking.count({
+    where: {
+      productId,
+      status: { in: ['CONFIRMED', 'PENDING'] },
+      // Overlap condition: existing booking (s, e) overlaps with (startDate, endDate)
+      // if startDate < e AND endDate > s
+      AND: [
+        { startDate: { lt: endDate } },
+        { endDate: { gt: startDate } },
+      ],
+    },
+  })
+
+  return conflictingBookings === 0
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -47,7 +76,8 @@ export async function POST(req: NextRequest) {
 
     const { items, customer, idempotencyKey } = parsed.data
 
-    // 1. Idempotency check — prevent duplicate orders
+    // 1. Idempotency check — prevent duplicate orders (cheap pre-check; the
+    //    authoritative log is created inside the transaction below).
     const existing = await db.securityLog.findFirst({
       where: {
         event: 'order_idempotency',
@@ -62,7 +92,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 2. Re-verify products and prices on server (security rule #2)
+    // 2. Re-verify products and prices on server (cheap pre-check; the
+    //    authoritative stock/availability checks happen inside the tx).
     const productIds = items.map((i) => i.productId)
     const dbProducts = await db.product.findMany({
       where: { id: { in: productIds }, isActive: true },
@@ -75,80 +106,98 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 3. Re-check availability for each item (security critical)
-    for (const item of items) {
-      const product = dbProducts.find((p) => p.id === item.productId)
-      if (!product) continue
+    // 3. Re-check availability + stock INSIDE a Serializable transaction (C5).
+    //    This closes the TOCTOU race between the availability check and the
+    //    booking.create: with Serializable isolation (and the
+    //    `@@unique([productId, startDate, endDate])` constraint on Booking),
+    //    two concurrent orders for the same product/date range cannot both
+    //    succeed — the second will fail with a unique-constraint violation.
+    const result = await db.$transaction(
+      async (tx) => {
+        // Re-fetch products inside the tx for an authoritative stock check.
+        const txProducts = await tx.product.findMany({
+          where: { id: { in: productIds }, isActive: true },
+        })
 
-      // Verify price matches DB
-      if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.01) {
-        return NextResponse.json(
-          { error: 'price_mismatch' },
-          { status: 400 }
-        )
-      }
+        if (txProducts.length !== items.length) {
+          throw new OrderError('invalid_products', 400)
+        }
 
-      // Verify stock
-      if (product.stock < item.quantity) {
-        return NextResponse.json(
-          { error: 'insufficient_stock' },
-          { status: 400 }
-        )
-      }
+        // Verify price, stock, and availability for each item inside the tx.
+        for (const item of items) {
+          const product = txProducts.find((p) => p.id === item.productId)
+          if (!product) {
+            throw new OrderError('invalid_products', 400)
+          }
 
-      // Verify availability
-      const startDate = new Date(item.startDate)
-      const endDate = new Date(item.endDate)
-      const availability = await checkProductAvailability(item.productId, startDate, endDate)
+          // Verify price matches DB
+          if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.01) {
+            throw new OrderError('price_mismatch', 400)
+          }
 
-      if (!availability.available) {
-        return NextResponse.json(
-          { error: 'not_available' },
-          { status: 409 }
-        )
-      }
-    }
+          // Verify stock
+          if (product.stock < item.quantity) {
+            throw new OrderError('insufficient_stock', 400)
+          }
 
-    // 4. Create bookings in a transaction (security rule #12)
-    const result = await db.$transaction(async (tx) => {
-      const bookings = []
-
-      for (const item of items) {
-        const startDate = new Date(item.startDate)
-        const endDate = new Date(item.endDate)
-
-        const booking = await tx.booking.create({
-          data: {
-            productId: item.productId,
+          // Verify availability inside the tx (authoritative given isolation level)
+          const startDate = new Date(item.startDate)
+          const endDate = new Date(item.endDate)
+          const available = await checkProductAvailabilityInTx(
+            tx,
+            item.productId,
             startDate,
-            endDate,
-            status: 'PENDING',
-            customerName: customer.customerName,
-            customerPhone: customer.customerPhone,
-            customerEmail: customer.customerEmail,
-            totalAmount: item.total,
-            currency: 'KWD',
+            endDate
+          )
+
+          if (!available) {
+            throw new OrderError('not_available', 409)
+          }
+        }
+
+        // Create bookings inside the same tx (C5).
+        const bookings = []
+        for (const item of items) {
+          const startDate = new Date(item.startDate)
+          const endDate = new Date(item.endDate)
+
+          const booking = await tx.booking.create({
+            data: {
+              productId: item.productId,
+              startDate,
+              endDate,
+              status: 'PENDING',
+              customerName: customer.customerName,
+              customerPhone: customer.customerPhone,
+              customerEmail: customer.customerEmail,
+              totalAmount: item.total,
+              currency: 'KWD',
+              address: customer.address,
+              city: customer.city,
+              notes: customer.notes ?? null,
+            },
+          })
+
+          bookings.push(booking)
+        }
+
+        // Log idempotency key inside the tx so it commits atomically.
+        await tx.securityLog.create({
+          data: {
+            event: 'order_idempotency',
+            details: JSON.stringify({
+              idempotencyKey,
+              bookingIds: bookings.map((b) => b.id),
+            }),
           },
         })
 
-        bookings.push(booking)
-      }
+        return bookings
+      },
+      { isolationLevel: 'Serializable' }
+    )
 
-      // Log idempotency key
-      await tx.securityLog.create({
-        data: {
-          event: 'order_idempotency',
-          details: JSON.stringify({
-            idempotencyKey,
-            bookingIds: bookings.map((b) => b.id),
-          }),
-        },
-      })
-
-      return bookings
-    })
-
-    // 5. Return success with first booking ID as order reference
+    // 4. Return success with first booking ID as order reference
     const orderId = result[0]?.id
 
     return NextResponse.json(
@@ -161,11 +210,48 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     )
   } catch (error: unknown) {
+    // Surface our typed OrderErrors with the appropriate HTTP status.
+    if (error instanceof OrderError) {
+      return NextResponse.json(
+        { error: error.code },
+        { status: error.status }
+      )
+    }
+
+    // Handle Prisma unique-constraint violations (e.g. concurrent double-booking).
+    // P2002 = Unique constraint failed on the {fields}.
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2002'
+    ) {
+      return NextResponse.json(
+        { error: 'not_available' },
+        { status: 409 }
+      )
+    }
+
     const message = error instanceof Error ? error.message : 'Internal error'
     console.error('Order creation error:', message, error)
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Internal error type used to bail out of the transaction with a
+ * specific HTTP status code and error code.
+ */
+class OrderError extends Error {
+  code: string
+  status: number
+  constructor(code: string, status: number) {
+    super(code)
+    this.name = 'OrderError'
+    this.code = code
+    this.status = status
   }
 }

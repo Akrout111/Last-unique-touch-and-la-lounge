@@ -17,7 +17,6 @@ import { shouldEnable3D } from '@/lib/device-capabilities'
 export function BirthdayVisualizer() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [enabled, setEnabled] = useState(false)
-  const [inView, setInView] = useState(true)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const composerRef = useRef<any>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
@@ -29,18 +28,11 @@ export function BirthdayVisualizer() {
     setEnabled(shouldEnable3D())
   }, [])
 
-  // IntersectionObserver to pause when off-screen
+  // Main 3D setup — runs ONCE when enabled.
+  // An IntersectionObserver inside this effect pauses/resumes the
+  // requestAnimationFrame loop without tearing down the scene.
   useEffect(() => {
     if (!enabled || !containerRef.current) return
-    const el = containerRef.current
-    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.01 })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [enabled])
-
-  // Main 3D setup
-  useEffect(() => {
-    if (!enabled || !containerRef.current || !inView) return
 
     const container = containerRef.current
     const isMobile = window.innerWidth < 768
@@ -398,6 +390,13 @@ export function BirthdayVisualizer() {
     const mouse = { x: 0, y: 0 }
     const targetMouse = { x: 0, y: 0 }
 
+    // Pause/resume via IntersectionObserver WITHOUT tearing down the scene.
+    let isInView = true
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      isInView = entry.isIntersecting
+    }, { threshold: 0.01 })
+    visibilityObserver.observe(container)
+
     const onMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect()
       targetMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
@@ -407,8 +406,14 @@ export function BirthdayVisualizer() {
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate)
-      const time = clock.getElapsedTime()
+      // Always keep the rAF loop alive; only skip the heavy work when off-screen.
+      if (!isInView) return
+
+      // NOTE: getDelta() must be called BEFORE getElapsedTime() —
+      // getElapsedTime() internally calls getDelta(), so calling it first
+      // would make the subsequent getDelta() return ~0.
       const delta = clock.getDelta()
+      const time = clock.elapsedTime
 
       // Smooth mouse
       mouse.x += (targetMouse.x - mouse.x) * 0.05
@@ -512,6 +517,7 @@ export function BirthdayVisualizer() {
     // === CLEANUP ===
     return () => {
       cancelAnimationFrame(animationIdRef.current)
+      visibilityObserver.disconnect()
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('resize', onResize)
       clearTimeout(resizeTimer)
@@ -534,7 +540,7 @@ export function BirthdayVisualizer() {
       composerRef.current = null
       sceneRef.current = null
     }
-  }, [enabled, inView])
+  }, [enabled])
 
   if (!enabled) return null
 

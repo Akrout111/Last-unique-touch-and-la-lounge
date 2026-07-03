@@ -62,7 +62,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             return (
               <div
                 key={idx}
-                className="p-6 rounded-xl bg-bg-light border border-border"
+                className="p-6 rounded-xl bg-stone-50 border border-border"
               >
                 <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-gold" />

@@ -157,7 +157,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
         {/* Payment Form */}
         <div className="lg:col-span-2">
           {/* Order info card */}
-          <div className="p-4 rounded-xl bg-bg-light border border-border mb-6">
+          <div className="p-4 rounded-xl bg-stone-50 border border-border mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -333,7 +333,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 p-6 rounded-xl bg-bg-light border border-border">
+          <div className="sticky top-24 p-6 rounded-xl bg-stone-50 border border-border">
             <h2 className="text-lg font-bold text-foreground mb-4">
               {t('payment.orderSummary')}
             </h2>

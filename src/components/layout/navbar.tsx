@@ -26,8 +26,9 @@ export function Navbar() {
     router.replace(pathname, { locale: next })
   }
 
-  // Only About + Contact (no brand logo, no cart, no home/products)
   const navLinks = [
+    { href: '/' as const, label: t('nav.home') },
+    { href: '/products' as const, label: t('nav.products') },
     { href: '/about' as const, label: t('nav.about') },
     { href: '/contact' as const, label: t('nav.contact') },
   ]

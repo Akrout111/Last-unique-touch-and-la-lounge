@@ -11,7 +11,7 @@ export function PageHeader({ title, subtitle, lastUpdated }: PageHeaderProps) {
   return (
     <>
       <Navbar />
-      <div className="bg-bg-light pt-32 pb-12 border-b border-border">
+      <div className="bg-stone-50 pt-32 pb-12 border-b border-border">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {lastUpdated && (
             <p className="text-xs text-muted-foreground mb-2">{lastUpdated}</p>

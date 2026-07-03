@@ -1,41 +1,113 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { db } from '@/lib/db'
 import { triggerOrderConfirmedWebhook } from '@/lib/n8n'
+
+const schema = z.object({
+  orderId: z.string().min(1),
+  status: z.enum(['success', 'failed', 'pending', 'refunded']),
+  signature: z.string(),
+})
+
+/**
+ * Resolve the payment webhook signing secret. Fail-closed in production.
+ */
+function getWebhookSecret(): string {
+  const isProduction = process.env.NODE_ENV === 'production'
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET
+
+  if (secret && secret.length >= 16) {
+    return secret
+  }
+
+  if (isProduction) {
+    throw new Error('PAYMENT_WEBHOOK_SECRET must be set in production.')
+  }
+
+  console.warn(
+    '[payment-callback] WARNING: PAYMENT_WEBHOOK_SECRET is not set. ' +
+      'Using dev-only insecure secret. Do NOT use in production.'
+  )
+  return 'dev-insecure-payment-webhook-secret'
+}
+
+/**
+ * Constant-time hex string comparison.
+ */
+function safeEqualHex(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, 'utf8')
+  const bBuf = Buffer.from(b, 'utf8')
+  if (aBuf.length !== bBuf.length) {
+    // Run a comparison to keep timing roughly constant.
+    timingSafeEqual(aBuf, aBuf)
+    return false
+  }
+  return timingSafeEqual(aBuf, bBuf)
+}
+
+/**
+ * Compute the expected HMAC signature for the given payload.
+ *
+ * Signature = HMAC-SHA256(secret, orderId + status)
+ */
+function computeSignature(secret: string, orderId: string, status: string): string {
+  return createHmac('sha256', secret).update(orderId + status).digest('hex')
+}
 
 /**
  * POST /api/webhooks/payment-callback
  *
- * This endpoint is a STUB for receiving payment confirmations from the
- * external payment gateway company. They will call this endpoint when
- * a payment is processed (success or failure).
+ * Receives payment confirmations from the external payment gateway company.
+ * The request body MUST contain a valid HMAC signature computed over
+ * `orderId + status` using the shared `PAYMENT_WEBHOOK_SECRET`.
  *
- * TODO (external company): Implement signature verification when they
- * provide their signing secret and payload format.
- *
- * Expected payload from external gateway (will be defined by them):
+ * Expected payload:
  * {
  *   "orderId": "string",
- *   "transactionId": "string",
- *   "status": "success" | "failed",
- *   "amount": number,
- *   "currency": "KWD"
+ *   "status": "success" | "failed" | "pending" | "refunded",
+ *   "signature": "hex-string"
  * }
  */
 export async function POST(req: NextRequest) {
   try {
-    // TODO: Verify signature from external payment gateway
-    // const signature = req.headers.get('x-payment-signature')
-    // if (!signature || !verifySignature(await req.text(), signature)) {
-    //   return NextResponse.json({ error: 'invalid_signature' }, { status: 401 })
-    // }
-
     const body = await req.json()
-    const { orderId, status } = body as { orderId?: string; status?: string }
+    const parsed = schema.safeParse(body)
 
-    if (!orderId || !status) {
+    if (!parsed.success) {
       return NextResponse.json(
         { error: 'invalid_payload' },
         { status: 400 }
+      )
+    }
+
+    const { orderId, status, signature } = parsed.data
+
+    // --- HMAC signature verification (C2) ---
+    let secret: string
+    try {
+      secret = getWebhookSecret()
+    } catch {
+      // Fail-closed in production if the secret is not configured.
+      return NextResponse.json(
+        { error: 'server_misconfigured' },
+        { status: 500 }
+      )
+    }
+
+    const expectedSignature = computeSignature(secret, orderId, status)
+
+    let signatureValid = false
+    try {
+      signatureValid = safeEqualHex(signature, expectedSignature)
+    } catch {
+      signatureValid = false
+    }
+
+    if (!signatureValid) {
+      return NextResponse.json(
+        { error: 'invalid_signature' },
+        { status: 401 }
       )
     }
 
@@ -66,12 +138,12 @@ export async function POST(req: NextRequest) {
       }
       return NextResponse.json({ success: true })
     } else {
-      // Payment failed — mark as CANCELLED
+      // Payment failed — mark as PAYMENT_FAILED
       await db.booking.update({
         where: { id: orderId },
-        data: { status: 'CANCELLED' },
+        data: { status: 'PAYMENT_FAILED' },
       })
-      return NextResponse.json({ success: true, status: 'cancelled' })
+      return NextResponse.json({ success: true, status: 'payment_failed' })
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'

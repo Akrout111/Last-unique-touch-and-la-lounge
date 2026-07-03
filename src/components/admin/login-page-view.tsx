@@ -25,13 +25,17 @@ export function LoginPageView() {
       router.push('/admin')
       router.refresh()
     } else {
-      setError(t('admin.login.invalid'))
+      setError(
+        result.error === 'rate_limited'
+          ? t('admin.login.rateLimited')
+          : t('admin.login.invalid')
+      )
       setSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-bg-dark flex items-center justify-center p-4">
+    <div className="min-h-screen bg-stone-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

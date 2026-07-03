@@ -143,7 +143,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
       </div>
 
       {/* Financial summary */}
-      <div className="p-6 rounded-xl bg-bg-light border border-border">
+      <div className="p-6 rounded-xl bg-stone-50 border border-border">
         <h2 className="text-lg font-bold text-foreground mb-4">{t('admin.bookings.detail.financialSummary')}</h2>
         <div className="space-y-2 max-w-md">
           <div className="flex justify-between text-sm">

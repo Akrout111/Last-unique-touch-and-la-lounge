@@ -34,7 +34,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       {/* Sidebar — desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-bg-dark text-white shrink-0">
+      <aside className="hidden md:flex flex-col w-64 bg-stone-950 text-white shrink-0">
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-lut">{t('brand.lut')}</span>
@@ -82,7 +82,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           onClick={() => setSidebarOpen(false)}
         >
           <aside
-            className="absolute top-0 start-0 w-64 h-full bg-bg-dark text-white"
+            id="admin-mobile-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('admin.title')}
+            className="absolute top-0 start-0 w-64 h-full bg-stone-950 text-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
@@ -134,6 +138,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             className="md:hidden p-2 text-foreground"
             onClick={() => setSidebarOpen(true)}
             aria-label={t('nav.menu')}
+            aria-expanded={sidebarOpen}
+            aria-controls="admin-mobile-drawer"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -150,7 +156,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           {children}
         </main>
       </div>
