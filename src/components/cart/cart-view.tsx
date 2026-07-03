@@ -138,7 +138,7 @@ export function CartView() {
 
                     {/* Item total */}
                     <p className="font-bold text-foreground">
-                      {item.total.toFixed(3)} {t('featured.perDay').split(' ')[0]}
+                      {item.total.toFixed(3)} {t('common.currency')}
                     </p>
                   </div>
                 </div>

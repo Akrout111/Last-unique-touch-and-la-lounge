@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, X } from 'lucide-react'
@@ -15,6 +15,7 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
   const t = useTranslations('admin.confirmDelete')
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   const handleConfirm = async () => {
     setDeleting(true)
@@ -34,6 +35,52 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open, deleting])
+
+  // Focus trap: focus first element on open, cycle Tab within modal
+  useEffect(() => {
+    if (!open) return
+
+    const node = dialogRef.current
+    if (!node) return
+
+    const getFocusable = (): HTMLElement[] => {
+      const selector =
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      return Array.from(node.querySelectorAll<HTMLElement>(selector)).filter(
+        (el) => el.offsetParent !== null || el === document.activeElement
+      )
+    }
+
+    // Focus the first focusable element when opening
+    const focusables = getFocusable()
+    focusables[0]?.focus()
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      const items = getFocusable()
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement as HTMLElement | null
+
+      if (e.shiftKey) {
+        if (active === first || !node.contains(active)) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (active === last || !node.contains(active)) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleTab)
+    return () => {
+      document.removeEventListener('keydown', handleTab)
+    }
+  }, [open])
 
   return (
     <>
@@ -55,6 +102,7 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
           aria-label={t('title')}
         >
           <div
+            ref={dialogRef}
             className="bg-card rounded-xl shadow-xl max-w-sm w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >

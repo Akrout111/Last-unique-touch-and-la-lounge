@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { db } from '@/lib/db'
 
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const now = new Date()
@@ -17,11 +19,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const locales = ['ar', 'en']
 
-  // Fetch all active products for dynamic product URLs
-  const products = await db.product.findMany({
-    where: { isActive: true },
-    select: { slug: true, updatedAt: true },
-  })
+  // Fetch all active products for dynamic product URLs.
+  // If the DB is unavailable, fall back to static-only entries so sitemap
+  // generation doesn't fail (and tank the build / ISR).
+  let products: Array<{ slug: string; updatedAt: Date }> = []
+  try {
+    products = await db.product.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true },
+    })
+  } catch (error) {
+    console.error('[sitemap] DB query failed, serving static-only sitemap:', error)
+  }
 
   const staticEntries = locales.flatMap((locale) =>
     staticPages.map((page) => ({

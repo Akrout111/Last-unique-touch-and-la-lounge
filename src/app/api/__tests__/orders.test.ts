@@ -33,6 +33,23 @@ function makeRequest(body: unknown): NextRequest {
   })
 }
 
+// A valid item that satisfies the `itemSchema` so that validation can reach
+// the targeted customer / idempotency checks instead of failing on missing items.
+const validItem = {
+  productId: 'p1',
+  slug: 'test-product',
+  nameAr: 'منتج اختبار',
+  nameEn: 'Test Product',
+  image: 'https://example.com/image.jpg',
+  rentalPricePerDay: 10,
+  securityDeposit: 50,
+  startDate: '2026-07-01T00:00:00.000Z',
+  endDate: '2026-07-03T00:00:00.000Z',
+  quantity: 1,
+  days: 2,
+  total: 20,
+}
+
 describe('POST /api/orders security', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -65,7 +82,7 @@ describe('POST /api/orders security', () => {
 
   it('rejects invalid email', async () => {
     const req = makeRequest({
-      items: [],
+      items: [validItem],
       customer: {
         customerName: 'Test User',
         customerPhone: '+96512345678',
@@ -81,7 +98,7 @@ describe('POST /api/orders security', () => {
 
   it('rejects invalid phone format', async () => {
     const req = makeRequest({
-      items: [],
+      items: [validItem],
       customer: {
         customerName: 'Test User',
         customerPhone: '123', // Too short
@@ -97,7 +114,7 @@ describe('POST /api/orders security', () => {
 
   it('rejects short idempotency key', async () => {
     const req = makeRequest({
-      items: [],
+      items: [validItem],
       customer: {
         customerName: 'Test',
         customerPhone: '+96512345678',

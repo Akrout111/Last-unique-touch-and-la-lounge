@@ -100,13 +100,12 @@ export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<v
 
     console.warn('[n8n] Webhook sent successfully for booking:', bookingId)
 
-    // Log success
+    // Log success (do NOT log the webhook URL — it's a secret)
     await db.securityLog.create({
       data: {
         event: 'n8n_webhook_sent',
         details: JSON.stringify({
           bookingId,
-          webhookUrl,
           responseStatus: response.status,
         }),
       },

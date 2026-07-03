@@ -87,6 +87,7 @@ function FloatingParticles() {
 function EventArchitecture() {
   const groupRef = useRef<THREE.Group>(null);
   const centerRingsRef = useRef<THREE.Group>(null);
+  const geometriesRef = useRef<THREE.BufferGeometry[]>([]);
   
   useFrame((state) => {
     if (groupRef.current) {
@@ -102,6 +103,13 @@ function EventArchitecture() {
   const { elements, nodes, materials } = useMemo(() => {
     const items = [];
     const technicalNodes = [];
+    const geometries: THREE.BufferGeometry[] = [];
+
+    // Track a geometry so it can be disposed on unmount
+    const track = <T extends THREE.BufferGeometry>(geo: T): T => {
+      geometries.push(geo);
+      return geo;
+    };
     
     // Materials that look like blueprint ink
     const matBold = new THREE.LineBasicMaterial({ color: '#4c1d95', transparent: true, opacity: 0.95 });
@@ -110,8 +118,8 @@ function EventArchitecture() {
     const matAccent = new THREE.LineBasicMaterial({ color: '#c084fc', transparent: true, opacity: 0.9 });
     
     const addBoundingBox = (w: number, h: number, d: number, x: number, y: number, z: number) => {
-      const box = new THREE.BoxGeometry(w + 0.5, h + 0.5, d + 0.5);
-      items.push(<lineSegments key={`bbox_${x}_${y}_${z}`} geometry={new THREE.EdgesGeometry(box)} material={matSub} position={[x, y, z]} />);
+      const box = track(new THREE.BoxGeometry(w + 0.5, h + 0.5, d + 0.5));
+      items.push(<lineSegments key={`bbox_${x}_${y}_${z}`} geometry={track(new THREE.EdgesGeometry(box))} material={matSub} position={[x, y, z]} />);
     };
 
     // --- 1. THE STAGE (Grand Event Focal Point) ---
@@ -121,36 +129,36 @@ function EventArchitecture() {
     const stageZ = -35;
     
     // Main Stage Platform
-    const stageGeo = new THREE.BoxGeometry(stageWidth, stageHeight, stageDepth);
-    items.push(<lineSegments key="stage" geometry={new THREE.EdgesGeometry(stageGeo)} material={matBold} position={[0, stageHeight/2, stageZ]} />);
+    const stageGeo = track(new THREE.BoxGeometry(stageWidth, stageHeight, stageDepth));
+    items.push(<lineSegments key="stage" geometry={track(new THREE.EdgesGeometry(stageGeo))} material={matBold} position={[0, stageHeight/2, stageZ]} />);
     addBoundingBox(stageWidth, stageHeight, stageDepth, 0, stageHeight/2, stageZ);
     
     // Stage Steps (Curved)
     for(let step=1; step<=4; step++) {
        const stepWidth = stageWidth - 10 + (step * 2);
-       const stepGeo = new THREE.BoxGeometry(stepWidth, 0.4, 1.5);
-       items.push(<lineSegments key={`step_${step}`} geometry={new THREE.EdgesGeometry(stepGeo)} material={matMain} position={[0, (5-step)*0.38, stageZ + stageDepth/2 + step*1.2]} />);
+       const stepGeo = track(new THREE.BoxGeometry(stepWidth, 0.4, 1.5));
+       items.push(<lineSegments key={`step_${step}`} geometry={track(new THREE.EdgesGeometry(stepGeo))} material={matMain} position={[0, (5-step)*0.38, stageZ + stageDepth/2 + step*1.2]} />);
     }
 
     // Huge LED Backdrop Screen
-    const screenGeo = new THREE.BoxGeometry(stageWidth - 2, 16, 0.5);
-    items.push(<lineSegments key="screen" geometry={new THREE.EdgesGeometry(screenGeo)} material={matBold} position={[0, stageHeight + 8, stageZ - stageDepth/2 + 1]} />);
+    const screenGeo = track(new THREE.BoxGeometry(stageWidth - 2, 16, 0.5));
+    items.push(<lineSegments key="screen" geometry={track(new THREE.EdgesGeometry(screenGeo))} material={matBold} position={[0, stageHeight + 8, stageZ - stageDepth/2 + 1]} />);
     addBoundingBox(stageWidth - 2, 16, 0.5, 0, stageHeight + 8, stageZ - stageDepth/2 + 1);
     
     // Screen Panels (Grid inside the screen)
     for(let x=-stageWidth/2 + 2; x<=stageWidth/2 - 2; x+=4) {
-      const panelGeo = new THREE.BoxGeometry(3.8, 15.6, 0.2);
-      items.push(<lineSegments key={`panel_${x}`} geometry={new THREE.EdgesGeometry(panelGeo)} material={matSub} position={[x, stageHeight + 8, stageZ - stageDepth/2 + 1.2]} />);
+      const panelGeo = track(new THREE.BoxGeometry(3.8, 15.6, 0.2));
+      items.push(<lineSegments key={`panel_${x}`} geometry={track(new THREE.EdgesGeometry(panelGeo))} material={matSub} position={[x, stageHeight + 8, stageZ - stageDepth/2 + 1.2]} />);
     }
 
     // Stage Podium
-    const podiumGeo = new THREE.CylinderGeometry(0.8, 0.6, 2.5, 8);
-    items.push(<lineSegments key="podium" geometry={new THREE.EdgesGeometry(podiumGeo)} material={matAccent} position={[0, stageHeight + 1.25, stageZ + 4]} />);
+    const podiumGeo = track(new THREE.CylinderGeometry(0.8, 0.6, 2.5, 8));
+    items.push(<lineSegments key="podium" geometry={track(new THREE.EdgesGeometry(podiumGeo))} material={matAccent} position={[0, stageHeight + 1.25, stageZ + 4]} />);
     
     // Stage Projection Cones (Lighting)
     for (let lx of [-15, -5, 5, 15]) {
-      const lightCone = new THREE.ConeGeometry(3, 15, 8, 1, true);
-      items.push(<lineSegments key={`light_${lx}`} geometry={new THREE.EdgesGeometry(lightCone)} material={matSub} position={[lx, stageHeight + 15, stageZ + 5]} rotation={[Math.PI/6, 0, 0]} />);
+      const lightCone = track(new THREE.ConeGeometry(3, 15, 8, 1, true));
+      items.push(<lineSegments key={`light_${lx}`} geometry={track(new THREE.EdgesGeometry(lightCone))} material={matSub} position={[lx, stageHeight + 15, stageZ + 5]} rotation={[Math.PI/6, 0, 0]} />);
     }
 
     // --- 2. OVERHEAD TRUSS & RIGGING SYSTEM (Highly detailed) ---
@@ -160,38 +168,38 @@ function EventArchitecture() {
     ];
     
     trussPositions.forEach(([x, z], idx) => {
-      const pillarGeo = new THREE.BoxGeometry(1.2, 24, 1.2);
-      items.push(<lineSegments key={`pil_${idx}`} geometry={new THREE.EdgesGeometry(pillarGeo)} material={matBold} position={[x, 12, z]} />);
+      const pillarGeo = track(new THREE.BoxGeometry(1.2, 24, 1.2));
+      items.push(<lineSegments key={`pil_${idx}`} geometry={track(new THREE.EdgesGeometry(pillarGeo))} material={matBold} position={[x, 12, z]} />);
       for(let y=1; y<23; y+=2) {
-        const braceGeo = new THREE.BoxGeometry(1.2, 0.1, 1.2);
-        items.push(<lineSegments key={`brace_${idx}_${y}`} geometry={new THREE.EdgesGeometry(braceGeo)} material={matSub} position={[x, y, z]} />);
+        const braceGeo = track(new THREE.BoxGeometry(1.2, 0.1, 1.2));
+        items.push(<lineSegments key={`brace_${idx}_${y}`} geometry={track(new THREE.EdgesGeometry(braceGeo))} material={matSub} position={[x, y, z]} />);
       }
       technicalNodes.push(new THREE.Vector3(x, 24, z));
     });
 
-    const hTrussGeo1 = new THREE.BoxGeometry(48, 1.2, 1.2);
-    items.push(<lineSegments key="ht_1" geometry={new THREE.EdgesGeometry(hTrussGeo1)} material={matBold} position={[0, 24, -20]} />);
-    items.push(<lineSegments key="ht_2" geometry={new THREE.EdgesGeometry(hTrussGeo1)} material={matBold} position={[0, 24, 0]} />);
-    const hTrussGeo2 = new THREE.BoxGeometry(52, 1.2, 1.2);
-    items.push(<lineSegments key="ht_3" geometry={new THREE.EdgesGeometry(hTrussGeo2)} material={matBold} position={[0, 24, 25]} />);
+    const hTrussGeo1 = track(new THREE.BoxGeometry(48, 1.2, 1.2));
+    items.push(<lineSegments key="ht_1" geometry={track(new THREE.EdgesGeometry(hTrussGeo1))} material={matBold} position={[0, 24, -20]} />);
+    items.push(<lineSegments key="ht_2" geometry={track(new THREE.EdgesGeometry(hTrussGeo1))} material={matBold} position={[0, 24, 0]} />);
+    const hTrussGeo2 = track(new THREE.BoxGeometry(52, 1.2, 1.2));
+    items.push(<lineSegments key="ht_3" geometry={track(new THREE.EdgesGeometry(hTrussGeo2))} material={matBold} position={[0, 24, 25]} />);
 
     // Hanging Line Array Speakers
     [-18, 18].forEach((lx, idx) => {
       for(let s=0; s<6; s++) {
-        const speakerGeo = new THREE.BoxGeometry(1.8, 1.2, 2.5);
+        const speakerGeo = track(new THREE.BoxGeometry(1.8, 1.2, 2.5));
         const rotX = (s * 0.1);
-        items.push(<lineSegments key={`speaker_${idx}_${s}`} geometry={new THREE.EdgesGeometry(speakerGeo)} material={matBold} position={[lx, 20 - s * 1.5, -30 + s * 0.2]} rotation={[rotX, 0, 0]} />);
+        items.push(<lineSegments key={`speaker_${idx}_${s}`} geometry={track(new THREE.EdgesGeometry(speakerGeo))} material={matBold} position={[lx, 20 - s * 1.5, -30 + s * 0.2]} rotation={[rotX, 0, 0]} />);
       }
       // Hanging wire
       const wirePts = [new THREE.Vector3(lx, 24, -30), new THREE.Vector3(lx, 20.6, -30)];
-      items.push(<primitive key={`wire_${idx}`} object={new THREE.Line(new THREE.BufferGeometry().setFromPoints(wirePts), matMain)} />);
+      items.push(<primitive key={`wire_${idx}`} object={new THREE.Line(track(new THREE.BufferGeometry().setFromPoints(wirePts)), matMain)} />);
     });
 
     // Additional Lighting Arrays
     for(let lx=-20; lx<=20; lx+=4) {
-      const lightGeo = new THREE.CylinderGeometry(0.5, 0.6, 1.5, 8);
-      items.push(<lineSegments key={`tlight1_${lx}`} geometry={new THREE.EdgesGeometry(lightGeo)} material={matAccent} position={[lx, 23, -20]} rotation={[Math.PI/4, 0, 0]} />);
-      items.push(<lineSegments key={`tlight2_${lx}`} geometry={new THREE.EdgesGeometry(lightGeo)} material={matAccent} position={[lx, 23, 0]} rotation={[Math.PI/3, 0, 0]} />);
+      const lightGeo = track(new THREE.CylinderGeometry(0.5, 0.6, 1.5, 8));
+      items.push(<lineSegments key={`tlight1_${lx}`} geometry={track(new THREE.EdgesGeometry(lightGeo))} material={matAccent} position={[lx, 23, -20]} rotation={[Math.PI/4, 0, 0]} />);
+      items.push(<lineSegments key={`tlight2_${lx}`} geometry={track(new THREE.EdgesGeometry(lightGeo))} material={matAccent} position={[lx, 23, 0]} rotation={[Math.PI/3, 0, 0]} />);
     }
 
     // --- 3. LOUNGE & VIP SEATING AREAS ---
@@ -200,12 +208,12 @@ function EventArchitecture() {
         const vx = side * 18;
         const vz = 5 + row * 14;
         
-        const boothGeo = new THREE.TorusGeometry(3.5, 1.2, 8, 16, Math.PI);
+        const boothGeo = track(new THREE.TorusGeometry(3.5, 1.2, 8, 16, Math.PI));
         const rotY = side === 1 ? Math.PI/2 : -Math.PI/2;
-        items.push(<lineSegments key={`booth_${side}_${row}`} geometry={new THREE.EdgesGeometry(boothGeo)} material={matMain} position={[vx, 1, vz]} rotation={[Math.PI/2, 0, rotY]} />);
+        items.push(<lineSegments key={`booth_${side}_${row}`} geometry={track(new THREE.EdgesGeometry(boothGeo))} material={matMain} position={[vx, 1, vz]} rotation={[Math.PI/2, 0, rotY]} />);
         
-        const tableGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.8, 16);
-        items.push(<lineSegments key={`viptab_${side}_${row}`} geometry={new THREE.EdgesGeometry(tableGeo)} material={matAccent} position={[vx + side*1.5, 0.4, vz]} />);
+        const tableGeo = track(new THREE.CylinderGeometry(1.5, 1.5, 0.8, 16));
+        items.push(<lineSegments key={`viptab_${side}_${row}`} geometry={track(new THREE.EdgesGeometry(tableGeo))} material={matAccent} position={[vx + side*1.5, 0.4, vz]} />);
         addBoundingBox(7, 2, 7, vx, 1, vz);
       }
     });
@@ -215,30 +223,30 @@ function EventArchitecture() {
     ];
     
     tablePositions.forEach(([tx, tz], idx) => {
-      const tGeo = new THREE.CylinderGeometry(1.8, 1.8, 0.7, 16);
-      items.push(<lineSegments key={`tab_${idx}`} geometry={new THREE.EdgesGeometry(tGeo)} material={matMain} position={[tx, 0.35, tz]} />);
+      const tGeo = track(new THREE.CylinderGeometry(1.8, 1.8, 0.7, 16));
+      items.push(<lineSegments key={`tab_${idx}`} geometry={track(new THREE.EdgesGeometry(tGeo))} material={matMain} position={[tx, 0.35, tz]} />);
       
       for(let c=0; c<6; c++) {
         const cAngle = (c/6) * Math.PI * 2;
         const cx = tx + Math.cos(cAngle) * 2.8;
         const cz = tz + Math.sin(cAngle) * 2.8;
-        const chairGeo = new THREE.BoxGeometry(0.8, 1.2, 0.8);
-        items.push(<lineSegments key={`chair_${idx}_${c}`} geometry={new THREE.EdgesGeometry(chairGeo)} material={matSub} position={[cx, 0.6, cz]} rotation={[0, -cAngle, 0]} />);
+        const chairGeo = track(new THREE.BoxGeometry(0.8, 1.2, 0.8));
+        items.push(<lineSegments key={`chair_${idx}_${c}`} geometry={track(new THREE.EdgesGeometry(chairGeo))} material={matSub} position={[cx, 0.6, cz]} rotation={[0, -cAngle, 0]} />);
       }
       addBoundingBox(7, 2, 7, tx, 1, tz);
     });
 
     // --- 4. THE LUXURY BAR AREA ---
     const barZ = 40;
-    const barGeo = new THREE.BoxGeometry(28, 1.2, 3);
-    items.push(<lineSegments key="bar" geometry={new THREE.EdgesGeometry(barGeo)} material={matBold} position={[0, 1.1, barZ]} />);
+    const barGeo = track(new THREE.BoxGeometry(28, 1.2, 3));
+    items.push(<lineSegments key="bar" geometry={track(new THREE.EdgesGeometry(barGeo))} material={matBold} position={[0, 1.1, barZ]} />);
     
-    const shelfGeo = new THREE.BoxGeometry(26, 7, 1);
-    items.push(<lineSegments key="barshelf" geometry={new THREE.EdgesGeometry(shelfGeo)} material={matMain} position={[0, 3.5, barZ + 3]} />);
+    const shelfGeo = track(new THREE.BoxGeometry(26, 7, 1));
+    items.push(<lineSegments key="barshelf" geometry={track(new THREE.EdgesGeometry(shelfGeo))} material={matMain} position={[0, 3.5, barZ + 3]} />);
     
     for(let sx=-12; sx<=12; sx+=2.4) {
-      const stoolGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.9, 8);
-      items.push(<lineSegments key={`stool_${sx}`} geometry={new THREE.EdgesGeometry(stoolGeo)} material={matAccent} position={[sx, 0.45, barZ - 2.5]} />);
+      const stoolGeo = track(new THREE.CylinderGeometry(0.4, 0.4, 0.9, 8));
+      items.push(<lineSegments key={`stool_${sx}`} geometry={track(new THREE.EdgesGeometry(stoolGeo))} material={matAccent} position={[sx, 0.45, barZ - 2.5]} />);
     }
 
     // --- 5. DRAFTING ANNOTATIONS & MEASUREMENTS ---
@@ -248,14 +256,14 @@ function EventArchitecture() {
         new THREE.Vector3(p2[0], height, p2[1])
       ];
       
-      items.push(<primitive key={`dim_l_${key}`} object={new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), matSub)} />);
+      items.push(<primitive key={`dim_l_${key}`} object={new THREE.Line(track(new THREE.BufferGeometry().setFromPoints(pts)), matSub)} />);
       
       technicalNodes.push(new THREE.Vector3(p1[0], height, p1[1]));
       technicalNodes.push(new THREE.Vector3(p2[0], height, p2[1]));
       
-      const markGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-      items.push(<lineSegments key={`dim_m1_${key}`} geometry={new THREE.EdgesGeometry(markGeo)} material={matAccent} position={[p1[0], height, p1[1]]} />);
-      items.push(<lineSegments key={`dim_m2_${key}`} geometry={new THREE.EdgesGeometry(markGeo)} material={matAccent} position={[p2[0], height, p2[1]]} />);
+      const markGeo = track(new THREE.BoxGeometry(0.5, 0.5, 0.5));
+      items.push(<lineSegments key={`dim_m1_${key}`} geometry={track(new THREE.EdgesGeometry(markGeo))} material={matAccent} position={[p1[0], height, p1[1]]} />);
+      items.push(<lineSegments key={`dim_m2_${key}`} geometry={track(new THREE.EdgesGeometry(markGeo))} material={matAccent} position={[p2[0], height, p2[1]]} />);
     };
 
     addDimension([-20, -35], [20, -35], 0.1, 'stage_w');
@@ -274,12 +282,14 @@ function EventArchitecture() {
         new THREE.Vector3(px, h, pz),
         new THREE.Vector3(px + 4, h, pz)
       ];
-      items.push(<primitive key={`elev_${k}`} object={new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), matSub)} />);
+      items.push(<primitive key={`elev_${k}`} object={new THREE.Line(track(new THREE.BufferGeometry().setFromPoints(pts)), matSub)} />);
       
-      const textBox = new THREE.BoxGeometry(3.5, 0.8, 0.1);
-      items.push(<lineSegments key={`elev_txt_${k}`} geometry={new THREE.EdgesGeometry(textBox)} material={matSub} position={[px + 6, h, pz]} />);
+      const textBox = track(new THREE.BoxGeometry(3.5, 0.8, 0.1));
+      items.push(<lineSegments key={`elev_txt_${k}`} geometry={track(new THREE.EdgesGeometry(textBox))} material={matSub} position={[px + 6, h, pz]} />);
       technicalNodes.push(new THREE.Vector3(px, h, pz));
     }
+
+    geometriesRef.current = geometries;
 
     return { elements: items, nodes: technicalNodes, materials: { matBold, matMain, matSub, matAccent } };
   }, []);
@@ -291,6 +301,9 @@ function EventArchitecture() {
       materials.matMain.dispose()
       materials.matSub.dispose()
       materials.matAccent.dispose()
+      // Dispose all tracked geometries to free GPU memory
+      geometriesRef.current.forEach((g) => g.dispose())
+      geometriesRef.current = []
     }
   }, [materials])
 
@@ -364,7 +377,7 @@ export default function PurpleWaves3D() {
   if (!enabled) return null
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full pointer-events-none bg-[#fafafa] z-0 overflow-hidden">
+    <div ref={containerRef} aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none bg-[#fafafa] z-0 overflow-hidden">
       <Canvas frameloop={inView ? 'always' : 'never'} camera={{ position: [0, 40, 60], fov: 45 }}>
         <fog attach="fog" args={['#fafafa', 50, 180]} />
         <CameraRig />

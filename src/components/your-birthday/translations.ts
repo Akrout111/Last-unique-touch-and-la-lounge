@@ -14,6 +14,9 @@ export const translations = {
     nav: {
       back: 'رجوع',
       top: 'العودة للأعلى',
+      brand: 'Your Birthday',
+      // Label shown on the language toggle button (the language the user will switch TO)
+      langToggle: 'English',
     },
     hero: {
       tagline: 'حيث تبدأ الليالي الأسطورية',
@@ -22,6 +25,8 @@ export const translations = {
         'نحوّل يومك إلى تجربة احتفالية لا تُنسى — من الديكور الفاخر إلى الإضاءة والموسيقى والتصوير الفوتوغرافي.',
       cta1: 'احجز الباقة المميزة',
       cta2: 'استكشف الباقات',
+      // Words cycled through by the TextScramble effect on the hero title
+      scrambleWords: ['احتفل معنا', 'يومك المميز', 'بأبهى حلة', 'عيد ميلادك'],
     },
     services: {
       title: 'خدماتنا',
@@ -67,6 +72,18 @@ export const translations = {
     },
     gallery: {
       title: 'معرض الأعمال',
+      // Decorative prefix shown on each gallery tile (kept identical across locales)
+      expPrefix: 'EXP // 0',
+      items: [
+        'قوس البالونات العضوي',
+        'تنسيق منصة الكيك',
+        'إضاءة المسرح الملونة',
+        'طاولات الأكريليك الشفافة',
+        'كراسي المعازيم الفاخرة',
+        'بوفيه الحلويات الأنيق',
+        'كتابة النيون المخصصة',
+        'تغطية فوتوغرافية كاملة',
+      ],
     },
     testimonials: {
       title: 'آراء عملائنا',
@@ -96,8 +113,26 @@ export const translations = {
       button: 'احجز الباقة الفاخرة',
     },
     footer: {
+      brand: 'Your Birthday',
       tagline: 'نحوّل أعياد الميلاد إلى تجارب لا تُنسى.',
       rights: '© ٢٠٢٥ جميع الحقوق محفوظة',
+    },
+    booking: {
+      modalTitle: 'حجز باقة عيد الميلاد',
+      selectedPackageLabel: 'الباقة المحددة:',
+      submit: 'إرسال طلب الحجز',
+      form: {
+        name: 'الاسم الكامل',
+        phone: 'رقم الهاتف',
+        email: 'البريد الإلكتروني (اختياري)',
+        location: 'موقع الحفلة (مثال: السالمية)',
+        notes: 'طلبات أو ملاحظات إضافية',
+      },
+      success: {
+        title: 'تم استلام طلبك بنجاح',
+        body:
+          'سيتواصل معك فريق منسقي الحفلات لدينا قريباً لتأكيد تفاصيل حفل عيد ميلادك.',
+      },
     },
   },
 
@@ -108,6 +143,9 @@ export const translations = {
     nav: {
       back: 'Back',
       top: 'Back to top',
+      brand: 'Your Birthday',
+      // Label shown on the language toggle button (the language the user will switch TO)
+      langToggle: 'عربي',
     },
     hero: {
       tagline: 'Where Legendary Nights Begin',
@@ -116,6 +154,8 @@ export const translations = {
         'We turn your day into an unforgettable celebration — from luxurious decor to lighting, music, and photography.',
       cta1: 'Book Premium Package',
       cta2: 'Explore Packages',
+      // Words cycled through by the TextScramble effect on the hero title
+      scrambleWords: ['CELEBRATE', 'YOUR DAY', 'IN STYLE', 'YOUR BIRTHDAY'],
     },
     services: {
       title: 'Our Services',
@@ -161,6 +201,18 @@ export const translations = {
     },
     gallery: {
       title: 'Our Work',
+      // Decorative prefix shown on each gallery tile (kept identical across locales)
+      expPrefix: 'EXP // 0',
+      items: [
+        'Organic Balloon Arch',
+        'Cake Pedestal Styling',
+        'Vivid Stage Lighting',
+        'Clear Acrylic Pedestals',
+        'Transparent Tiffany Seating',
+        'Luxury Dessert Buffet',
+        'Custom Neon Signage',
+        'Professional Photography',
+      ],
     },
     testimonials: {
       title: 'Client Testimonials',
@@ -190,8 +242,26 @@ export const translations = {
       button: 'Book Luxury Package',
     },
     footer: {
+      brand: 'Your Birthday',
       tagline: 'We turn birthdays into unforgettable experiences.',
       rights: '© 2025 All Rights Reserved',
+    },
+    booking: {
+      modalTitle: 'Book Birthday Package',
+      selectedPackageLabel: 'Selected Package:',
+      submit: 'Submit Reservation Order',
+      form: {
+        name: 'Full Name',
+        phone: 'Phone Number',
+        email: 'Email Address (Optional)',
+        location: 'Event Location (e.g., Salmiya)',
+        notes: 'Additional custom requests',
+      },
+      success: {
+        title: 'Order Received Successfully',
+        body:
+          'Our party planning coordinators will contact you shortly to finalize details.',
+      },
     },
   },
 } as const

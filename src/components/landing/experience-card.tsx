@@ -38,7 +38,6 @@ export function ExperienceCard({
   // Track scroll direction + visibility to drive the exit/enter animation.
   // 'enter' = card is in view (animate in), 'exit' = scrolled past (animate out).
   const [animState, setAnimState] = useState<'enter' | 'exit'>('enter')
-  const lastScrollY = useRef(0)
 
   useEffect(() => {
     const el = cardRef.current
@@ -55,7 +54,6 @@ export function ExperienceCard({
       // (card has mostly scrolled out of view at the top)
       const isExiting = rect.bottom < vh * 0.15
       setAnimState(isExiting ? 'exit' : 'enter')
-      lastScrollY.current = window.scrollY
     }
 
     update()
@@ -72,6 +70,7 @@ export function ExperienceCard({
       ref={cardRef}
       role="button"
       tabIndex={0}
+      aria-label={`${category} - ${title}`}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

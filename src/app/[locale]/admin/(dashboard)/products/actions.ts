@@ -52,6 +52,7 @@ export async function createProductAction(formData: FormData): Promise<{ success
     return { success: false, error: 'invalid_input' }
   }
 
+  let shouldRedirect = false
   try {
     const existing = await db.product.findUnique({ where: { slug: parsed.data.slug } })
     if (existing) {
@@ -68,12 +69,17 @@ export async function createProductAction(formData: FormData): Promise<{ success
     })
 
     revalidatePath('/admin/products')
-    redirect('/admin/products')
+    shouldRedirect = true
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
     console.error('Create product error:', message, error)
     return { success: false, error: 'internal_error' }
   }
+
+  if (shouldRedirect) {
+    redirect('/admin/products')
+  }
+  return { success: false, error: 'internal_error' }
 }
 
 export async function updateProductAction(id: string, formData: FormData): Promise<{ success: boolean; error?: string }> {
@@ -106,6 +112,7 @@ export async function updateProductAction(id: string, formData: FormData): Promi
     return { success: false, error: 'invalid_input' }
   }
 
+  let shouldRedirect = false
   try {
     const existing = await db.product.findFirst({
       where: { slug: parsed.data.slug, NOT: { id } },
@@ -124,12 +131,17 @@ export async function updateProductAction(id: string, formData: FormData): Promi
     })
 
     revalidatePath('/admin/products')
-    redirect('/admin/products')
+    shouldRedirect = true
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
     console.error('Update product error:', message, error)
     return { success: false, error: 'internal_error' }
   }
+
+  if (shouldRedirect) {
+    redirect('/admin/products')
+  }
+  return { success: false, error: 'internal_error' }
 }
 
 export async function deleteProductAction(id: string): Promise<{ success: boolean; error?: string }> {

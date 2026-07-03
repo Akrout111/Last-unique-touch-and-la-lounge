@@ -146,13 +146,13 @@ export function CategoriesTable({ categories, locale }: CategoriesTableProps) {
                             <button
                               onClick={() => setEditingCategory(cat)}
                               aria-label={t('admin.categories.edit')}
-                              className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <ConfirmDelete
                               trigger={
-                                <span aria-label={t('admin.products.delete')} className="p-2 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block">
+                                <span aria-label={t('admin.products.delete')} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block">
                                   <Trash2 className="w-4 h-4" />
                                 </span>
                               }

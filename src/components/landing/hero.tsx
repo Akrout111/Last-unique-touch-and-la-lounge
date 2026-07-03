@@ -5,7 +5,6 @@ import { useScroll, useTransform, motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ExperienceCard } from './experience-card'
-import { initScrollTracking } from '@/stores/scroll-store'
 
 export function Hero() {
   const t = useTranslations()
@@ -21,8 +20,6 @@ export function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
 
   useEffect(() => {
-    const cleanup = initScrollTracking(ref.current)
-    return cleanup
   }, [])
 
   return (
@@ -78,7 +75,7 @@ export function Hero() {
           className="animate-hero-in text-xs sm:text-sm text-paper/60 mt-1"
           style={{ animationDelay: '0.5s' }}
         >
-          {locale === 'ar' ? 'اختر تجربتك الفاخرة' : 'Choose your luxury experience'}
+          {t('hero.subtitle')}
         </p>
       </motion.div>
 
@@ -86,7 +83,7 @@ export function Hero() {
       <div className="relative z-20 flex-1 flex items-center px-3 sm:px-6 lg:px-8 py-2">
         <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 md:gap-6 lg:gap-8">
           <ExperienceCard
-            category="Heritage"
+            category={t('hero.categories.heritage')}
             title={t('brandSelector.lut.name')}
             actionText={t('hero.explore')}
             productImageUrl="/products/lalounge_modern.webp"
@@ -99,7 +96,7 @@ export function Hero() {
             onClick={() => router.push('/last-unique-touch')}
           />
           <ExperienceCard
-            category="Modern"
+            category={t('hero.categories.modern')}
             title={t('brandSelector.lalounge.name')}
             actionText={t('hero.explore')}
             productImageUrl="/products/lut_heritage.webp"
@@ -112,7 +109,7 @@ export function Hero() {
             onClick={() => router.push('/la-lounge')}
           />
           <ExperienceCard
-            category="Atelier"
+            category={t('hero.categories.atelier')}
             title={t('brandSelector.birthday.name')}
             actionText={t('hero.explore')}
             productImageUrl="/products/birthday_atelier.webp"

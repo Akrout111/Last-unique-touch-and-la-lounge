@@ -6,7 +6,6 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Background3D } from '@/components/hero-3d/background-3d'
-import { initScrollTracking } from '@/stores/scroll-store'
 
 export default function LastUniqueTouchView() {
   const t = useTranslations()
@@ -16,8 +15,6 @@ export default function LastUniqueTouchView() {
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   useEffect(() => {
-    const cleanup = initScrollTracking(ref.current)
-    return cleanup
   }, [])
 
   return (

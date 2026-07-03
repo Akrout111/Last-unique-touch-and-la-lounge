@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import Image from 'next/image'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
@@ -101,9 +102,11 @@ export function BrandSelector() {
                   >
                     {/* Background image */}
                     <div className="absolute inset-0 overflow-hidden">
-                      <img
+                      <Image
                         src={brand.image}
                         alt={t(`brandSelector.${brand.key}.name`)}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
                         className={`w-full h-full object-cover transition-transform duration-700 ${
                           brand.active ? 'group-hover:scale-110' : ''
                         }`}

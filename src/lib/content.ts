@@ -40,8 +40,13 @@ export async function getContent(
     if (fallbackCached !== undefined) {
       return fallbackCached
     }
-    const fallbackContent = await fs.readFile(fallbackPath, 'utf-8')
-    cache.set(fallbackPath, fallbackContent)
-    return fallbackContent
+    try {
+      const fallbackContent = await fs.readFile(fallbackPath, 'utf-8')
+      cache.set(fallbackPath, fallbackContent)
+      return fallbackContent
+    } catch {
+      // Neither the requested locale nor the Arabic fallback exists.
+      return `# ${page}\n\nContent not available.`
+    }
   }
 }

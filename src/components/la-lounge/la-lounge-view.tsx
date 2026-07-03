@@ -10,7 +10,7 @@ export default function LaLoungeView() {
   const router = useRouter()
   const locale = useLocale()
   const t = useTranslations()
-  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
+  const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
   const handleBack = () => {
     router.push('/')
@@ -26,7 +26,7 @@ export default function LaLoungeView() {
       {/* Floating Back Button */}
       <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
         <motion.button
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: locale === 'ar' ? 20 : -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           whileHover={{ x: locale === 'ar' ? 4 : -4, scale: 1.02 }}
@@ -67,6 +67,7 @@ export default function LaLoungeView() {
           transition={{ duration: 1, delay: 1.2, ease: 'easeOut' }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => router.push('/products')}
           className="mt-8 px-10 py-3.5 bg-purple-700 hover:bg-purple-800 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] hover:shadow-[0_6px_25px_rgba(126,34,206,0.4)] transition-all cursor-pointer border border-purple-500/30"
         >
           {t('laLounge.explore')}

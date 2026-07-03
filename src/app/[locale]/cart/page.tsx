@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { CartView } from '@/components/cart/cart-view'
@@ -10,10 +11,11 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
+  const t = await getTranslations({ locale: locale as 'ar' | 'en' })
   return buildMetadata({
     locale: locale as 'ar' | 'en',
     path: '/cart',
-    title: 'Cart',
+    title: t('cart.title'),
     noIndex: true,
   })
 }

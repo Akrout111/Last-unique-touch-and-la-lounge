@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { LayoutDashboard, Package, FolderTree, CalendarDays, LogOut, Menu, X, ExternalLink } from 'lucide-react'
 import { logoutAction } from '@/app/[locale]/admin/login/actions'
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations()
+  const locale = useLocale()
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -31,7 +32,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex" dir={t('admin.dir')}>
+    <div className="min-h-screen bg-background flex" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       {/* Sidebar — desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-bg-dark text-white shrink-0">
         <div className="p-6 border-b border-white/10">

@@ -1,4 +1,13 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// The health endpoint pings the database via `db.$queryRaw\`SELECT 1\``.
+// Mock it so the test does not require a real database connection.
+vi.mock('@/lib/db', () => ({
+  db: {
+    $queryRaw: vi.fn().mockResolvedValue([1]),
+  },
+}))
+
 import { GET } from '@/app/api/v1/health/route'
 
 describe('Health endpoint', () => {

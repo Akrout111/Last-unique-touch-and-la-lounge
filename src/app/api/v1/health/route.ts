@@ -28,10 +28,9 @@ export async function GET() {
       database,
       timestamp: new Date().toISOString(),
     })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error'
+  } catch {
     return NextResponse.json(
-      { status: 'error', message },
+      { status: 'error', message: 'Health check failed' },
       { status: 500 }
     )
   }

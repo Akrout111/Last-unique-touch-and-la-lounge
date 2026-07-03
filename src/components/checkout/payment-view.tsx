@@ -126,12 +126,14 @@ export function PaymentView({ orderId }: PaymentViewProps) {
 
       if (!response.ok) {
         const errorCode = result.error as string | undefined
-        const errorKey = `payment.errors.${errorCode ?? 'payment_failed'}`
-        try {
-          setErrorMessage(t(errorKey))
-        } catch {
-          setErrorMessage(t('payment.errors.payment_failed'))
+        const errorKeys: Record<string, string> = {
+          payment_failed: 'payment.errors.paymentFailed',
+          order_not_found: 'payment.errors.orderNotFound',
+          invalid_card: 'payment.errors.invalidCard',
+          invalid_expiry: 'payment.errors.invalidExpiry',
+          invalid_cvv: 'payment.errors.invalidCvv',
         }
+        setErrorMessage(t(errorKeys[errorCode ?? 'payment_failed'] || 'payment.errors.paymentFailed'))
         setSubmitting(false)
         return
       }
@@ -140,7 +142,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
       clear()
       router.push(`/checkout/success?order=${orderId}`)
     } catch {
-      setErrorMessage(t('payment.errors.payment_failed'))
+      setErrorMessage(t('payment.errors.paymentFailed'))
       setSubmitting(false)
     }
   }

@@ -125,7 +125,7 @@ export function Navbar() {
                 {navLinks.map((link, idx) => (
                   <motion.div
                     key={link.href}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: locale === 'ar' ? -20 : 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.08 }}
                   >

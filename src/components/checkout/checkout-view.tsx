@@ -95,12 +95,15 @@ export function CheckoutView() {
 
       if (!response.ok) {
         const errorCode = result.error as string | undefined
-        const errorKey = `checkout.errors.${errorCode ?? 'internal_error'}`
-        try {
-          setErrorMessage(t(errorKey))
-        } catch {
-          setErrorMessage(t('checkout.errors.internal_error'))
+        const errorKeys: Record<string, string> = {
+          price_mismatch: 'checkout.errors.priceMismatch',
+          insufficient_stock: 'checkout.errors.insufficientStock',
+          not_available: 'checkout.errors.notAvailable',
+          duplicate_request: 'checkout.errors.duplicateRequest',
+          invalid_input: 'checkout.errors.invalidInput',
+          internal_error: 'checkout.errors.internalError',
         }
+        setErrorMessage(t(errorKeys[errorCode ?? 'internal_error'] || 'checkout.errors.internalError'))
         setSubmitting(false)
         return
       }
@@ -109,7 +112,7 @@ export function CheckoutView() {
       const orderId = result.orderId as string
       router.push(`/checkout/payment?order=${orderId}`)
     } catch {
-      setErrorMessage(t('checkout.errors.internal_error'))
+      setErrorMessage(t('checkout.errors.internalError'))
       setSubmitting(false)
     }
   }

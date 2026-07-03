@@ -214,6 +214,12 @@ export function ProductInfo({ product }: ProductInfoProps) {
             {t('product.rental.unavailable')}
           </div>
         )}
+        {availability === 'error' && (
+          <p className="flex items-center gap-2 text-sm text-lut" role="alert">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{t('product.rental.checkError')}</span>
+          </p>
+        )}
         {availability === 'idle' && startDate && endDate && (
           <p className="text-sm text-muted-foreground">
             {t('product.rental.checking')}

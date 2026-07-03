@@ -4,7 +4,7 @@ import LaLoungeView from '@/components/la-lounge/la-lounge-view'
 export async function generateMetadata() {
   const t = await getTranslations()
   return {
-    title: 'La Lounge',
+    title: t('brandSelector.lalounge.name'),
     description: t('brandSelector.lalounge.desc'),
   }
 }

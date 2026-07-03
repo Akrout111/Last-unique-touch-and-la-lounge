@@ -147,6 +147,12 @@ export function ContactView() {
                     {...register('phone')}
                     className="bg-background"
                   />
+                  {errors.phone && (
+                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t('contact.form.errors.phoneInvalid')}</span>
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="subject">

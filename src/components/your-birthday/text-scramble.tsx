@@ -25,6 +25,13 @@ export class TextScramble {
   }
 
   setText(newText: string): Promise<void> {
+    // Resolve any pending Promise before starting a new animation,
+    // so callers awaiting the previous setText don't hang forever.
+    if (this.resolve) {
+      const r = this.resolve
+      this.resolve = null
+      r()
+    }
     const oldText = this.el.innerText
     const length = Math.max(oldText.length, newText.length)
     const promise = new Promise<void>((resolve) => {

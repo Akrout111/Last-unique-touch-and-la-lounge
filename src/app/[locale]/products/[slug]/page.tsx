@@ -44,7 +44,7 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params
+  const { slug, locale } = await params
 
   const product = await getProductBySlug(slug)
 
@@ -90,7 +90,7 @@ export default async function ProductPage({ params }: PageProps) {
             categorySlug={product.category.slug}
             categoryNameAr={product.category.nameAr}
             categoryNameEn={product.category.nameEn}
-            productName={product.nameAr}
+            productName={locale === 'ar' ? product.nameAr : product.nameEn}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

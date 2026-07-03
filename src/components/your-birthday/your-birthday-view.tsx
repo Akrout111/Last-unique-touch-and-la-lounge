@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useLocale } from 'next-intl'
+import { useRouter, usePathname } from '@/i18n/routing'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -27,9 +29,16 @@ interface YourBirthdayViewProps {
 }
 
 export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
-  const [locale, setLocale] = useState<'ar' | 'en'>('ar')
+  const locale = useLocale() as 'ar' | 'en'
   const isRTL = locale === 'ar'
   const t = translations[locale]
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const toggleLocale = () => {
+    const next = locale === 'ar' ? 'en' : 'ar'
+    router.replace(pathname, { locale: next })
+  }
   const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
 
@@ -62,12 +71,10 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     if (loading || !titleRef.current) return
 
     // Pre-initialize title elements with the target language to avoid mixed-language scramble transition
-    titleRef.current.innerText = isRTL ? 'عيد ميلادك' : 'YOUR BIRTHDAY'
+    titleRef.current.innerText = t.hero.title1
 
     const fx = new TextScramble(titleRef.current)
-    const words = isRTL
-      ? ['احتفل معنا', 'يومك المميز', 'بأبهى حلة', 'عيد ميلادك']
-      : ['CELEBRATE', 'YOUR DAY', 'IN STYLE', 'YOUR BIRTHDAY']
+    const words = t.hero.scrambleWords
 
     let counter = 0
     let timeoutId: ReturnType<typeof setTimeout>
@@ -92,9 +99,6 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const toggleLocale = () => {
-    setLocale((prev) => (prev === 'ar' ? 'en' : 'ar'))
-  }
 
   const BackIcon = isRTL ? ArrowLeft : ArrowRight
 
@@ -158,6 +162,14 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
             {/* Brand Title */}
             <h1
               onClick={scrollToTop}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  scrollToTop()
+                }
+              }}
               className="text-lg md:text-2xl font-black tracking-wider cursor-pointer"
               style={{
                 fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
@@ -166,7 +178,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Your Birthday
+              {t.nav.brand}
             </h1>
 
             {/* Language Toggle & Up Arrow */}
@@ -176,7 +188,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-semibold tracking-wider transition-all cursor-pointer"
               >
                 <Languages className="w-3.5 h-3.5 text-[#00F3FF]" />
-                <span>{isRTL ? 'English' : 'عربي'}</span>
+                <span>{t.nav.langToggle}</span>
               </button>
 
               <button
@@ -472,14 +484,14 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { n: 1, label: isRTL ? 'قوس البالونات العضوي' : 'Organic Balloon Arch', grad: 'from-[#8B5CF6] to-[#EC4899]' },
-                { n: 2, label: isRTL ? 'تنسيق منصة الكيك' : 'Cake Pedestal Styling', grad: 'from-[#EC4899] to-[#F97316]' },
-                { n: 3, label: isRTL ? 'إضاءة المسرح الملونة' : 'Vivid Stage Lighting', grad: 'from-[#F97316] to-[#00F3FF]' },
-                { n: 4, label: isRTL ? 'طاولات الأكريليك الشفافة' : 'Clear Acrylic Pedestals', grad: 'from-[#00F3FF] to-[#8B5CF6]' },
-                { n: 5, label: isRTL ? 'كراسي المعازيم الفاخرة' : 'Transparent Tiffany Seating', grad: 'from-[#8B5CF6] to-[#00F3FF]' },
-                { n: 6, label: isRTL ? 'بوفيه الحلويات الأنيق' : 'Luxury Dessert Buffet', grad: 'from-[#00F3FF] to-[#EC4899]' },
-                { n: 7, label: isRTL ? 'كتابة النيون المخصصة' : 'Custom Neon Signage', grad: 'from-[#EC4899] to-[#F97316]' },
-                { n: 8, label: isRTL ? 'تغطية فوتوغرافية كاملة' : 'Professional Photography', grad: 'from-[#F97316] to-[#8B5CF6]' }
+                { n: 1, label: t.gallery.items[0], grad: 'from-[#8B5CF6] to-[#EC4899]' },
+                { n: 2, label: t.gallery.items[1], grad: 'from-[#EC4899] to-[#F97316]' },
+                { n: 3, label: t.gallery.items[2], grad: 'from-[#F97316] to-[#00F3FF]' },
+                { n: 4, label: t.gallery.items[3], grad: 'from-[#00F3FF] to-[#8B5CF6]' },
+                { n: 5, label: t.gallery.items[4], grad: 'from-[#8B5CF6] to-[#00F3FF]' },
+                { n: 6, label: t.gallery.items[5], grad: 'from-[#00F3FF] to-[#EC4899]' },
+                { n: 7, label: t.gallery.items[6], grad: 'from-[#EC4899] to-[#F97316]' },
+                { n: 8, label: t.gallery.items[7], grad: 'from-[#F97316] to-[#8B5CF6]' }
               ].map((item) => (
                 <div
                   key={item.n}
@@ -490,7 +502,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
                   {/* Geometric outline decoration */}
                   <div className="absolute inset-4 border border-white/10 group-hover:border-white/30 rounded-xl transition-colors duration-500 flex flex-col justify-end p-4">
-                    <span className="text-xs font-mono text-white/40 tracking-widest uppercase">EXP // 0{item.n}</span>
+                    <span className="text-xs font-mono text-white/40 tracking-widest uppercase">{t.gallery.expPrefix}{item.n}</span>
                     <h4 className="text-base font-bold text-white tracking-wide mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                       {item.label}
                     </h4>
@@ -603,7 +615,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Your Birthday
+              {t.footer.brand}
             </h3>
             <p className="text-white/50 text-sm max-w-md mx-auto">{t.footer.tagline}</p>
             <div className="w-16 h-[1px] bg-white/10 mx-auto" />
@@ -615,7 +627,15 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
       {/* === BOOKING DIALOG === */}
       <AnimatePresence>
         {bookingOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="booking-modal-title"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setBookingOpen(false)
+            }}
+          >
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -651,13 +671,11 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto text-green-400">
                     <CheckCircle2 className="w-10 h-10 animate-pulse" />
                   </div>
-                  <h3 className="text-2xl font-bold tracking-wide">
-                    {isRTL ? 'تم استلام طلبك بنجاح' : 'Order Received Successfully'}
+                  <h3 id="booking-modal-title" className="text-2xl font-bold tracking-wide">
+                    {t.booking.success.title}
                   </h3>
                   <p className="text-white/60 text-sm">
-                    {isRTL
-                      ? 'سيتواصل معك فريق منسقي الحفلات لدينا قريباً لتأكيد تفاصيل حفل عيد ميلادك.'
-                      : 'Our party planning coordinators will contact you shortly to finalize details.'}
+                    {t.booking.success.body}
                   </p>
                 </div>
               ) : (
@@ -665,12 +683,12 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <PartyPopper className="w-6 h-6 text-[#EC4899]" />
                     <div>
-                      <h3 className="text-xl font-bold">
-                        {isRTL ? 'حجز باقة عيد الميلاد' : 'Book Birthday Package'}
+                      <h3 id="booking-modal-title" className="text-xl font-bold">
+                        {t.booking.modalTitle}
                       </h3>
                       {selectedPkgName && (
                         <p className="text-xs text-white/60 font-medium tracking-wide mt-0.5">
-                          {isRTL ? 'الباقة المحددة:' : 'Selected Package:'} <span className="text-[#00F3FF] font-bold">{selectedPkgName}</span>
+                          {t.booking.selectedPackageLabel} <span className="text-[#00F3FF] font-bold">{selectedPkgName}</span>
                         </p>
                       )}
                     </div>
@@ -683,7 +701,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       <input
                         type="text"
                         required
-                        placeholder={isRTL ? 'الاسم الكامل' : 'Full Name'}
+                        placeholder={t.booking.form.name}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
@@ -695,7 +713,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       <input
                         type="tel"
                         required
-                        placeholder={isRTL ? 'رقم الهاتف' : 'Phone Number'}
+                        placeholder={t.booking.form.phone}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
@@ -706,7 +724,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       <Mail className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
                       <input
                         type="email"
-                        placeholder={isRTL ? 'البريد الإلكتروني (اختياري)' : 'Email Address (Optional)'}
+                        placeholder={t.booking.form.email}
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
@@ -729,7 +747,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       <input
                         type="text"
                         required
-                        placeholder={isRTL ? 'موقع الحفلة (مثال: السالمية)' : 'Event Location (e.g., Salmiya)'}
+                        placeholder={t.booking.form.location}
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         className={`w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
@@ -738,7 +756,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
                     <textarea
                       rows={2}
-                      placeholder={isRTL ? 'طلبات أو ملاحظات إضافية' : 'Additional custom requests'}
+                      placeholder={t.booking.form.notes}
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       className="w-full p-3.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm"
@@ -752,7 +770,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       background: 'linear-gradient(135deg, #EC4899, #8B5CF6)',
                     }}
                   >
-                    {isRTL ? 'إرسال طلب الحجز' : 'Submit Reservation Order'}
+                    {t.booking.submit}
                   </button>
                 </form>
               )}

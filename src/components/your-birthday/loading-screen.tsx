@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { translations } from './translations'
 
 interface Props {
@@ -13,22 +13,34 @@ export function BirthdayLoadingScreen({ onComplete, locale }: Props) {
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(true)
 
+  // Store onComplete in a ref so the interval effect can stay stable
+  // (empty deps) and we avoid re-running the interval when the parent
+  // passes a new callback identity on every render.
+  const onCompleteRef = useRef(onComplete)
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
+
+  // Interval effect — runs once on mount. Increments progress.
+  // Empty deps ensures we never restart the interval mid-flight.
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setTimeout(() => {
-            setVisible(false)
-            setTimeout(onComplete, 500)
-          }, 300)
-          return 100
-        }
-        return prev + 2
-      })
+      setProgress((prev) => (prev >= 100 ? 100 : prev + 2))
     }, 20)
     return () => clearInterval(interval)
-  }, [onComplete])
+  }, [])
+
+  // Completion effect — watches progress and triggers the fade-out
+  // + onComplete callback when the bar reaches 100%.
+  useEffect(() => {
+    if (progress < 100) return
+    const hideTimer = setTimeout(() => setVisible(false), 300)
+    const completeTimer = setTimeout(() => onCompleteRef.current(), 800)
+    return () => {
+      clearTimeout(hideTimer)
+      clearTimeout(completeTimer)
+    }
+  }, [progress])
 
   return (
     <div

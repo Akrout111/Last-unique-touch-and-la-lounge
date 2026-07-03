@@ -1,4 +1,4 @@
-import { Inter, Tajawal, Cormorant_Garamond, DM_Mono } from 'next/font/google'
+import { Inter, Tajawal, Cormorant_Garamond, DM_Mono, Orbitron, Rajdhani, Cairo } from 'next/font/google'
 
 export const inter = Inter({
   subsets: ['latin'],
@@ -26,4 +26,25 @@ export const dmMono = DM_Mono({
   display: 'swap',
   variable: '--font-mono',
   weight: ['400', '500'],
+})
+
+export const orbitron = Orbitron({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-birthday-headline',
+  weight: ['400', '700', '900'],
+})
+
+export const rajdhani = Rajdhani({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-birthday-sub',
+  weight: ['400', '500', '700'],
+})
+
+export const cairo = Cairo({
+  subsets: ['arabic', 'latin'],
+  display: 'swap',
+  variable: '--font-birthday-arabic',
+  weight: ['400', '700', '900'],
 })

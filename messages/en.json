@@ -16,7 +16,7 @@
   "hero": {
     "title": "Elegance that",
     "titleAccent": "inspires",
-    "subtitle": "A luxury platform for furniture and event equipment rental in Kuwait",
+    "subtitle": "Choose your luxury experience",
     "ctaPrimary": "Browse Products",
     "ctaSecondary": "About Us",
     "stat": "+500 luxury items",
@@ -24,6 +24,11 @@
     "chooseExperience": "Choose Your Experience",
     "explore": "Explore",
     "comingSoon": "Coming Soon",
+    "categories": {
+      "heritage": "Heritage",
+      "modern": "Modern",
+      "atelier": "Atelier"
+    },
     "statLabels": {
       "luxuryItems": "Luxury Items",
       "events": "Events",
@@ -109,7 +114,8 @@
     "phaseLabel": "Phase {phase} — Foundation complete",
     "noImage": "No image",
     "close": "Close",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "currency": "KWD"
   },
   "a11y": {
     "skipToContent": "Skip to main content"
@@ -162,7 +168,8 @@
       "checking": "Checking availability...",
       "available": "Available for selected period",
       "unavailable": "Unavailable — overlapping booking exists",
-      "selectDates": "Select dates to check availability"
+      "selectDates": "Select dates to check availability",
+      "checkError": "Failed to check availability — please try again"
     },
     "quantity": {
       "label": "Quantity",
@@ -404,12 +411,18 @@
     },
     "errors": {
       "invalid_input": "Invalid input data",
+      "invalidInput": "Invalid input data",
       "duplicate_request": "This order has already been received",
+      "duplicateRequest": "This order has already been received",
       "invalid_products": "Some products are invalid",
       "price_mismatch": "Product prices have changed — please update your cart",
+      "priceMismatch": "Product prices have changed — please update your cart",
       "insufficient_stock": "Insufficient stock for one of the products",
+      "insufficientStock": "Insufficient stock for one of the products",
       "not_available": "One of the products is no longer available for the selected period",
-      "internal_error": "An error occurred — please try again later"
+      "notAvailable": "One of the products is no longer available for the selected period",
+      "internal_error": "An error occurred — please try again later",
+      "internalError": "An error occurred — please try again later"
     },
     "empty": "Cannot checkout with an empty cart",
     "success": {
@@ -451,10 +464,15 @@
     },
     "errors": {
       "invalid_card": "Invalid card number",
+      "invalidCard": "Invalid card number",
       "invalid_expiry": "Invalid expiry date",
+      "invalidExpiry": "Invalid expiry date",
       "invalid_cvv": "Invalid CVV",
+      "invalidCvv": "Invalid CVV",
       "payment_failed": "Payment failed — please try again",
+      "paymentFailed": "Payment failed — please try again",
       "order_not_found": "Order not found",
+      "orderNotFound": "Order not found",
       "nameRequired": "Name on card is required",
       "nameMinLength": "Name must be at least 3 characters"
     },

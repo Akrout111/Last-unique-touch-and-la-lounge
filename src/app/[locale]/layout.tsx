@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import { CartProvider } from '@/components/providers/cart-provider'
 import { ToastProvider } from '@/components/providers/toast-provider'
-import { inter, tajawal, cormorant, dmMono } from '@/app/fonts'
+import { inter, tajawal, cormorant, dmMono, orbitron, rajdhani, cairo } from '@/app/fonts'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations()
@@ -47,7 +47,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={locale === 'ar' ? 'rtl' : 'ltr'}
-      className={`${inter.variable} ${tajawal.variable} ${cormorant.variable} ${dmMono.variable}`}
+      className={`${inter.variable} ${tajawal.variable} ${cormorant.variable} ${dmMono.variable} ${orbitron.variable} ${rajdhani.variable} ${cairo.variable}`}
       suppressHydrationWarning
     >
       <head>

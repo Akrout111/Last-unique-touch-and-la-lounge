@@ -17,6 +17,9 @@ export function shouldEnable3D(): boolean {
     const canvas = document.createElement('canvas')
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
     if (!gl) return false
+    // Release the context so we don't leak GPU resources just by probing
+    const loseExt = gl.getExtension('WEBGL_lose_context')
+    loseExt?.loseContext()
   } catch {
     return false
   }
@@ -28,10 +31,4 @@ export function shouldEnable3D(): boolean {
   if (mem < 4 || cores < 4) return false
 
   return true
-}
-
-/** Mobile device check (used to tune DPR and model scale). */
-export function isMobileDevice(): boolean {
-  if (typeof window === 'undefined') return false
-  return window.innerWidth <= 768
 }

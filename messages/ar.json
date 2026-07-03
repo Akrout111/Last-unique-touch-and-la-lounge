@@ -16,7 +16,7 @@
   "hero": {
     "title": "أناقة تُلهم",
     "titleAccent": "أحداثك",
-    "subtitle": "منصة فاخرة لتأجير الأثاث ومعدات الأيفنتات في الكويت",
+    "subtitle": "اختر تجربتك الفاخرة",
     "ctaPrimary": "تصفّح المنتجات",
     "ctaSecondary": "تعرّف علينا",
     "stat": "+500 منتج فاخر",
@@ -24,6 +24,11 @@
     "chooseExperience": "اختر تجربتك",
     "explore": "استكشف",
     "comingSoon": "قريباً",
+    "categories": {
+      "heritage": "تراث",
+      "modern": "عصري",
+      "atelier": "أتيليه"
+    },
     "statLabels": {
       "luxuryItems": "منتج فاخر",
       "events": "حدث ناجح",
@@ -109,7 +114,8 @@
     "phaseLabel": "المرحلة {phase} — التأسيس مكتمل",
     "noImage": "لا توجد صورة",
     "close": "إغلاق",
-    "saving": "جارٍ الحفظ..."
+    "saving": "جارٍ الحفظ...",
+    "currency": "د.ك"
   },
   "a11y": {
     "skipToContent": "تخطّي إلى المحتوى الرئيسي"
@@ -162,7 +168,8 @@
       "checking": "جارٍ التحقق من التوفر...",
       "available": "متاح للفترة المختارة",
       "unavailable": "غير متاح — يوجد حجز متداخل",
-      "selectDates": "اختر التواريخ للتحقق من التوافر"
+      "selectDates": "اختر التواريخ للتحقق من التوافر",
+      "checkError": "تعذّر فحص التوفر — يرجى المحاولة مرة أخرى"
     },
     "quantity": {
       "label": "الكمية",
@@ -404,12 +411,18 @@
     },
     "errors": {
       "invalid_input": "بيانات غير صالحة",
+      "invalidInput": "بيانات غير صالحة",
       "duplicate_request": "تم استلام هذا الطلب مسبقاً",
+      "duplicateRequest": "تم استلام هذا الطلب مسبقاً",
       "invalid_products": "بعض المنتجات غير صالحة",
       "price_mismatch": "أسعار المنتجات تغيّرت — يرجى تحديث السلة",
+      "priceMismatch": "أسعار المنتجات تغيّرت — يرجى تحديث السلة",
       "insufficient_stock": "لا توجد كمية كافية لأحد المنتجات",
+      "insufficientStock": "لا توجد كمية كافية لأحد المنتجات",
       "not_available": "أحد المنتجات لم يعد متاحاً في الفترة المختارة",
-      "internal_error": "حدث خطأ — يرجى المحاولة لاحقاً"
+      "notAvailable": "أحد المنتجات لم يعد متاحاً في الفترة المختارة",
+      "internal_error": "حدث خطأ — يرجى المحاولة لاحقاً",
+      "internalError": "حدث خطأ — يرجى المحاولة لاحقاً"
     },
     "empty": "لا يمكن إتمام الطلب بسلة فارغة",
     "success": {
@@ -451,10 +464,15 @@
     },
     "errors": {
       "invalid_card": "رقم البطاقة غير صالح",
+      "invalidCard": "رقم البطاقة غير صالح",
       "invalid_expiry": "تاريخ الانتهاء غير صالح",
+      "invalidExpiry": "تاريخ الانتهاء غير صالح",
       "invalid_cvv": "CVV غير صالح",
+      "invalidCvv": "CVV غير صالح",
       "payment_failed": "فشل الدفع — يرجى المحاولة مرة أخرى",
+      "paymentFailed": "فشل الدفع — يرجى المحاولة مرة أخرى",
       "order_not_found": "الطلب غير موجود",
+      "orderNotFound": "الطلب غير موجود",
       "nameRequired": "الاسم على البطاقة مطلوب",
       "nameMinLength": "الاسم يجب أن يكون 3 أحرف على الأقل"
     },

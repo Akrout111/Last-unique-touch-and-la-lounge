@@ -399,8 +399,9 @@ export function BirthdayVisualizer() {
     const targetMouse = { x: 0, y: 0 }
 
     const onMouseMove = (e: MouseEvent) => {
-      targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1
-      targetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+      const rect = container.getBoundingClientRect()
+      targetMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      targetMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
     }
     window.addEventListener('mousemove', onMouseMove)
 
@@ -464,7 +465,7 @@ export function BirthdayVisualizer() {
           laser.rotation.z = -Math.sin(time * 0.7) * 0.4 + 0.5
           laser.rotation.x = Math.sin(time * 0.4) * 0.2
         }
-        laserMatList[i].opacity = 0.25 + Math.random() * 0.2
+        laserMatList[i].opacity = 0.25 + Math.sin(time * 4 + i) * 0.1 + 0.1
       })
 
       // Rotate and color cycle celebration ring
@@ -525,6 +526,7 @@ export function BirthdayVisualizer() {
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
       }
+      if (composerRef.current) { composerRef.current.dispose(); composerRef.current = null }
       renderer.dispose()
 
       // Clear refs

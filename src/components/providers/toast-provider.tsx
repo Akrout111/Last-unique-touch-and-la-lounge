@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 
 type ToastType = 'success' | 'error' | 'warning'
@@ -19,13 +19,26 @@ const ToastContext = createContext<ToastContextValue | null>(null)
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  // Track all pending setTimeout IDs so they can be cleared on unmount.
+  const timeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
 
   const showToast = useCallback((type: ToastType, message: string) => {
     const id = Math.random().toString(36).slice(2, 11)
     setToasts((prev) => [...prev, { id, type, message }])
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
+      timeoutsRef.current.delete(timeout)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 4000)
+    timeoutsRef.current.add(timeout)
+  }, [])
+
+  // Clear any pending timeouts on unmount to prevent state updates after teardown.
+  useEffect(() => {
+    const timeouts = timeoutsRef.current
+    return () => {
+      timeouts.forEach((t) => clearTimeout(t))
+      timeouts.clear()
+    }
   }, [])
 
   return (
