@@ -1,12 +1,15 @@
-# Caddyfile
+# Caddyfile — Gateway for preview panel
 #
-# NOTE (Phase 1 security fix — C6):
-# The previous `:81` block accepted an arbitrary `XTransformPort` query
-# parameter and proxied to `localhost:{port}`. This was an open SSRF vector
-# (e.g. an attacker could reach internal services on any localhost port).
-# That block has been removed. The app is served directly on :3000 by Next.js;
-# Caddy is not used as a proxy in front of it in this configuration.
-#
-# If you need a public-facing reverse proxy in the future, configure it
-# explicitly with a hardcoded upstream and never allow caller-controlled
-# port selection.
+# The :81 block proxies requests from the preview panel to the Next.js
+# server on port 3000. The XTransformPort query parameter is restricted
+# to port 3000 only (allowlist) to prevent SSRF attacks.
+
+:81 {
+	@allowed query.XTransformPort=3000
+	handle @allowed {
+		reverse_proxy localhost:3000
+	}
+	handle {
+		respond 403
+	}
+}
