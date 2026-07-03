@@ -1,16 +1,19 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
 import PurpleWaves3D from './purple-waves-3d'
+import { LaLoungeLoadingScreen } from './loading-screen'
 
 export default function LaLoungeView() {
   const router = useRouter()
   const locale = useLocale()
   const t = useTranslations()
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
+  const [loading, setLoading] = useState(true)
 
   const services = locale === 'ar' ? [
     {
@@ -52,6 +55,7 @@ export default function LaLoungeView() {
 
   return (
     <div className="relative w-full bg-white">
+      {loading && <LaLoungeLoadingScreen onComplete={() => setLoading(false)} />}
       {/* === Hero section — title centered, purple 3D background === */}
       <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
         <PurpleWaves3D />

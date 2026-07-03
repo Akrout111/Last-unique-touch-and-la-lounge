@@ -62,14 +62,12 @@ export default function LastUniqueTouchView() {
             <span className="w-6 sm:w-8 h-px bg-gold/50" />
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, filter: 'blur(10px)', y: 10 }}
-            animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-            className="font-display text-4xl sm:text-6xl md:text-7xl text-paper mb-4"
+          <h1
+            className="animate-hero-down font-display text-4xl sm:text-6xl md:text-7xl text-paper mb-4 relative z-30"
+            style={{ animationDelay: '0.3s', textShadow: '0 2px 30px rgba(0,0,0,0.8)' }}
           >
             {t('brandSelector.lut.name')}
-          </motion.h1>
+          </h1>
 
           <motion.p
             initial={{ opacity: 0, y: 10 }}
