@@ -251,29 +251,17 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 {t.hero.subtitle}
               </p>
 
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              {/* CTA — single Discover button */}
+              <div className="flex flex-col gap-4 justify-center items-center">
                 <button
-                  onClick={() => handleBookingClick(t.packages.premium.name)}
-                  className="w-full sm:w-auto px-8 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(139,92,246,0.4)]"
+                  onClick={() => router.push('/your-birthday/features')}
+                  className="w-full sm:w-auto px-10 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(139,92,246,0.4)]"
                   style={{
                     background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
                     fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
                   }}
                 >
-                  {t.hero.cta1}
-                </button>
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('packages-section')
-                    el?.scrollIntoView({ behavior: 'smooth' })
-                  }}
-                  className="w-full sm:w-auto px-8 py-4 rounded-full font-bold text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all backdrop-blur-sm cursor-pointer"
-                  style={{
-                    fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
-                  }}
-                >
-                  {t.hero.cta2}
+                  {isRTL ? 'اكتشاف الموقع' : 'Discover the Site'}
                 </button>
               </div>
             </div>
