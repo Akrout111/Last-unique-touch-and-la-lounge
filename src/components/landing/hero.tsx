@@ -4,7 +4,6 @@ import { useRef, useEffect } from 'react'
 import { useScroll, useTransform, motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
-import { Background3D } from '@/components/hero-3d/background-3d'
 import { ExperienceCard } from './experience-card'
 import { initScrollTracking } from '@/stores/scroll-store'
 
@@ -31,8 +30,17 @@ export function Hero() {
       ref={ref}
       className="relative min-h-screen w-full overflow-hidden bg-ink flex flex-col"
     >
-      {/* 3D Furniture Tunnel Background */}
-      <Background3D />
+      {/* CSS-based luxury background (different from LUT's 3D tunnel) */}
+      {/* Animated gradient mesh */}
+      <div className="absolute inset-0 z-0 pointer-events-none hero-bg-gradient" />
+      {/* Grid overlay */}
+      <div className="absolute inset-0 z-0 pointer-events-none hero-bg-grid" />
+      {/* Floating orbs */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="hero-orb hero-orb-1" />
+        <div className="hero-orb hero-orb-2" />
+        <div className="hero-orb hero-orb-3" />
+      </div>
 
       {/* Subtle red brand glow */}
       <div

@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
-import { Menu, X, Globe, ShoppingCart } from 'lucide-react'
+import { Menu, X, Globe } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useCart } from '@/components/providers/cart-provider'
 import { MagneticButton } from '@/components/ui-premium/magnetic-button'
 
 export function Navbar() {
@@ -15,7 +14,6 @@ export function Navbar() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const { count, hydrated } = useCart()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -28,9 +26,8 @@ export function Navbar() {
     router.replace(pathname, { locale: next })
   }
 
+  // Only About + Contact (no brand logo, no cart, no home/products)
   const navLinks = [
-    { href: '/' as const, label: t('nav.home') },
-    { href: '/products' as const, label: t('nav.products') },
     { href: '/about' as const, label: t('nav.about') },
     { href: '/contact' as const, label: t('nav.contact') },
   ]
@@ -46,17 +43,7 @@ export function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 shrink-0 group">
-              <span className={`font-display text-2xl font-semibold transition-colors ${
-                scrolled ? 'text-paper' : 'text-ink'
-              }`}>
-                {t('brand.lut')}
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-gold group-hover:scale-150 transition-transform duration-300" />
-            </Link>
-
-            {/* Desktop nav */}
+            {/* Desktop nav — left side (no brand logo) */}
             <div className="hidden md:flex items-center gap-10">
               {navLinks.map((link) => (
                 <Link
@@ -78,29 +65,17 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* Right side */}
-            <div className="flex items-center gap-4">
-              {/* Cart */}
-              <Link
-                href="/cart"
-                className={`relative p-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${
-                  scrolled ? 'text-paper/70 hover:text-gold' : 'text-ink/70 hover:text-gold'
-                }`}
-                aria-label={t('nav.cart')}
-              >
-                <ShoppingCart className="w-5 h-5" strokeWidth={1.3} />
-                {hydrated && count > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full bg-lut text-paper text-[10px] font-bold tabular-nums"
-                  >
-                    {count}
-                  </motion.span>
-                )}
-              </Link>
+            {/* Mobile menu button — left side */}
+            <button
+              className="md:hidden text-paper p-2 min-w-[44px] min-h-[44px]"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={t('nav.menu')}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
 
-              {/* Language switcher */}
+            {/* Right side — Language switcher only */}
+            <div className="flex items-center gap-4">
               <MagneticButton strength={0.2}>
                 <button
                   onClick={switchLocale}
@@ -114,15 +89,6 @@ export function Navbar() {
                   <span>{locale === 'ar' ? 'EN' : 'عربي'}</span>
                 </button>
               </MagneticButton>
-
-              {/* Mobile menu button */}
-              <button
-                className="md:hidden text-paper p-2 min-w-[44px] min-h-[44px]"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label={t('nav.menu')}
-              >
-                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
             </div>
           </div>
         </div>
@@ -147,12 +113,10 @@ export function Navbar() {
               className="fixed top-0 end-0 bottom-0 z-50 w-80 max-w-[85vw] bg-ink md:hidden flex flex-col"
             >
               <div className="p-6 border-b border-paper/10 flex items-center justify-between">
-                <span className="font-display text-xl text-paper">
-                  {t('brand.lut')}
-                </span>
                 <button
                   onClick={() => setMobileOpen(false)}
                   className="text-paper/60 hover:text-paper min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label={t('common.close')}
                 >
                   <X className="w-5 h-5" />
                 </button>
