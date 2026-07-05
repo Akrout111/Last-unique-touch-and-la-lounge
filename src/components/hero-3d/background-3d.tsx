@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Environment, Sparkles } from '@react-three/drei'
+import { Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { shouldEnable3D } from '@/lib/device-capabilities'
 
@@ -383,7 +383,6 @@ export function Background3D({ active = true }: Background3DProps) {
           <pointLight position={[0, 0, 5]} intensity={4} color="#d4af37" distance={25} />
           <InfiniteTunnel isMobile={isMobile} />
           <CameraRig />
-          <Environment preset="studio" />
           {/* Bloom removed — it was the #1 GPU bottleneck AND caused the
               "too bright/harsh light" symptom on mobile by amplifying the
               lamp bulb glow into a full-screen flare. The lamp bulbs still

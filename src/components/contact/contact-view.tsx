@@ -299,7 +299,7 @@ export function ContactView() {
                   <MessageCircle className="w-5 h-5" />
                 </a>
                 <a
-                  href="https://instagram.com/lastuniquetouch"
+                  href="https://instagram.com/last.unique.touch"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-lut hover:text-white hover:border-lut transition-colors"

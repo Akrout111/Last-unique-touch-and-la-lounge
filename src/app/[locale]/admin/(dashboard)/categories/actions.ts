@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { getAdminBrand } from '@/lib/admin-brand'
 import { revalidatePath } from 'next/cache'
 
 const categorySchema = z.object({
@@ -25,6 +26,8 @@ export async function createCategoryAction(formData: FormData): Promise<{ succes
   }
 
   try {
+    const brand = await getAdminBrand()
+
     const existing = await db.category.findUnique({ where: { slug: parsed.data.slug } })
     if (existing) {
       return { success: false, error: 'slug_exists' }
@@ -33,7 +36,7 @@ export async function createCategoryAction(formData: FormData): Promise<{ succes
     await db.category.create({
       data: {
         ...parsed.data,
-        brand: 'LUT',
+        brand,
       },
     })
 
@@ -59,6 +62,15 @@ export async function updateCategoryAction(id: string, formData: FormData): Prom
   }
 
   try {
+    const brand = await getAdminBrand()
+
+    // Ensure the category belongs to the current admin brand before editing.
+    // Without this check an admin could update another tenant's category by id.
+    const owned = await db.category.findFirst({ where: { id, brand } })
+    if (!owned) {
+      return { success: false, error: 'not_found' }
+    }
+
     const existing = await db.category.findFirst({
       where: { slug: parsed.data.slug, NOT: { id } },
     })
@@ -83,6 +95,14 @@ export async function deleteCategoryAction(id: string): Promise<{ success: boole
   await requireAuth()
 
   try {
+    const brand = await getAdminBrand()
+
+    // Ensure the category belongs to the current admin brand before deleting.
+    const owned = await db.category.findFirst({ where: { id, brand } })
+    if (!owned) {
+      return { success: false, error: 'not_found' }
+    }
+
     // Check if category has products
     const productCount = await db.product.count({ where: { categoryId: id } })
     if (productCount > 0) {

@@ -62,7 +62,7 @@ export function LaLoungeLoadingScreen({ onComplete }: { onComplete: () => void }
 
         {/* Progress bar */}
         <div className="w-64 mx-auto">
-          <div className="h-1 bg-purple-100 rounded-full overflow-hidden">
+          <div className="h-1 bg-primary/10 rounded-full overflow-hidden">
             <div
               className="h-full transition-all duration-100"
               style={{
@@ -71,7 +71,7 @@ export function LaLoungeLoadingScreen({ onComplete }: { onComplete: () => void }
               }}
             />
           </div>
-          <p className="text-xs text-purple-400 mt-2 tracking-widest uppercase font-mono">
+          <p className="text-xs text-primary mt-2 tracking-widest uppercase font-mono">
             {t.loading} {progress}%
           </p>
         </div>

@@ -3,6 +3,7 @@
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
+import { triggerOrderConfirmedWebhook } from '@/lib/n8n'
 
 const validTransitions: Record<string, string[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
@@ -40,6 +41,16 @@ export async function updateBookingStatusAction(
         }),
       },
     })
+
+    // Trigger n8n webhook when booking is confirmed (Telegram + Google Calendar + invoice email).
+    // Wrapped in try/catch so a webhook failure never breaks the booking flow.
+    if (newStatus === 'CONFIRMED') {
+      try {
+        await triggerOrderConfirmedWebhook(bookingId)
+      } catch (error) {
+        console.error('[n8n] Failed to trigger order-confirmed webhook:', error)
+      }
+    }
 
     revalidatePath('/admin/bookings')
     revalidatePath(`/admin/bookings/${bookingId}`)

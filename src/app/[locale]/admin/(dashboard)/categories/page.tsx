@@ -1,13 +1,15 @@
 import { getTranslations, getLocale } from 'next-intl/server'
 import { db } from '@/lib/db'
+import { getAdminBrand } from '@/lib/admin-brand'
 import { CategoriesTable } from '@/components/admin/categories-table'
 
 export default async function AdminCategoriesPage() {
   const t = await getTranslations()
   const locale = await getLocale()
+  const brand = await getAdminBrand()
 
   const categories = await db.category.findMany({
-    where: { brand: 'LUT' },
+    where: { brand },
     include: {
       _count: { select: { products: true } },
     },

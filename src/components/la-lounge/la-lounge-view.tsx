@@ -64,7 +64,7 @@ export default function LaLoungeView() {
         <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/50 backdrop-blur-md border border-purple-100/30 shadow-sm hover:shadow-md text-purple-800 transition-all font-medium text-xs cursor-pointer"
+            className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/50 backdrop-blur-md border border-primary/10 shadow-sm hover:shadow-md text-primary transition-all font-medium text-xs cursor-pointer"
           >
             <ArrowIcon className="w-4 h-4" />
             <span className="font-sans font-medium tracking-wide">
@@ -78,13 +78,13 @@ export default function LaLoungeView() {
           <div
             className="flex items-center gap-2 mb-4"
           >
-            <span className="text-purple-400 text-xs tracking-[0.3em] uppercase">
+            <span className="text-primary text-xs tracking-[0.3em] uppercase">
               {locale === 'ar' ? 'تجهيز الفعاليات' : 'Event Solutions'}
             </span>
           </div>
 
           <h1
-            className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-purple-950 tracking-widest drop-shadow-sm mb-4"
+            className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-primary tracking-widest drop-shadow-sm mb-4"
           >
             {t('brandSelector.lalounge.name')}
           </h1>
@@ -108,17 +108,17 @@ export default function LaLoungeView() {
 
         {/* Scroll hint */}
         <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-purple-400/60"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-primary/60"
         >
           <ArrowDown className="w-5 h-5 animate-bounce" />
         </div>
       </div>
 
       {/* === Services section — revealed on scroll === */}
-      <div id="services" className="relative z-10 py-20 px-4 bg-purple-50">
+      <div id="services" className="relative z-10 py-20 px-4 bg-primary/5">
         <div className="max-w-5xl mx-auto">
           <h2
-            className="font-serif text-3xl sm:text-5xl text-purple-950 text-center mb-4"
+            className="font-serif text-3xl sm:text-5xl text-primary text-center mb-4"
           >
             {locale === 'ar' ? 'ما نقدمه' : 'What We Offer'}
           </h2>
@@ -132,10 +132,10 @@ export default function LaLoungeView() {
             {services.map((service, i) => (
               <div
                 key={i}
-                className="bg-white/80 backdrop-blur-md border border-purple-100/50 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow"
+                className="bg-white/80 backdrop-blur-md border border-primary/10 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow"
               >
                 <div className="text-5xl mb-5">{service.icon}</div>
-                <h3 className="font-serif text-xl text-purple-950 mb-3">{service.title}</h3>
+                <h3 className="font-serif text-xl text-primary mb-3">{service.title}</h3>
                 <p className="text-sm text-primary/60 leading-relaxed">{service.desc}</p>
               </div>
             ))}

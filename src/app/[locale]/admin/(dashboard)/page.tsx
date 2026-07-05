@@ -1,5 +1,6 @@
 import { getTranslations, getLocale } from 'next-intl/server'
 import { getAdminStats } from '@/lib/admin-stats'
+import { getAdminBrand } from '@/lib/admin-brand'
 import { localizedName } from '@/lib/products'
 import { Link } from '@/i18n/routing'
 import { Package, Clock, CheckCircle, DollarSign, AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react'
@@ -7,7 +8,8 @@ import { Package, Clock, CheckCircle, DollarSign, AlertTriangle, ArrowLeft, Arro
 export default async function AdminDashboardPage() {
   const t = await getTranslations()
   const locale = await getLocale()
-  const stats = await getAdminStats()
+  const brand = await getAdminBrand()
+  const stats = await getAdminStats(brand)
 
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 

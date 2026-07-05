@@ -116,7 +116,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-paper/40">
-            {t('footer.rights')}
+            {t('footer.rights', { year: new Date().getFullYear() })}
           </p>
           <p className="eyebrow text-paper/30">
             {t('footer.craftedIn')}

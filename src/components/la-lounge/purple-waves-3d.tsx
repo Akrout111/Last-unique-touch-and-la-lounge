@@ -79,7 +79,7 @@ function FloatingParticles() {
           args={[positions, 3]}
         />
       </bufferGeometry>
-      <PointMaterial transparent color="#a855f7" size={0.15} sizeAttenuation={true} depthWrite={false} opacity={0.6} />
+      <PointMaterial transparent color="var(--primary)" size={0.15} sizeAttenuation={true} depthWrite={false} opacity={0.6} />
     </points>
   );
 }
@@ -114,7 +114,7 @@ function EventArchitecture() {
     // Materials that look like blueprint ink
     const matBold = new THREE.LineBasicMaterial({ color: '#4c1d95', transparent: true, opacity: 0.95 });
     const matMain = new THREE.LineBasicMaterial({ color: '#7e22ce', transparent: true, opacity: 0.8 });
-    const matSub = new THREE.LineBasicMaterial({ color: '#a855f7', transparent: true, opacity: 0.5 });
+    const matSub = new THREE.LineBasicMaterial({ color: 'var(--primary)', transparent: true, opacity: 0.5 });
     const matAccent = new THREE.LineBasicMaterial({ color: '#c084fc', transparent: true, opacity: 0.9 });
     
     const addBoundingBox = (w: number, h: number, d: number, x: number, y: number, z: number) => {
@@ -327,7 +327,7 @@ function EventArchitecture() {
         {[8, 12, 16].map((r, i) => (
           <mesh key={`cring_${i}`} rotation={[-Math.PI / 2, 0, 0]}>
             <ringGeometry args={[r, r + 0.2, 64]} />
-            <meshBasicMaterial color="#a855f7" transparent opacity={0.6} side={THREE.DoubleSide} />
+            <meshBasicMaterial color="var(--primary)" transparent opacity={0.6} side={THREE.DoubleSide} />
           </mesh>
         ))}
       </group>

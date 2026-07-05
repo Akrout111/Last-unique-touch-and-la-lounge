@@ -25,10 +25,10 @@ const organizationLd = {
   description: 'Luxury furniture and event equipment rental in Kuwait',
   url: 'https://lastuniquetouch.com',
   logo: 'https://lastuniquetouch.com/icon-192.png',
-  sameAs: ['https://instagram.com/lastuniquetouch'],
+  sameAs: ['https://instagram.com/last.unique.touch'],
   contactPoint: {
     '@type': 'ContactPoint',
-    telephone: '+965-1234-5678',
+    telephone: '+965 9XXX XXXX',
     email: 'info@lastuniquetouch.com',
     contactType: 'customer service',
   },
