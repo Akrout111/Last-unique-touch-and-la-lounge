@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { stringifyImages } from '@/lib/products'
+import { getAdminBrand } from '@/lib/admin-brand'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -54,19 +55,26 @@ export async function createProductAction(formData: FormData): Promise<{ success
 
   let shouldRedirect = false
   try {
-    const existing = await db.product.findUnique({ where: { slug: parsed.data.slug } })
+    // Read brand from cookie so admin can create products for the currently
+    // selected tenant. Falls back to 'LUT' for backwards compatibility.
+    const brand = await getAdminBrand()
+
+    // Use findFirst because `slug` is no longer globally unique — it's only
+    // unique within a brand (`@@unique([brand, slug])`). The duplicate-slug
+    // check must therefore be scoped to the same brand the new product will
+    // belong to, otherwise we'd block creating the same slug in a different
+    // tenant.
+    const existing = await db.product.findFirst({
+      where: { slug: parsed.data.slug, brand },
+    })
     if (existing) {
       return { success: false, error: 'slug_exists' }
     }
 
-    // Read brand from formData so admin can create products for any tenant.
-    // Falls back to 'LUT' for backwards compatibility.
-    const brand = (formData.get('brand') as string) || 'LUT'
-
     await db.product.create({
       data: {
         ...parsed.data,
-        brand: brand as 'LUT' | 'LA_LOUNGE' | 'YOUR_BIRTHDAY',
+        brand,
         model3dUrl: parsed.data.model3dUrl || null,
         images: stringifyImages(parsed.data.images),
       },
@@ -118,8 +126,19 @@ export async function updateProductAction(id: string, formData: FormData): Promi
 
   let shouldRedirect = false
   try {
+    const brand = await getAdminBrand()
+
+    // Ensure the product belongs to the current admin brand before editing.
+    // Without this check an admin could update another tenant's product by id.
+    const owned = await db.product.findFirst({ where: { id, brand } })
+    if (!owned) {
+      return { success: false, error: 'not_found' }
+    }
+
+    // Duplicate-slug check is scoped to the same brand because
+    // `@@unique([brand, slug])` only enforces uniqueness within a tenant.
     const existing = await db.product.findFirst({
-      where: { slug: parsed.data.slug, NOT: { id } },
+      where: { slug: parsed.data.slug, brand, NOT: { id } },
     })
     if (existing) {
       return { success: false, error: 'slug_exists' }

@@ -9,8 +9,10 @@ async function main() {
   console.log('🌱 Starting seed...')
 
   // 1. Create categories for LUT brand
+  // NOTE: `slug` is no longer globally unique — only unique within a brand
+  // (`@@unique([brand, slug])`). Use the compound unique selector for upserts.
   const chairs = await prisma.category.upsert({
-    where: { slug: 'chairs' },
+    where: { category_brand_slug_unique: { brand: 'LUT', slug: 'chairs' } },
     update: {},
     create: {
       slug: 'chairs',
@@ -21,7 +23,7 @@ async function main() {
   })
 
   const tables = await prisma.category.upsert({
-    where: { slug: 'tables' },
+    where: { category_brand_slug_unique: { brand: 'LUT', slug: 'tables' } },
     update: {},
     create: {
       slug: 'tables',
@@ -32,7 +34,7 @@ async function main() {
   })
 
   const lighting = await prisma.category.upsert({
-    where: { slug: 'lighting' },
+    where: { category_brand_slug_unique: { brand: 'LUT', slug: 'lighting' } },
     update: {},
     create: {
       slug: 'lighting',
@@ -255,7 +257,9 @@ async function main() {
 
   for (const product of products) {
     await prisma.product.upsert({
-      where: { slug: product.slug },
+      where: {
+        product_brand_slug_unique: { brand: product.brand, slug: product.slug },
+      },
       update: {
         ...product,
         images: product.images,

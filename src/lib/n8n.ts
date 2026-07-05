@@ -35,14 +35,15 @@ export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<v
     throw new Error(`Booking not found: ${bookingId}`)
   }
 
-  if (!booking.product) {
-    throw new Error(`Booking ${bookingId} has no associated product`)
-  }
+  // Birthday / non-product bookings legitimately have `product: null`.
+  // Do NOT throw — build a payload with fallback values so n8n can route
+  // the event based on `bookingType` (#4).
 
   // 2. Build payload
   const payload = {
     event: 'order.confirmed',
     timestamp: new Date().toISOString(),
+    bookingType: booking.product ? 'product_rental' : 'birthday_event',
     booking: {
       id: booking.id,
       status: booking.status,
@@ -58,14 +59,14 @@ export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<v
       email: booking.customerEmail,
     },
     product: {
-      id: booking.product.id,
-      slug: booking.product.slug,
-      nameAr: booking.product.nameAr,
-      nameEn: booking.product.nameEn,
-      rentalPricePerDay: booking.product.rentalPricePerDay,
-      securityDeposit: booking.product.securityDeposit,
-      categoryAr: booking.product.category.nameAr,
-      categoryEn: booking.product.category.nameEn,
+      id: booking.product?.id ?? null,
+      slug: booking.product?.slug ?? null,
+      nameAr: booking.product?.nameAr ?? 'باقة عيد الميلاد',
+      nameEn: booking.product?.nameEn ?? 'Birthday Package',
+      rentalPricePerDay: booking.product?.rentalPricePerDay ?? null,
+      securityDeposit: booking.product?.securityDeposit ?? null,
+      categoryAr: booking.product?.category?.nameAr ?? null,
+      categoryEn: booking.product?.category?.nameEn ?? null,
     },
   }
 

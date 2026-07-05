@@ -21,7 +21,6 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react'
-import { BirthdayLoadingScreen } from './loading-screen'
 import { TextScramble } from './text-scramble'
 import { translations } from './translations'
 import { BirthdayVisualizer } from './birthday-visualizer'
@@ -41,7 +40,6 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     const next = locale === 'ar' ? 'en' : 'ar'
     router.replace(pathname, { locale: next })
   }
-  const [loading, setLoading] = useState(true)
   const [scrolled, setScrolled] = useState(false)
 
   // Custom booking modal state
@@ -80,7 +78,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
   // TextScramble for Title (Arabic & English)
   useEffect(() => {
-    if (loading || !titleRef.current) return
+    if (!titleRef.current) return
 
     // Pre-initialize title elements with the target language to avoid mixed-language scramble transition
     titleRef.current.innerText = t.hero.title1
@@ -104,7 +102,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
       clearTimeout(timeoutId)
       fx.cancel()
     }
-  }, [loading, isRTL])
+  }, [isRTL])
 
   // Smooth scroll to top
   const scrollToTop = () => {
@@ -213,20 +211,8 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        {loading && (
-          <BirthdayLoadingScreen
-            key="loader"
-            locale={locale}
-            onComplete={() => setLoading(false)}
-          />
-        )}
-      </AnimatePresence>
-
       <div
-        className={`min-h-screen bg-[#020204] text-white overflow-x-hidden transition-opacity duration-500 ${
-          loading ? 'opacity-0' : 'opacity-100'
-        }`}
+        className="min-h-screen bg-[#020204] text-white overflow-x-hidden"
         style={{
           fontFamily: isRTL
             ? 'var(--font-birthday-arabic), Cairo, sans-serif'

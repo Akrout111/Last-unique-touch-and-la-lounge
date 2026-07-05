@@ -1,6 +1,6 @@
 'use client'
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '96512345678'
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '965XXXXXXXX'
 const DEFAULT_MESSAGE = 'مرحباً، أريد الاستفسار عن خدماتكم'
 
 export function FloatingWhatsApp() {

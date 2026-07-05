@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { LayoutDashboard, Package, FolderTree, CalendarDays, LogOut, Menu, X, ExternalLink } from 'lucide-react'
 import { logoutAction } from '@/app/[locale]/admin/login/actions'
+import { getBrandColor } from '@/lib/brand-colors'
 
 /**
  * Multi-tenant brands the admin can switch between. Keys match the Prisma
@@ -20,6 +21,16 @@ const ADMIN_BRAND_COOKIE = 'admin-brand'
 const ADMIN_BRAND_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
 type AdminBrandKey = (typeof ADMIN_BRANDS)[number]['key']
+
+/** Hex color used to paint the active brand pill in the switcher. */
+function brandColor(brand: AdminBrandKey): string {
+  return getBrandColor(brand)
+}
+
+/** Human-readable label for the active brand shown in the sidebar header. */
+function brandLabel(brand: AdminBrandKey): string {
+  return ADMIN_BRANDS.find((b) => b.key === brand)?.label ?? 'LUT'
+}
 
 function isValidBrand(value: string | null | undefined): value is AdminBrandKey {
   return !!value && (ADMIN_BRANDS.some((b) => b.key === value))
@@ -176,9 +187,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               aria-pressed={selected}
               className={`min-h-[44px] px-2 py-2 rounded-md text-xs font-semibold transition-colors ${
                 selected
-                  ? 'bg-lut text-white'
+                  ? 'text-white'
                   : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
               }`}
+              style={
+                selected
+                  ? { backgroundColor: brandColor(b.key) }
+                  : undefined
+              }
             >
               {b.label}
             </button>
@@ -194,7 +210,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 bg-stone-950 text-white shrink-0">
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-lut">{t('brand.lut')}</span>
+            <span className="text-lg font-bold text-lut">{brandLabel(activeBrand)}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-brand" />
           </div>
           <p className="text-xs text-white/50 mt-1">{t('admin.title')}</p>
@@ -251,7 +267,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-lut">{t('brand.lutShort')}</span>
+                <span className="text-lg font-bold text-lut">{brandLabel(activeBrand)}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-brand" />
               </div>
               <button

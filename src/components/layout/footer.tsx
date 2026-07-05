@@ -28,7 +28,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://instagram.com"
+                href="https://instagram.com/last.unique.touch"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
@@ -37,7 +37,7 @@ export function Footer() {
                 <Instagram className="w-4 h-4" strokeWidth={1.3} />
               </a>
               <a
-                href="https://wa.me/96512345678"
+                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '965XXXXXXXX'}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"

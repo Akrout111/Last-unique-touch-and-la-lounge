@@ -3,7 +3,7 @@
  *
  * This page manages its own locale state independently of next-intl so it can
  * toggle between Arabic and English without a route change. Keys are extracted
- * from `your-birthday-view.tsx` and `loading-screen.tsx`.
+ * from `your-birthday-view.tsx`.
  */
 
 export const translations = {

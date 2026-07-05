@@ -22,13 +22,14 @@ enum Brand {
 model Category {
   id        String    @id @default(cuid())
   brand     Brand     @default(LUT)
-  slug      String    @unique
+  slug      String
   nameAr    String
   nameEn    String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   products  Product[]
 
+  @@unique([brand, slug], name: "category_brand_slug_unique")
   @@index([brand, slug])
 }
 
@@ -36,7 +37,7 @@ model Category {
 model Product {
   id                String    @id @default(cuid())
   brand             Brand     @default(LUT)
-  slug              String    @unique
+  slug              String
   nameAr            String
   nameEn            String
   descriptionAr     String
@@ -53,6 +54,7 @@ model Product {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  @@unique([brand, slug], name: "product_brand_slug_unique")
   @@index([brand, categoryId])
   @@index([brand, isActive])
 }

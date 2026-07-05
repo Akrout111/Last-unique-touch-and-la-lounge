@@ -28,7 +28,13 @@ export async function createCategoryAction(formData: FormData): Promise<{ succes
   try {
     const brand = await getAdminBrand()
 
-    const existing = await db.category.findUnique({ where: { slug: parsed.data.slug } })
+    // `slug` is only unique within a brand (`@@unique([brand, slug])`), so
+    // the duplicate-slug check must be scoped to the same brand the new
+    // category will belong to. Otherwise we'd block creating the same slug
+    // in a different tenant.
+    const existing = await db.category.findFirst({
+      where: { slug: parsed.data.slug, brand },
+    })
     if (existing) {
       return { success: false, error: 'slug_exists' }
     }
@@ -71,8 +77,10 @@ export async function updateCategoryAction(id: string, formData: FormData): Prom
       return { success: false, error: 'not_found' }
     }
 
+    // Duplicate-slug check is scoped to the same brand because
+    // `@@unique([brand, slug])` only enforces uniqueness within a tenant.
     const existing = await db.category.findFirst({
-      where: { slug: parsed.data.slug, NOT: { id } },
+      where: { slug: parsed.data.slug, brand, NOT: { id } },
     })
     if (existing) {
       return { success: false, error: 'slug_exists' }

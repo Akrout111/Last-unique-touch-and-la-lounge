@@ -74,8 +74,12 @@
    - `data-brand` is set on <html> by BrandThemeSetter
      (src/components/providers/brand-theme-setter.tsx).
    - Default :root matches LUT so SSR / no-JS falls back to LUT colors.
-   - Only --primary, --accent, --ring are overridden per brand; all other
-     tokens (background, foreground, borders, etc.) are inherited from :root.
+   - `--primary`, `--accent`, `--ring` are the shadcn tokens.
+   - `--gold` and `--lut` aliases are added per brand so any legacy code
+     reading them directly (and any Tailwind utility classes generated from
+     `--color-gold` / `--color-lut` in `@theme inline`) follow the active
+     brand. This is the "brand color cascade" (#12): `text-gold`, `bg-lut`
+     etc. must change color when the admin switches tenant.
    ======================================== */
 
 :root,
@@ -83,18 +87,39 @@
   --primary: #E62129;
   --accent: #E62129;
   --ring: #E62129;
+  /* Brand aliases — LUT is the default identity. */
+  --gold: #E62129;
+  --lut: #E62129;
+  /* Tailwind utility cascade: text-gold / bg-lut / bg-brand must follow. */
+  --color-gold: #E62129;
+  --color-brand: #E62129;
+  --color-lut: #E62129;
 }
 
 :root[data-brand="lalounge"] {
   --primary: #FF1493;
   --accent: #FF1493;
   --ring: #FF1493;
+  /* Brand aliases — every "lut"/"gold" reference becomes LA Lounge pink. */
+  --gold: #FF1493;
+  --lut: #FF1493;
+  /* Tailwind utility cascade. */
+  --color-gold: #FF1493;
+  --color-brand: #FF1493;
+  --color-lut: #FF1493;
 }
 
 :root[data-brand="birthday"] {
   --primary: #8B5CF6;
   --accent: #F97316;
   --ring: #8B5CF6;
+  /* Brand aliases — every "lut"/"gold" reference becomes birthday purple. */
+  --gold: #8B5CF6;
+  --lut: #8B5CF6;
+  /* Tailwind utility cascade. */
+  --color-gold: #8B5CF6;
+  --color-brand: #8B5CF6;
+  --color-lut: #8B5CF6;
 }
 
 /* TODO: Dark mode is not currently exposed in the UI (no theme toggle).

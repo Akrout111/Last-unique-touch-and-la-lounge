@@ -63,7 +63,16 @@ export async function getAdminStats(brand?: Brand): Promise<AdminStats> {
         },
       },
     }).then((rows) =>
-      rows.map((r) => ({ ...r, product: r.product! }))
+      // The `where: { product: { isNot: null } }` filter guarantees product is
+      // non-null at runtime, but Prisma's generated types can't see that, so
+      // we narrow with a type predicate instead of using the `!` non-null
+      // assertion. Rows without a product are dropped defensively (#10).
+      rows
+        .filter(
+          (r): r is typeof r & { product: NonNullable<typeof r.product> } =>
+            r.product !== null
+        )
+        .map((r) => ({ ...r, product: r.product }))
     ),
     db.product.findMany({
       where: { ...brandFilter, stock: { lte: 2 }, isActive: true },

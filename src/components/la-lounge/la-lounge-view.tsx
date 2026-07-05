@@ -1,11 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
-import { LaLoungeLoadingScreen } from './loading-screen'
 import PurpleWaves3D from './purple-waves-3d'
 
 export default function LaLoungeView() {
@@ -13,7 +10,6 @@ export default function LaLoungeView() {
   const locale = useLocale()
   const t = useTranslations()
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
-  const [loading, setLoading] = useState(true)
 
   const services = locale === 'ar' ? [
     {
@@ -55,7 +51,6 @@ export default function LaLoungeView() {
 
   return (
     <div className="relative w-full bg-white">
-      {loading && <LaLoungeLoadingScreen onComplete={() => setLoading(false)} />}
       {/* === Hero section — title centered, purple 3D background === */}
       <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
         <PurpleWaves3D />
@@ -100,7 +95,7 @@ export default function LaLoungeView() {
           {/* Services button — scrolls to services section */}
           <button
             onClick={scrollToServices}
-            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] hover:shadow-[0_6px_25px_rgba(126,34,206,0.4)] transition-all cursor-pointer border border-primary/30"
+            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(255,20,147,0.3)] hover:shadow-[0_6px_25px_rgba(255,20,147,0.4)] transition-all cursor-pointer border border-primary/30"
           >
             {locale === 'ar' ? 'الميزات والخدمات' : 'Features & Services'}
           </button>
@@ -145,7 +140,7 @@ export default function LaLoungeView() {
           <div className="text-center mt-12">
             <button
               onClick={() => router.push('/contact')}
-              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] transition-all cursor-pointer"
+              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(255,20,147,0.3)] transition-all cursor-pointer"
             >
               {locale === 'ar' ? 'تواصل معنا' : 'Contact Us'}
             </button>

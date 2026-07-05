@@ -22,28 +22,28 @@ function BlueprintGrid() {
   return (
     <group ref={gridGroup}>
       {/* Base Grids */}
-      <gridHelper args={[200, 200, '#e9d5ff', '#f5f3ff']} position={[0, -0.01, 0]} />
-      <gridHelper args={[200, 20, '#c084fc', '#ede9fe']} position={[0, -0.02, 0]} />
+      <gridHelper args={[200, 200, '#FFD1E8', '#FFEFF6']} position={[0, -0.01, 0]} />
+      <gridHelper args={[200, 20, '#FF6B9D', '#FFE0EF']} position={[0, -0.02, 0]} />
       
       {/* Radial Grid (Architectural Focus) */}
       {Array.from({ length: 16 }).map((_, i) => (
         <mesh key={`radial_${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]}>
           <ringGeometry args={[5 + i * 5, 5.05 + i * 5, 128]} />
-          <meshBasicMaterial color="#d8b4fe" transparent opacity={0.25} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#FFB3D9" transparent opacity={0.25} side={THREE.DoubleSide} />
         </mesh>
       ))}
       
       {/* Radar Sweep */}
       <mesh ref={radarRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.012, 0]}>
         <circleGeometry args={[100, 64]} />
-        <meshBasicMaterial color="#c084fc" transparent opacity={0.04} side={THREE.DoubleSide} />
+        <meshBasicMaterial color="#FF6B9D" transparent opacity={0.04} side={THREE.DoubleSide} />
       </mesh>
 
       {/* Crosshairs */}
       {Array.from({ length: 24 }).map((_, i) => (
         <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 24, 0]} position={[0, -0.015, 0]}>
           <boxGeometry args={[200, 0.01, 0.04]} />
-          <meshBasicMaterial color="#e9d5ff" transparent opacity={0.3} />
+          <meshBasicMaterial color="#FFD1E8" transparent opacity={0.3} />
         </mesh>
       ))}
     </group>
@@ -79,7 +79,7 @@ function FloatingParticles() {
           args={[positions, 3]}
         />
       </bufferGeometry>
-      <PointMaterial transparent color="var(--primary)" size={0.15} sizeAttenuation={true} depthWrite={false} opacity={0.6} />
+      <PointMaterial transparent color="#FF1493" size={0.15} sizeAttenuation={true} depthWrite={false} opacity={0.6} />
     </points>
   );
 }
@@ -112,10 +112,10 @@ function EventArchitecture() {
     };
     
     // Materials that look like blueprint ink
-    const matBold = new THREE.LineBasicMaterial({ color: '#4c1d95', transparent: true, opacity: 0.95 });
-    const matMain = new THREE.LineBasicMaterial({ color: '#7e22ce', transparent: true, opacity: 0.8 });
-    const matSub = new THREE.LineBasicMaterial({ color: 'var(--primary)', transparent: true, opacity: 0.5 });
-    const matAccent = new THREE.LineBasicMaterial({ color: '#c084fc', transparent: true, opacity: 0.9 });
+    const matBold = new THREE.LineBasicMaterial({ color: '#8B0A50', transparent: true, opacity: 0.95 });
+    const matMain = new THREE.LineBasicMaterial({ color: '#FF1493', transparent: true, opacity: 0.8 });
+    const matSub = new THREE.LineBasicMaterial({ color: '#FF1493', transparent: true, opacity: 0.5 });
+    const matAccent = new THREE.LineBasicMaterial({ color: '#FF6B9D', transparent: true, opacity: 0.9 });
     
     const addBoundingBox = (w: number, h: number, d: number, x: number, y: number, z: number) => {
       const box = track(new THREE.BoxGeometry(w + 0.5, h + 0.5, d + 0.5));
@@ -319,7 +319,7 @@ function EventArchitecture() {
             args={[new Float32Array(nodes.flatMap(v => [v.x, v.y, v.z])), 3]}
           />
         </bufferGeometry>
-        <pointsMaterial color="#7e22ce" size={0.5} sizeAttenuation={true} />
+        <pointsMaterial color="#FF1493" size={0.5} sizeAttenuation={true} />
       </points>
 
       {/* Animated Center Focal Point (Dance Floor / Core) */}
@@ -327,7 +327,7 @@ function EventArchitecture() {
         {[8, 12, 16].map((r, i) => (
           <mesh key={`cring_${i}`} rotation={[-Math.PI / 2, 0, 0]}>
             <ringGeometry args={[r, r + 0.2, 64]} />
-            <meshBasicMaterial color="var(--primary)" transparent opacity={0.6} side={THREE.DoubleSide} />
+            <meshBasicMaterial color="#FF1493" transparent opacity={0.6} side={THREE.DoubleSide} />
           </mesh>
         ))}
       </group>

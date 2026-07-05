@@ -290,7 +290,7 @@ export function ContactView() {
               </p>
               <div className="flex items-center gap-3">
                 <a
-                  href="https://wa.me/96512345678"
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '965XXXXXXXX'}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-lut hover:text-white hover:border-lut transition-colors"
