@@ -2,6 +2,12 @@ import { Prisma, type Brand, type Category, type Product } from '@prisma/client'
 import { db } from './db'
 
 /**
+ * Cookie name used by the admin brand switcher (AdminShell). Server components
+ * read it to scope product lists & categories to the currently selected tenant.
+ */
+export const ADMIN_BRAND_COOKIE = 'admin-brand'
+
+/**
  * Parse images JSON string to array of URLs.
  * SQLite stores String[] as JSON string, so we need this helper.
  */
@@ -63,11 +69,19 @@ export interface ProductWithImages {
 
 /**
  * Get featured products for landing page.
+ *
+ * NOTE: `brand` is optional. When omitted, the query is no longer scoped by
+ * brand — callers (e.g. the landing page) explicitly pass the brand they want
+ * to feature. This fixes the multi-tenant bug where `LUT` was hard-coded and
+ * LA_LOUNGE / YOUR_BIRTHDAY products could never be featured.
  */
-export async function getFeaturedProducts(limit = 4): Promise<ProductWithImages[]> {
+export async function getFeaturedProducts(
+  limit = 4,
+  brand?: Brand
+): Promise<ProductWithImages[]> {
   const products = await db.product.findMany({
     where: {
-      brand: 'LUT',
+      ...(brand ? { brand } : {}),
       isActive: true,
     },
     take: limit,
@@ -125,10 +139,15 @@ export interface ProductListResult {
 
 /**
  * Get paginated, filtered, sorted product list.
+ *
+ * `brand` is optional. When omitted, the query is NOT scoped by brand (matches
+ * products across all tenants). This fixes the multi-tenant bug where `LUT`
+ * was hard-coded as the default. Admin callers pass an explicit brand read
+ * from the `admin-brand` cookie via `getAdminBrand()`.
  */
 export async function getProducts(params: ProductListParams = {}): Promise<ProductListResult> {
   const {
-    brand = 'LUT',
+    brand,
     categorySlug,
     search,
     sort = 'newest',
@@ -137,8 +156,12 @@ export async function getProducts(params: ProductListParams = {}): Promise<Produ
   } = params
 
   const where: Prisma.ProductWhereInput = {
-    brand,
     isActive: true,
+  }
+
+  // Brand filter (only applied when an explicit brand is provided)
+  if (brand) {
+    where.brand = brand
   }
 
   // Category filter

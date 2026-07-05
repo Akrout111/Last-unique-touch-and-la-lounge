@@ -33,6 +33,7 @@ export function CheckoutView() {
   const { items, hydrated, total, rentalTotal, depositTotal } = useCart()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   // Generate idempotency key once on mount
   const idempotencyKey = useMemo(
@@ -270,10 +271,28 @@ export function CheckoutView() {
                 />
               </div>
 
+              {/* Terms acceptance */}
+              <div className="flex items-start gap-3 mb-4">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  required
+                  className="mt-1 size-5"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                />
+                <label htmlFor="terms" className="text-sm">
+                  {locale === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                  <Link href="/terms" target="_blank" className="text-primary underline">
+                    {locale === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
+                  </Link>
+                </label>
+              </div>
+
               {/* Submit */}
               <Button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !termsAccepted}
                 className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (

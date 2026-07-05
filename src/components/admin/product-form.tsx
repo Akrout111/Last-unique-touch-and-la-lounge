@@ -25,6 +25,12 @@ interface ProductFormProps {
   categories: Category[]
   product?: ProductWithImages
   mode: 'create' | 'edit'
+  /**
+   * Brand (tenant) this product belongs to. In create mode, comes from the
+   * `admin-brand` cookie (set by the AdminShell brand switcher). In edit mode,
+   * preserved from the existing product's brand.
+   */
+  brand?: 'LUT' | 'LA_LOUNGE' | 'YOUR_BIRTHDAY'
 }
 
 function slugify(text: string): string {
@@ -34,7 +40,7 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-export function ProductForm({ categories, product, mode }: ProductFormProps) {
+export function ProductForm({ categories, product, mode, brand }: ProductFormProps) {
   const t = useTranslations()
   const locale = useLocale()
   const router = useRouter()
@@ -48,6 +54,11 @@ export function ProductForm({ categories, product, mode }: ProductFormProps) {
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? '')
   const [isActive, setIsActive] = useState(product?.isActive ?? true)
   const [model3dUrl, setModel3dUrl] = useState(product?.model3dUrl ?? '')
+
+  // Resolve the brand: explicit prop > existing product brand > LUT default.
+  // Server components read the `admin-brand` cookie and pass it in, so a newly
+  // created product is filed under the brand the admin is currently viewing.
+  const effectiveBrand = brand ?? product?.brand ?? 'LUT'
 
   const handleNameEnChange = (value: string) => {
     setNameEn(value)
@@ -100,6 +111,10 @@ export function ProductForm({ categories, product, mode }: ProductFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-6 max-w-3xl">
+      {/* Brand (tenant) — hidden field submitted with the form so the server
+          action files the product under the correct brand. */}
+      <input type="hidden" name="brand" value={effectiveBrand} />
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">
           {mode === 'create' ? t('admin.products.form.titleNew') : t('admin.products.form.titleEdit')}

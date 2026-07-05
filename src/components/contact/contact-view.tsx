@@ -25,6 +25,7 @@ export function ContactView() {
   const t = useTranslations()
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -35,13 +36,42 @@ export function ContactView() {
     resolver: zodResolver(contactSchema),
   })
 
-  const onSubmit = async (_data: ContactFormData) => {
+  const onSubmit = async (data: ContactFormData) => {
     setSubmitting(true)
-    // Simulate submission (n8n will handle email sending later)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setSubmitting(false)
-    setSubmitted(true)
-    reset()
+    setSubmitError(null)
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string
+      }
+
+      if (response.status !== 200 || !result) {
+        const code = result?.error ?? 'internal_error'
+        const messageMap: Record<string, string> = {
+          invalid_input: t('contact.form.errors.invalidInput'),
+          invalid_json: t('contact.form.errors.invalidInput'),
+          rate_limited: t('contact.form.errors.rateLimited'),
+          internal_error: t('contact.form.errors.internalError'),
+        }
+        setSubmitError(messageMap[code] ?? messageMap.internal_error)
+        setSubmitting(false)
+        return
+      }
+
+      // Only show success on a real 200 from the server.
+      setSubmitting(false)
+      setSubmitted(true)
+      reset()
+    } catch {
+      setSubmitError(t('contact.form.errors.networkError'))
+      setSubmitting(false)
+    }
   }
 
   const contactInfo = [
@@ -88,6 +118,16 @@ export function ContactView() {
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-5 p-6 rounded-xl bg-card border border-border"
             >
+              {submitError && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 p-3 rounded-lg bg-lut/10 border border-lut/30 text-lut text-sm"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{submitError}</span>
+                </div>
+              )}
+
               {/* Name + Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

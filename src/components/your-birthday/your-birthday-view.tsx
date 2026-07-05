@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useLocale } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/routing'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -17,12 +18,18 @@ import {
   X,
   Languages,
   CalendarDays,
-  PartyPopper
+  PartyPopper,
+  Loader2,
+  AlertCircle
 } from 'lucide-react'
-import { BirthdayVisualizer } from './birthday-visualizer'
 import { BirthdayLoadingScreen } from './loading-screen'
 import { TextScramble } from './text-scramble'
 import { translations } from './translations'
+
+const BirthdayVisualizer = dynamic(
+  () => import('./birthday-visualizer').then(m => m.BirthdayVisualizer),
+  { ssr: false, loading: () => <div className="absolute inset-0" /> }
+)
 
 interface YourBirthdayViewProps {
   onBack: () => void
@@ -54,8 +61,18 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     notes: ''
   })
   const [formSuccess, setFormSuccess] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formSubmitting, setFormSubmitting] = useState(false)
 
   const titleRef = useRef<HTMLSpanElement>(null)
+  // Holds the booking success→close timer so it can be cleared on unmount
+  // (F3) — prevents setState-after-unmount if the user leaves mid-success.
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Saves the element that had focus before the booking modal opened so we
+  // can restore it on close (F7).
+  const bookingTriggerRef = useRef<HTMLElement | null>(null)
+  // Ref to the modal container so we can focus its first element on open.
+  const bookingModalRef = useRef<HTMLDivElement>(null)
 
   // Track page scroll to apply glass effect to navbar
   useEffect(() => {
@@ -99,6 +116,40 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // F3: Clear any pending success timer if the component unmounts mid-success.
+  // Also F7: save the trigger element when the booking modal opens so focus
+  // can be restored to it when the modal closes (accessibility — keyboard
+  // users shouldn't be dropped back at the top of the page).
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!bookingOpen) {
+      // Modal just closed (or never opened) — restore focus to the trigger.
+      // The small rAF delay lets the modal finish unmounting first.
+      if (bookingTriggerRef.current) {
+        const t = bookingTriggerRef.current
+        const raf = requestAnimationFrame(() => t.focus?.())
+        return () => cancelAnimationFrame(raf)
+      }
+      return
+    }
+    // Modal just opened — capture the trigger and focus the first field.
+    bookingTriggerRef.current = document.activeElement as HTMLElement | null
+    const raf = requestAnimationFrame(() => {
+      const node = bookingModalRef.current
+      if (!node) return
+      const selector =
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      const first = node.querySelector<HTMLElement>(selector)
+      first?.focus()
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [bookingOpen])
+
 
   const BackIcon = isRTL ? ArrowLeft : ArrowRight
 
@@ -106,17 +157,63 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     setSelectedPkgName(pkgName)
     setBookingOpen(true)
     setFormSuccess(false)
+    setFormError(null)
   }
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulated API call success
-    setFormSuccess(true)
-    setTimeout(() => {
-      setBookingOpen(false)
-      setFormSuccess(false)
-      setFormData({ name: '', phone: '', email: '', date: '', location: '', notes: '' })
-    }, 2500)
+    setFormError(null)
+    setFormSubmitting(true)
+
+    try {
+      const response = await fetch('/api/bookings/birthday', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          eventDate: formData.date,
+          notes: formData.location || formData.notes
+            ? `Location: ${formData.location}${formData.notes ? ` | Notes: ${formData.notes}` : ''}`
+            : '',
+        }),
+      })
+
+      const result = await response.json().catch(() => ({}))
+
+      if (response.status !== 201 || !result?.success) {
+        const code = (result?.error as string | undefined) ?? 'internal_error'
+        const messageMap: Record<string, string> = {
+          invalid_input: isRTL ? 'البيانات غير صحيحة. يرجى المراجعة.' : 'Invalid input. Please review your details.',
+          invalid_json: isRTL ? 'طلب غير صالح.' : 'Invalid request.',
+          invalid_event_date: isRTL ? 'تاريخ الحفلة غير صالح.' : 'Invalid event date.',
+          rate_limited: isRTL ? 'محاولات كثيرة. حاول مرة أخرى بعد قليل.' : 'Too many attempts. Please try again shortly.',
+          internal_error: isRTL ? 'حدث خطأ. حاول مرة أخرى.' : 'Something went wrong. Please try again.',
+        }
+        setFormError(messageMap[code] ?? messageMap.internal_error)
+        setFormSubmitting(false)
+        return
+      }
+
+      // Only show success on a real 201 from the server.
+      setFormSuccess(true)
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current)
+      successTimeoutRef.current = setTimeout(() => {
+        setBookingOpen(false)
+        setFormSuccess(false)
+        setFormError(null)
+        setFormData({ name: '', phone: '', email: '', date: '', location: '', notes: '' })
+      }, 2500)
+    } catch {
+      setFormError(
+        isRTL
+          ? 'تعذّر إرسال الطلب. تحقق من الاتصال بالإنترنت.'
+          : 'Could not submit the request. Please check your connection.'
+      )
+    } finally {
+      setFormSubmitting(false)
+    }
   }
 
   return (
@@ -635,6 +732,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
             {/* Modal Box */}
             <motion.div
+              ref={bookingModalRef}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -682,6 +780,16 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       )}
                     </div>
                   </div>
+
+                  {formError && (
+                    <div
+                      role="alert"
+                      className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm"
+                    >
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{formError}</span>
+                    </div>
+                  )}
 
                   {/* Input Fields */}
                   <div className="space-y-3.5 text-black">
@@ -772,12 +880,20 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+                    disabled={formSubmitting}
+                    className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                     style={{
                       background: 'linear-gradient(135deg, #EC4899, #8B5CF6)',
                     }}
                   >
-                    {t.booking.submit}
+                    {formSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{isRTL ? 'جارٍ الإرسال...' : 'Submitting...'}</span>
+                      </>
+                    ) : (
+                      t.booking.submit
+                    )}
                   </button>
                 </form>
               )}

@@ -477,7 +477,13 @@
       "nameRequired": "Name on card is required",
       "nameMinLength": "Name must be at least 3 characters"
     },
-    "backToCart": "Back to Cart"
+    "backToCart": "Back to Cart",
+    "confirmOrder": "Confirm Order",
+    "payOnConfirmation": {
+      "title": "Pay on Confirmation",
+      "body": "Payment will be collected upon confirmation. Our team will contact you.",
+      "note": "We typically call within 1 business hour."
+    }
   },
   "about": {
     "title": "About Us",
@@ -550,7 +556,11 @@
         "subjectRequired": "Subject is required",
         "subjectMinLength": "Subject must be at least 5 characters",
         "messageRequired": "Message is required",
-        "messageMinLength": "Message must be at least 20 characters"
+        "messageMinLength": "Message must be at least 20 characters",
+        "invalidInput": "Invalid input. Please review your details.",
+        "rateLimited": "Too many attempts. Please try again shortly.",
+        "internalError": "Something went wrong. Please try again.",
+        "networkError": "Could not submit the form. Please check your connection."
       }
     },
     "info": {

@@ -23,6 +23,7 @@ export default async function AdminBookingDetailPage({ params }: PageProps) {
   })
 
   if (!booking) notFound()
+  if (!booking.product) notFound()
 
   const formatted = {
     id: booking.id,

@@ -115,7 +115,7 @@ export const translations = {
     footer: {
       brand: 'Your Birthday',
       tagline: 'نحوّل أعياد الميلاد إلى تجارب لا تُنسى.',
-      rights: '© ٢٠٢٥ جميع الحقوق محفوظة',
+      rights: `© ${new Date().getFullYear()} جميع الحقوق محفوظة`,
     },
     booking: {
       modalTitle: 'حجز باقة عيد الميلاد',
@@ -245,7 +245,7 @@ export const translations = {
     footer: {
       brand: 'Your Birthday',
       tagline: 'We turn birthdays into unforgettable experiences.',
-      rights: '© 2025 All Rights Reserved',
+      rights: `© ${new Date().getFullYear()} All Rights Reserved`,
     },
     booking: {
       modalTitle: 'Book Birthday Package',

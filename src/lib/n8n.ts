@@ -35,6 +35,10 @@ export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<v
     throw new Error(`Booking not found: ${bookingId}`)
   }
 
+  if (!booking.product) {
+    throw new Error(`Booking ${bookingId} has no associated product`)
+  }
+
   // 2. Build payload
   const payload = {
     event: 'order.confirmed',

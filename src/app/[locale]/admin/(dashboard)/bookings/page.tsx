@@ -38,17 +38,19 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
     take: 50,
   })
 
-  const formatted = bookings.map((b) => ({
-    id: b.id,
-    customerName: b.customerName,
-    customerPhone: b.customerPhone,
-    startDate: b.startDate.toISOString(),
-    endDate: b.endDate.toISOString(),
-    status: b.status,
-    totalAmount: b.totalAmount,
-    productName: localizedName(b.product.nameAr, b.product.nameEn, locale),
-    productSlug: b.product.slug,
-  }))
+  const formatted = bookings
+    .filter((b) => b.product !== null)
+    .map((b) => ({
+      id: b.id,
+      customerName: b.customerName,
+      customerPhone: b.customerPhone,
+      startDate: b.startDate.toISOString(),
+      endDate: b.endDate.toISOString(),
+      status: b.status,
+      totalAmount: b.totalAmount,
+      productName: localizedName(b.product!.nameAr, b.product!.nameEn, locale),
+      productSlug: b.product!.slug,
+    }))
 
   return (
     <div className="space-y-6">

@@ -134,8 +134,8 @@ export function ExperienceCard({
         <div className={cn(
           'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full transition-all duration-700',
           accentColor === 'heritage' && 'bg-red-500/60 group-hover:bg-red-500 group-hover:scale-125 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
-          accentColor === 'modern' && 'bg-amber-500/60 group-hover:bg-amber-500 group-hover:scale-125 shadow-[0_0_8px_rgba(245,158,11,0.8)]',
-          accentColor === 'atelier' && 'bg-white/60 group-hover:bg-white group-hover:scale-125 shadow-[0_0_8px_rgba(255,255,255,0.8)]',
+          accentColor === 'modern' && 'bg-primary/60 group-hover:bg-primary group-hover:scale-125 shadow-[0_0_8px_rgba(245,158,11,0.8)]',
+          accentColor === 'atelier' && 'bg-primary/60 group-hover:bg-primary group-hover:scale-125 shadow-[0_0_8px_rgba(255,255,255,0.8)]',
         )} />
       </div>
 
@@ -172,8 +172,8 @@ export function ExperienceCard({
             <div className={cn(
               'w-1 h-1 rounded-full transition-all duration-500',
               accentColor === 'heritage' && 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
-              accentColor === 'modern' && 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]',
-              accentColor === 'atelier' && 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]',
+              accentColor === 'modern' && 'bg-primary shadow-[0_0_8px_rgba(245,158,11,0.8)]',
+              accentColor === 'atelier' && 'bg-primary shadow-[0_0_8px_rgba(255,255,255,0.8)]',
             )} />
           </div>
           <h2 className="text-lg md:text-2xl lg:text-3xl font-serif text-white tracking-wide font-light">{title}</h2>

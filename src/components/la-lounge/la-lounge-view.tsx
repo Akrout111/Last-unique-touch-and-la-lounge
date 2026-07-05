@@ -1,12 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
-import PurpleWaves3D from './purple-waves-3d'
 import { LaLoungeLoadingScreen } from './loading-screen'
+
+const PurpleWaves3D = dynamic(
+  () => import('./purple-waves-3d'),
+  { ssr: false, loading: () => <div className="absolute inset-0" /> }
+)
 
 export default function LaLoungeView() {
   const router = useRouter()
@@ -104,7 +109,7 @@ export default function LaLoungeView() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.9 }}
-            className="text-sm sm:text-base text-purple-700/70 font-sans tracking-wide max-w-lg mb-8"
+            className="text-sm sm:text-base text-primary/70 font-sans tracking-wide max-w-lg mb-8"
           >
             {locale === 'ar'
               ? 'حلول متكاملة للفعاليات — من التخطيط إلى التنفيذ، مع أثاث فاخر وتصاميم مخصصة'
@@ -119,7 +124,7 @@ export default function LaLoungeView() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToServices}
-            className="px-10 py-3.5 bg-purple-700 hover:bg-purple-800 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] hover:shadow-[0_6px_25px_rgba(126,34,206,0.4)] transition-all cursor-pointer border border-purple-500/30"
+            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] hover:shadow-[0_6px_25px_rgba(126,34,206,0.4)] transition-all cursor-pointer border border-primary/30"
           >
             {locale === 'ar' ? 'الميزات والخدمات' : 'Features & Services'}
           </motion.button>
@@ -148,7 +153,7 @@ export default function LaLoungeView() {
           >
             {locale === 'ar' ? 'ما نقدمه' : 'What We Offer'}
           </motion.h2>
-          <p className="text-center text-purple-700/60 mb-12 max-w-xl mx-auto text-sm">
+          <p className="text-center text-primary/60 mb-12 max-w-xl mx-auto text-sm">
             {locale === 'ar'
               ? 'ثلاث خدمات متكاملة لتجهيز فعاليتك من الألف إلى الياء'
               : 'Three integrated services to prepare your event from A to Z'}
@@ -166,7 +171,7 @@ export default function LaLoungeView() {
               >
                 <div className="text-5xl mb-5">{service.icon}</div>
                 <h3 className="font-serif text-xl text-purple-950 mb-3">{service.title}</h3>
-                <p className="text-sm text-purple-700/60 leading-relaxed">{service.desc}</p>
+                <p className="text-sm text-primary/60 leading-relaxed">{service.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -181,7 +186,7 @@ export default function LaLoungeView() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => router.push('/contact')}
-              className="px-10 py-3.5 bg-purple-700 hover:bg-purple-800 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] transition-all cursor-pointer"
+              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(126,34,206,0.3)] transition-all cursor-pointer"
             >
               {locale === 'ar' ? 'تواصل معنا' : 'Contact Us'}
             </motion.button>

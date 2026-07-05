@@ -59,10 +59,14 @@ export async function createProductAction(formData: FormData): Promise<{ success
       return { success: false, error: 'slug_exists' }
     }
 
+    // Read brand from formData so admin can create products for any tenant.
+    // Falls back to 'LUT' for backwards compatibility.
+    const brand = (formData.get('brand') as string) || 'LUT'
+
     await db.product.create({
       data: {
         ...parsed.data,
-        brand: 'LUT',
+        brand: brand as 'LUT' | 'LA_LOUNGE' | 'YOUR_BIRTHDAY',
         model3dUrl: parsed.data.model3dUrl || null,
         images: stringifyImages(parsed.data.images),
       },

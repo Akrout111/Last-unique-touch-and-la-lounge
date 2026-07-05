@@ -197,6 +197,12 @@ export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
       gl={{ antialias: true, alpha: true }}
       style={{ background: 'transparent' }}
       dpr={[1, 1.5]}
+      onCreated={({ gl }) => {
+        // Prevent the page from crashing when the GPU yanks the WebGL context
+        // (e.g. tab backgrounding, driver reset). Calling preventDefault lets
+        // R3F attempt context restoration instead of tearing down the canvas.
+        gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
+      }}
     >
       <ambientLight intensity={0.4} />
       <directionalLight

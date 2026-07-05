@@ -1,36 +1,34 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link, useRouter } from '@/i18n/routing'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, AlertCircle, Lock, ShieldCheck, CreditCard, ArrowLeft, ArrowRight } from 'lucide-react'
+import { AlertCircle, ShieldCheck, CreditCard, ArrowLeft, ArrowRight, Phone, Clock } from 'lucide-react'
 import { useCart } from '@/components/providers/cart-provider'
 import { localizedName } from '@/lib/products'
-
-const paymentSchema = z.object({
-  cardNumber: z
-    .string()
-    .regex(/^\d{4}\s\d{4}\s\d{4}\s\d{4}$/, 'invalid_card'),
-  cardName: z.string().min(3).max(100),
-  expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'invalid_expiry'),
-  cvv: z.string().regex(/^\d{3,4}$/, 'invalid_cvv'),
-  saveCard: z.boolean().optional(),
-})
-
-type PaymentFormData = z.infer<typeof paymentSchema>
 
 interface PaymentViewProps {
   orderId?: string
 }
 
+/**
+ * "Pay on Confirmation" payment view.
+ *
+ * The previous implementation collected card number, CVV, and expiry
+ * directly — a serious PCI risk. Per the fix-v2-group-cd task we now:
+ *
+ *   • Capture NO card data on the client.
+ *   • Show an informational "we'll call you to collect payment" banner.
+ *   • Keep the order summary + a single "Confirm Order" button that, on
+ *     click, clears the cart and routes the customer to the success page.
+ *
+ * The actual Booking row is already created by the previous step
+ * (`/checkout` → `POST /api/orders`) and arrives here as `orderId`.
+ * The order is stored in `PENDING` status — our team will call the
+ * customer to collect payment and then flip it to `CONFIRMED`.
+ */
 export function PaymentView({ orderId }: PaymentViewProps) {
   const t = useTranslations()
   const locale = useLocale()
@@ -39,56 +37,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    control,
-    formState: { errors },
-  } = useForm<PaymentFormData>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: {
-      cardNumber: '',
-      cardName: '',
-      expiry: '',
-      cvv: '',
-      saveCard: false,
-    },
-  })
-
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
-
-  // Card number mask: auto-insert spaces every 4 digits
-  const formatCardNumber = (value: string): string => {
-    const digits = value.replace(/\D/g, '').slice(0, 16)
-    return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
-  }
-
-  // Expiry mask: MM/YY
-  const formatExpiry = (value: string): string => {
-    const digits = value.replace(/\D/g, '').slice(0, 4)
-    if (digits.length >= 3) {
-      return `${digits.slice(0, 2)}/${digits.slice(2)}`
-    }
-    return digits
-  }
-
-  // CVV: digits only, max 4
-  const formatCvv = (value: string): string => {
-    return value.replace(/\D/g, '').slice(0, 4)
-  }
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('cardNumber', formatCardNumber(e.target.value), { shouldValidate: false })
-  }
-
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('expiry', formatExpiry(e.target.value), { shouldValidate: false })
-  }
-
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('cvv', formatCvv(e.target.value), { shouldValidate: false })
-  }
 
   // No order ID — can't proceed
   if (!orderId) {
@@ -107,38 +56,16 @@ export function PaymentView({ orderId }: PaymentViewProps) {
     )
   }
 
-  const onSubmit = async (_data: PaymentFormData) => {
+  const onConfirmOrder = async () => {
     setSubmitting(true)
     setErrorMessage(null)
 
-    // Simulate payment processing (2 seconds) — NO real payment API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    // Call internal mock to confirm payment
     try {
-      const response = await fetch('/api/webhooks/payment-success', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        const errorCode = result.error as string | undefined
-        const errorKeys: Record<string, string> = {
-          payment_failed: 'payment.errors.paymentFailed',
-          order_not_found: 'payment.errors.orderNotFound',
-          invalid_card: 'payment.errors.invalidCard',
-          invalid_expiry: 'payment.errors.invalidExpiry',
-          invalid_cvv: 'payment.errors.invalidCvv',
-        }
-        setErrorMessage(t(errorKeys[errorCode ?? 'payment_failed'] || 'payment.errors.paymentFailed'))
-        setSubmitting(false)
-        return
-      }
-
-      // Success — clear cart and redirect to success page
+      // The Booking was already created at the /checkout step via
+      // POST /api/orders. Per the "Pay on Confirmation" flow we simply
+      // clear the cart and route to the success page — no payment
+      // webhook is invoked. Our team will reach out to collect payment
+      // and flip the booking status to CONFIRMED.
       clear()
       router.push(`/checkout/success?order=${orderId}`)
     } catch {
@@ -154,7 +81,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Payment Form */}
+        {/* Pay-on-confirmation panel */}
         <div className="lg:col-span-2">
           {/* Order info card */}
           <div className="p-4 rounded-xl bg-stone-50 border border-border mb-6">
@@ -174,152 +101,58 @@ export function PaymentView({ orderId }: PaymentViewProps) {
             </p>
           </div>
 
-          {/* Card form */}
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-5 p-6 rounded-xl bg-card border border-border"
-          >
+          {/* Pay on confirmation message + confirm button */}
+          <div className="space-y-5 p-6 rounded-xl bg-card border border-border">
             {errorMessage && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-lut/10 border border-lut/30 text-lut text-sm">
+              <div
+                role="alert"
+                className="flex items-start gap-2 p-3 rounded-lg bg-lut/10 border border-lut/30 text-lut text-sm"
+              >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            {/* Card Number */}
-            <div className="space-y-1.5">
-              <Label htmlFor="cardNumber">
-                {t('payment.form.cardNumber')}
-              </Label>
-              <Input
-                id="cardNumber"
-                dir="ltr"
-                autoComplete="cc-number"
-                inputMode="numeric"
-                placeholder="0000 0000 0000 0000"
-                {...register('cardNumber')}
-                onChange={handleCardNumberChange}
-                className="bg-background"
-              />
-              {errors.cardNumber && (
-                <p className="text-xs text-lut">{t('payment.errors.invalid_card')}</p>
-              )}
-            </div>
-
-            {/* Card Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="cardName">
-                {t('payment.form.cardName')}
-              </Label>
-              <Input
-                id="cardName"
-                autoComplete="cc-name"
-                {...register('cardName')}
-                className="bg-background"
-              />
-              {errors.cardName && (
-                <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    {errors.cardName?.type === 'required'
-                      ? t('payment.errors.nameRequired')
-                      : t('payment.errors.nameMinLength')}
-                  </span>
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-gold/5 border border-gold/20">
+              <Phone className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-foreground">
+                  {t('payment.payOnConfirmation.title')}
                 </p>
-              )}
-            </div>
-
-            {/* Expiry + CVV */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="expiry">
-                  {t('payment.form.expiry')}
-                </Label>
-                <Input
-                  id="expiry"
-                  dir="ltr"
-                  autoComplete="cc-exp"
-                  inputMode="numeric"
-                  placeholder="MM/YY"
-                  {...register('expiry')}
-                  onChange={handleExpiryChange}
-                  className="bg-background"
-                />
-                {errors.expiry && (
-                  <p className="text-xs text-lut">{t('payment.errors.invalid_expiry')}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cvv">
-                  {t('payment.form.cvv')}
-                </Label>
-                <Input
-                  id="cvv"
-                  type="password"
-                  dir="ltr"
-                  autoComplete="cc-csc"
-                  inputMode="numeric"
-                  placeholder="•••"
-                  {...register('cvv')}
-                  onChange={handleCvvChange}
-                  className="bg-background"
-                />
-                {errors.cvv && (
-                  <p className="text-xs text-lut">{t('payment.errors.invalid_cvv')}</p>
-                )}
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {t('payment.payOnConfirmation.body')}
+                </p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-2">
+                  <Clock className="w-3.5 h-3.5" />
+                  {t('payment.payOnConfirmation.note')}
+                </p>
               </div>
             </div>
 
-            {/* Save card (UI only) */}
-            <div className="flex items-center gap-2">
-              <Controller
-                control={control}
-                name="saveCard"
-                render={({ field: { value, onChange } }) => (
-                  <Checkbox
-                    id="saveCard"
-                    checked={value ?? false}
-                    onCheckedChange={(c) => onChange(!!c)}
-                  />
-                )}
-              />
-              <Label htmlFor="saveCard" className="text-sm text-muted-foreground cursor-pointer">
-                {t('payment.form.saveCard')}
-              </Label>
-            </div>
-
-            {/* Submit */}
             <Button
-              type="submit"
+              type="button"
+              onClick={onConfirmOrder}
               disabled={submitting}
               className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                  {t('payment.form.processing')}
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 me-2" />
-                  {t('payment.form.submit', { amount: total.toFixed(3) })}
-                </>
-              )}
+              {submitting
+                ? t('payment.form.processing')
+                : t('payment.confirmOrder')}
             </Button>
-          </form>
+          </div>
 
           {/* Trust badges */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">
-              <Lock className="w-4 h-4 text-gold shrink-0" />
-              <span className="text-xs text-foreground">
-                {t('payment.trust.ssl')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">
               <ShieldCheck className="w-4 h-4 text-gold shrink-0" />
               <span className="text-xs text-foreground">
                 {t('payment.trust.fraud')}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">
+              <Phone className="w-4 h-4 text-gold shrink-0" />
+              <span className="text-xs text-foreground">
+                {t('payment.trust.ssl')}
               </span>
             </div>
             <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">

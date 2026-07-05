@@ -11,9 +11,9 @@ export default async function SuccessPage({ searchParams }: PageProps) {
   return (
     <>
       <Navbar />
-      <main id="main-content" className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background">
         <SuccessView orderId={order} />
-      </main>
+      </div>
       <Footer />
     </>
   )

@@ -16,6 +16,10 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
+  // F7: Save the element that had focus before the dialog opened (typically
+  // the row's delete button) so we can restore focus on close — otherwise
+  // keyboard users get dropped at the top of the page.
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   const handleConfirm = async () => {
     setDeleting(true)
@@ -36,9 +40,23 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open, deleting])
 
-  // Focus trap: focus first element on open, cycle Tab within modal
+  // Focus trap: focus first element on open, cycle Tab within modal, and
+  // restore focus to the trigger element when the dialog closes (F7).
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      // Dialog just closed (or never opened) — restore focus to the element
+      // that opened it. The rAF delay lets the dialog finish unmounting.
+      if (previousFocusRef.current) {
+        const prev = previousFocusRef.current
+        const raf = requestAnimationFrame(() => prev.focus?.())
+        return () => cancelAnimationFrame(raf)
+      }
+      return
+    }
+
+    // Dialog just opened — capture the currently focused element (the trigger
+    // button) so we can restore focus later.
+    previousFocusRef.current = document.activeElement as HTMLElement | null
 
     const node = dialogRef.current
     if (!node) return

@@ -49,15 +49,17 @@ export default async function ProductsPage({ searchParams, params }: PageProps) 
       : 'newest'
   const page = search.page ? Math.max(1, parseInt(search.page, 10) || 1) : 1
 
+  // Storefront always shows LUT products — explicit brand keeps the multi-tenant
+  // `getProducts()` (which no longer defaults to LUT) scoped correctly.
   const [categories, result] = await Promise.all([
-    getCategoriesByBrand(),
-    getProducts({ categorySlug, search: searchQuery, sort, page }),
+    getCategoriesByBrand('LUT'),
+    getProducts({ brand: 'LUT', categorySlug, search: searchQuery, sort, page }),
   ])
 
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background" id="main-content">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
           {/* Page header */}
           <div className="mb-8">
@@ -90,7 +92,7 @@ export default async function ProductsPage({ searchParams, params }: PageProps) 
             />
           </Suspense>
         </div>
-      </main>
+      </div>
       <Footer />
     </>
   )

@@ -391,23 +391,15 @@ export function BirthdayVisualizer() {
     const targetMouse = { x: 0, y: 0 }
 
     // Pause/resume via IntersectionObserver WITHOUT tearing down the scene.
+    // When the canvas scrolls off-screen we cancel the in-flight rAF id so the
+    // browser stops scheduling frames at all (the previous implementation kept
+    // the rAF loop running and merely skipped the heavy work — still woke the
+    // main thread ~60×/s). When the canvas scrolls back into view we restart
+    // the loop and reset the clock so animations don't jump.
     let isInView = true
-    const visibilityObserver = new IntersectionObserver(([entry]) => {
-      isInView = entry.isIntersecting
-    }, { threshold: 0.01 })
-    visibilityObserver.observe(container)
-
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect()
-      targetMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-      targetMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-    }
-    window.addEventListener('mousemove', onMouseMove)
 
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate)
-      // Always keep the rAF loop alive; only skip the heavy work when off-screen.
-      if (!isInView) return
 
       // NOTE: getDelta() must be called BEFORE getElapsedTime() —
       // getElapsedTime() internally calls getDelta(), so calling it first
@@ -496,6 +488,31 @@ export function BirthdayVisualizer() {
         renderer.render(scene, camera)
       }
     }
+
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      const wasInView = isInView
+      isInView = entry.isIntersecting
+      if (isInView && !wasInView) {
+        // Resumed — restart the rAF loop (was cancelled when off-screen).
+        // Reset the clock so animations don't lurch forward by the time
+        // the user spent scrolled away.
+        clock.getDelta()
+        animate()
+      } else if (!isInView && wasInView) {
+        // Paused — cancel the in-flight rAF so the main thread can sleep.
+        cancelAnimationFrame(animationIdRef.current)
+        animationIdRef.current = 0
+      }
+    }, { threshold: 0.01 })
+    visibilityObserver.observe(container)
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect()
+      targetMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      targetMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+    }
+    window.addEventListener('mousemove', onMouseMove)
+
     animate()
 
     // === RESIZE HANDLER (debounced) ===

@@ -86,7 +86,7 @@ export function Hero() {
             category={t('hero.categories.heritage')}
             title={t('brandSelector.lut.name')}
             actionText={t('hero.explore')}
-            productImageUrl="/products/lalounge_modern.webp"
+            productImageUrl="/products/lut_heritage.webp"
             logoUrl="/logo-lut.jpg"
             isComingSoon={false}
             delay={0.01}
@@ -99,7 +99,7 @@ export function Hero() {
             category={t('hero.categories.modern')}
             title={t('brandSelector.lalounge.name')}
             actionText={t('hero.explore')}
-            productImageUrl="/products/lut_heritage.webp"
+            productImageUrl="/products/lalounge_modern.webp"
             logoUrl="/logo-lalounge.jpg"
             isComingSoon={false}
             delay={0.02}

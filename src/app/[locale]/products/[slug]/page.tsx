@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: PageProps) {
     <>
       <JsonLd data={productLd} />
       <Navbar />
-      <main className="min-h-screen bg-background" id="main-content">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
           <Breadcrumbs
             categorySlug={product.category.slug}
@@ -118,7 +118,7 @@ export default async function ProductPage({ params }: PageProps) {
             <RelatedProducts products={related} />
           )}
         </div>
-      </main>
+      </div>
       <Footer />
     </>
   )

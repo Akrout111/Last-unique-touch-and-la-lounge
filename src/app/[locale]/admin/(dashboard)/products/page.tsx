@@ -1,6 +1,7 @@
 import { getTranslations, getLocale } from 'next-intl/server'
 import { db } from '@/lib/db'
 import { parseImages } from '@/lib/products'
+import { getAdminBrand } from '@/lib/admin-brand'
 import { Link } from '@/i18n/routing'
 import { Plus } from 'lucide-react'
 import { ProductsTable } from '@/components/admin/products-table'
@@ -8,8 +9,11 @@ import { ProductsTable } from '@/components/admin/products-table'
 export default async function AdminProductsPage() {
   const t = await getTranslations()
   const locale = await getLocale()
+  // Filter the admin product list by the brand selected in the sidebar switcher.
+  const brand = await getAdminBrand()
 
   const products = await db.product.findMany({
+    where: { brand },
     include: {
       category: { select: { id: true, nameAr: true, nameEn: true, slug: true } },
     },
@@ -17,7 +21,7 @@ export default async function AdminProductsPage() {
   })
 
   const categories = await db.category.findMany({
-    where: { brand: 'LUT' },
+    where: { brand },
     orderBy: { nameEn: 'asc' },
   })
 

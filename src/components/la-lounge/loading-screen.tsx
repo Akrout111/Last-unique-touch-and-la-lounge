@@ -9,7 +9,10 @@ export function LaLoungeLoadingScreen({ onComplete }: { onComplete: () => void }
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(true)
   const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -40,11 +40,11 @@ export default function HomePage() {
       <JsonLd data={organizationLd} />
       <CustomCursor />
       <Navbar />
-      <main id="main-content">
+      <div>
         {/* Landing page — 3 brand selector cards over the 3D furniture tunnel.
             Each card navigates to its own dedicated page. */}
         <Hero />
-      </main>
+      </div>
       <Footer />
     </div>
   )

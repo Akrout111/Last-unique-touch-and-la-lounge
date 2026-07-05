@@ -44,12 +44,15 @@ export async function getAdminStats(): Promise<AdminStats> {
     db.booking.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
+      where: { product: { isNot: null } },
       include: {
         product: {
           select: { id: true, nameAr: true, nameEn: true, slug: true },
         },
       },
-    }),
+    }).then((rows) =>
+      rows.map((r) => ({ ...r, product: r.product! }))
+    ),
     db.product.findMany({
       where: { stock: { lte: 2 }, isActive: true },
       take: 5,

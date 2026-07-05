@@ -12,9 +12,13 @@ export function EmptyState({ search: _search, categorySlug: _categorySlug }: Emp
   const t = useTranslations()
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-col items-center justify-center py-20 text-center"
+    >
       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
-        <SearchX className="w-8 h-8 text-muted-foreground" />
+        <SearchX className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">
         {t('products.empty.title')}

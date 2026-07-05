@@ -378,7 +378,17 @@ export default function PurpleWaves3D() {
 
   return (
     <div ref={containerRef} aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none bg-[#fafafa] z-0 overflow-hidden">
-      <Canvas frameloop={inView ? 'always' : 'never'} camera={{ position: [0, 40, 60], fov: 45 }} dpr={[1, 1.5]}>
+      <Canvas
+        frameloop={inView ? 'always' : 'never'}
+        camera={{ position: [0, 40, 60], fov: 45 }}
+        dpr={[1, 1.5]}
+        onCreated={({ gl }) => {
+          // Prevent the page from crashing when the GPU yanks the WebGL context
+          // (e.g. tab backgrounding, driver reset). Calling preventDefault lets
+          // R3F attempt context restoration instead of tearing down the canvas.
+          gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
+        }}
+      >
         <fog attach="fog" args={['#fafafa', 50, 180]} />
         <CameraRig />
         <BlueprintGrid />

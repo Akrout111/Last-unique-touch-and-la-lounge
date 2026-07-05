@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,17 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1)
   const [availability, setAvailability] = useState<AvailabilityState>('idle')
   const [added, setAdded] = useState(false)
+
+  // Holds the "added to cart" reset timeout so we can clear it on unmount
+  // (prevents setState-after-unmount warning if the user navigates away
+  // within the 2s window).
+  const addedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current)
+    }
+  }, [])
 
   const productName = localizedName(product.nameAr, product.nameEn, locale)
   const categoryName = localizedName(product.category.nameAr, product.category.nameEn, locale)
@@ -119,7 +130,10 @@ export function ProductInfo({ product }: ProductInfoProps) {
     })
 
     setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
+    // Clear any in-flight reset timer (rapid double-clicks) before arming a
+    // new one. The unmount effect cleans up the latest timer.
+    if (addedTimeoutRef.current) clearTimeout(addedTimeoutRef.current)
+    addedTimeoutRef.current = setTimeout(() => setAdded(false), 2000)
   }
 
   const maxQty = Math.max(1, product.stock)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { rateLimit } from '@/lib/rate-limiter'
 
 const itemSchema = z.object({
   productId: z.string().min(1),
@@ -63,8 +64,30 @@ async function checkProductAvailabilityInTx(
 }
 
 export async function POST(req: NextRequest) {
+  // --- Rate limit (10/min/IP) — D5 ---
+  const forwarded = req.headers.get('x-forwarded-for')
+  const firstFwd = forwarded ? forwarded.split(',')[0] : null
+  const ip = firstFwd ? firstFwd.trim() : (req.headers.get('x-real-ip') ?? 'unknown')
+  const rl = rateLimit(`orders:${ip}`, 10, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: 60 },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   try {
-    const body = await req.json()
+    // --- Parse body defensively (D2): invalid JSON -> 400, not 500 ---
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'invalid_json' },
+        { status: 400 }
+      )
+    }
+
     const parsed = orderSchema.safeParse(body)
 
     if (!parsed.success) {

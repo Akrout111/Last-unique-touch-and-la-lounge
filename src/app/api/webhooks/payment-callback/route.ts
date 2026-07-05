@@ -71,12 +71,22 @@ function computeSignature(secret: string, orderId: string, status: string): stri
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    // --- Parse body defensively (D2): invalid JSON -> 400, not 500 ---
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'invalid_json' },
+        { status: 400 }
+      )
+    }
+
     const parsed = schema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'invalid_payload' },
+        { error: 'invalid_input' },
         { status: 400 }
       )
     }
@@ -89,9 +99,11 @@ export async function POST(req: NextRequest) {
       secret = getWebhookSecret()
     } catch {
       // Fail-closed in production if the secret is not configured.
+      // 503 (not 500) so monitoring can distinguish a misconfiguration
+      // from a real server error — D3.
       return NextResponse.json(
         { error: 'server_misconfigured' },
-        { status: 500 }
+        { status: 503 }
       )
     }
 

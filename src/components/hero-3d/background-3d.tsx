@@ -365,6 +365,11 @@ export function Background3D({ active = true }: Background3DProps) {
           // ⚠️ Prevent context loss when tab is backgrounded
           preserveDrawingBuffer: false,
         }}
+        onCreated={({ gl }) => {
+          // Mark context loss as handled so R3F can attempt recovery instead
+          // of crashing the page when the GPU temporarily yanks the context.
+          gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
+        }}
         >
           <color attach="background" args={['#050505']} />
           <fog attach="fog" args={['#050505', 25, 75]} />

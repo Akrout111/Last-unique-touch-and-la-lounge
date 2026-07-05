@@ -68,8 +68,14 @@ enum BookingStatus {
 
 model Booking {
   id            String        @id @default(cuid())
-  productId     String
-  product       Product       @relation(fields: [productId], references: [id])
+  // brand lets us distinguish bookings that don't belong to a specific
+  // Product (e.g. "Your Birthday" party packages) from regular LUT
+  // product rentals. Defaults to LUT so existing callers are unaffected.
+  brand         Brand         @default(LUT)
+  // productId is optional so non-product bookings (e.g. birthday party
+  // packages) can be stored without forcing a fake Product row.
+  productId     String?
+  product       Product?      @relation(fields: [productId], references: [id])
   startDate     DateTime
   endDate       DateTime
   status        BookingStatus @default(PENDING)
@@ -84,8 +90,12 @@ model Booking {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  @@index([brand, createdAt])
   @@index([productId, startDate, endDate])
   @@index([status])
+  // The no_double_booking unique constraint only applies when productId
+  // is set (SQLite treats NULL as distinct, so birthday bookings without
+  // a product won't collide).
   @@unique([productId, startDate, endDate], name: "no_double_booking")
 }
 
