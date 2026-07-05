@@ -1,14 +1,9 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight, Check, ArrowDown } from 'lucide-react'
-
-const Background3D = dynamic(
-  () => import('@/components/hero-3d/background-3d').then(m => m.Background3D),
-  { ssr: false, loading: () => <div className="absolute inset-0" /> }
-)
+import { Background3D } from '@/components/hero-3d/background-3d'
 
 export default function LastUniqueTouchView() {
   const t = useTranslations()

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import dynamic from 'next/dynamic'
 import { useLocale } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/routing'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -25,11 +24,7 @@ import {
 import { BirthdayLoadingScreen } from './loading-screen'
 import { TextScramble } from './text-scramble'
 import { translations } from './translations'
-
-const BirthdayVisualizer = dynamic(
-  () => import('./birthday-visualizer').then(m => m.BirthdayVisualizer),
-  { ssr: false, loading: () => <div className="absolute inset-0" /> }
-)
+import { BirthdayVisualizer } from './birthday-visualizer'
 
 interface YourBirthdayViewProps {
   onBack: () => void

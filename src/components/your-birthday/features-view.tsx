@@ -1,16 +1,11 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { translations } from '@/components/your-birthday/translations'
-
-const BirthdayVisualizer = dynamic(
-  () => import('@/components/your-birthday/birthday-visualizer').then(m => m.BirthdayVisualizer),
-  { ssr: false, loading: () => <div className="absolute inset-0" /> }
-)
+import { BirthdayVisualizer } from '@/components/your-birthday/birthday-visualizer'
 
 export default function BirthdayFeaturesView() {
   const locale = useLocale() as 'ar' | 'en'
