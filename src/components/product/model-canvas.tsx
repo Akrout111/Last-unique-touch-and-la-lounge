@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment, ContactShadows, Float, useGLTF } from '@react-three/drei'
+import { OrbitControls, ContactShadows, Float, useGLTF } from '@react-three/drei'
 import { Suspense, useRef } from 'react'
 import * as THREE from 'three'
 
@@ -229,7 +229,6 @@ export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
           blur={2}
           far={3}
         />
-        <Environment preset="apartment" />
       </Suspense>
 
       <OrbitControls

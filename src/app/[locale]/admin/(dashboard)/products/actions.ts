@@ -169,8 +169,13 @@ export async function updateProductAction(id: string, formData: FormData): Promi
 
 export async function deleteProductAction(id: string): Promise<{ success: boolean; error?: string }> {
   await requireAuth()
+  const brand = await getAdminBrand()
 
   try {
+    // Verify ownership before deleting (cross-tenant protection)
+    const owned = await db.product.findFirst({ where: { id, brand } })
+    if (!owned) return { success: false, error: 'not_found' }
+
     // Soft delete — set isActive to false
     await db.product.update({
       where: { id },

@@ -181,12 +181,14 @@ export async function POST(req: NextRequest) {
         // Create bookings inside the same tx (C5).
         const bookings = []
         for (const item of items) {
+          const product = txProducts.find((p) => p.id === item.productId)
           const startDate = new Date(item.startDate)
           const endDate = new Date(item.endDate)
 
           const booking = await tx.booking.create({
             data: {
               productId: item.productId,
+              brand: product!.brand,
               startDate,
               endDate,
               status: 'PENDING',

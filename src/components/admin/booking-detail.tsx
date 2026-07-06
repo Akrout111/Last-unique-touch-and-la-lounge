@@ -28,7 +28,7 @@ interface BookingDetailData {
     securityDeposit: number
     categoryNameAr: string
     categoryNameEn: string
-  }
+  } | null
 }
 
 interface BookingDetailProps {
@@ -50,8 +50,8 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
     )
   )
 
-  const rentalAmount = booking.product.rentalPricePerDay * days
-  const depositAmount = booking.product.securityDeposit
+  const rentalAmount = booking.product ? booking.product.rentalPricePerDay * days : booking.totalAmount
+  const depositAmount = booking.product ? booking.product.securityDeposit : 0
 
   const handleStatusChange = async (newStatus: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
     setUpdating(true)
@@ -123,7 +123,9 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
             <div>
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.product')}</dt>
               <dd className="text-sm font-medium text-foreground">
-                {localizedName(booking.product.nameAr, booking.product.nameEn, locale)}
+                {booking.product
+                  ? localizedName(booking.product.nameAr, booking.product.nameEn, locale)
+                  : (locale === 'ar' ? 'باقة عيد الميلاد' : 'Birthday Package')}
               </dd>
             </div>
             <div>

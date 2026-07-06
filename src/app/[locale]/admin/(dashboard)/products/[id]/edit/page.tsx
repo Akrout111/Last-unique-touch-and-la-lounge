@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation'
-import { getProductById, getCategoriesByBrand } from '@/lib/products'
+import { getCategoriesByBrand, parseImages, type ProductWithImages } from '@/lib/products'
+import { getAdminBrand } from '@/lib/admin-brand'
+import { db } from '@/lib/db'
 import { ProductForm } from '@/components/admin/product-form'
 import type { Brand } from '@prisma/client'
 
@@ -9,15 +11,17 @@ interface PageProps {
 
 export default async function EditProductPage({ params }: PageProps) {
   const { id } = await params
+  const brand = await getAdminBrand()
 
-  const [product, categories] = await Promise.all([
-    getProductById(id),
-    // Categories scoped to the product's existing brand so the admin can't
-    // accidentally reassign it to a category belonging to a different tenant.
-    getProductById(id).then((p) => getCategoriesByBrand((p?.brand ?? 'LUT') as Brand)),
-  ])
-
+  // Scope by brand to prevent cross-tenant read
+  const product = await db.product.findFirst({
+    where: { id, brand },
+    include: { category: { select: { id: true, nameAr: true, nameEn: true, slug: true } } },
+  })
   if (!product) notFound()
 
-  return <ProductForm categories={categories} product={product} mode="edit" brand={product.brand as 'LUT' | 'LA_LOUNGE' | 'YOUR_BIRTHDAY'} />
+  const categories = await getCategoriesByBrand(brand as Brand)
+  const productWithImages: ProductWithImages = { ...product, images: parseImages(product.images) }
+
+  return <ProductForm categories={categories} product={productWithImages} mode="edit" brand={brand as 'LUT' | 'LA_LOUNGE' | 'YOUR_BIRTHDAY'} />
 }

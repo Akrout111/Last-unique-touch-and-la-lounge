@@ -2,6 +2,7 @@
 
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
+import { getAdminBrand } from '@/lib/admin-brand'
 import { revalidatePath } from 'next/cache'
 import { triggerOrderConfirmedWebhook } from '@/lib/n8n'
 
@@ -17,9 +18,11 @@ export async function updateBookingStatusAction(
   newStatus: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
 ): Promise<{ success: boolean; error?: string }> {
   await requireAuth()
+  const brand = await getAdminBrand()
 
   try {
-    const booking = await db.booking.findUnique({ where: { id: bookingId } })
+    // Scope by brand to prevent cross-tenant mutation
+    const booking = await db.booking.findFirst({ where: { id: bookingId, brand } })
     if (!booking) return { success: false, error: 'not_found' }
 
     if (!validTransitions[booking.status]?.includes(newStatus)) {
