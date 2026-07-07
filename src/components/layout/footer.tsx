@@ -1,11 +1,34 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
+import { Link, usePathname } from '@/i18n/routing'
 import { Instagram, Phone } from 'lucide-react'
+import { buildWhatsappUrl, getPhoneNumber, isRealNumber } from '@/lib/contact-info'
+
+type BrandKey = 'lut' | 'lalounge' | 'birthday'
+
+function resolveBrandFromPath(pathname: string | null): BrandKey {
+  if (!pathname) return 'lut'
+  if (pathname.includes('/la-lounge')) return 'lalounge'
+  if (pathname.includes('/your-birthday')) return 'birthday'
+  return 'lut'
+}
 
 export function Footer() {
   const t = useTranslations()
+  const pathname = usePathname()
+  const brand = resolveBrandFromPath(pathname)
+
+  const brandName =
+    brand === 'lalounge'
+      ? t('brand.lalounge')
+      : brand === 'birthday'
+        ? t('brand.birthday')
+        : t('brand.lut')
+
+  const whatsappUrl = buildWhatsappUrl()
+  const phoneNumber = getPhoneNumber()
+  const showPhoneLine = isRealNumber(phoneNumber)
 
   return (
     <footer className="bg-ink text-paper/60 relative overflow-hidden">
@@ -19,7 +42,7 @@ export function Footer() {
           <div className="md:col-span-5">
             <div className="flex items-center gap-2 mb-6">
               <span className="font-display text-3xl text-paper">
-                {t('brand.lut')}
+                {brandName}
               </span>
               <span className="w-2 h-2 rounded-full bg-gold" />
             </div>
@@ -36,15 +59,17 @@ export function Footer() {
               >
                 <Instagram className="w-4 h-4" strokeWidth={1.3} />
               </a>
-              <a
-                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '965XXXXXXXX'}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
-                aria-label={t('contact.info.whatsapp')}
-              >
-                <Phone className="w-4 h-4" strokeWidth={1.3} />
-              </a>
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
+                  aria-label={t('contact.info.whatsapp')}
+                >
+                  <Phone className="w-4 h-4" strokeWidth={1.3} />
+                </a>
+              )}
             </div>
           </div>
 
@@ -103,7 +128,9 @@ export function Footer() {
               {t('footer.contact')}
             </h4>
             <ul className="space-y-3 text-sm">
-              <li dir="ltr" className="text-start">{t('footer.phone')}</li>
+              {showPhoneLine && (
+                <li dir="ltr" className="text-start">{phoneNumber}</li>
+              )}
               <li>{t('footer.email')}</li>
               <li>{t('footer.address')}</li>
             </ul>
@@ -115,7 +142,10 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-paper/40">
+          {/* Phase 5 contrast: bumped from text-paper/40 → text-paper/60 for
+              WCAG AA (4.5:1) on the bg-ink charcoal footer. The eyebrow
+              line below stays decorative (text-paper/30, "Crafted in Kuwait"). */}
+          <p className="text-xs text-paper/60">
             {t('footer.rights', { year: new Date().getFullYear() })}
           </p>
           <p className="eyebrow text-paper/30">

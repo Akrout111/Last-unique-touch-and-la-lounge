@@ -51,7 +51,7 @@ export function LoginPageView() {
         {/* Login card */}
         <form
           action={onSubmit}
-          className="bg-card rounded-xl shadow-xl p-8 space-y-5"
+          className="bg-card rounded-md shadow-xl p-8 space-y-5"
         >
           <div className="flex items-center justify-center w-14 h-14 rounded-full bg-lut/10 mx-auto mb-2">
             <Lock className="w-7 h-7 text-lut" />
@@ -62,7 +62,7 @@ export function LoginPageView() {
           </h1>
 
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+            <div className="flex items-center gap-2 p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -84,7 +84,7 @@ export function LoginPageView() {
           <Button
             type="submit"
             disabled={submitting}
-            className="w-full bg-lut hover:bg-lut/90 text-white py-3 font-semibold rounded-lg"
+            className="w-full bg-lut hover:bg-lut/90 text-white py-3 font-semibold rounded-md"
           >
             {submitting ? (
               <>

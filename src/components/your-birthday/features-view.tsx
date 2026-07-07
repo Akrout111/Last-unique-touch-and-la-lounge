@@ -1,33 +1,40 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { translations } from '@/components/your-birthday/translations'
 import { BirthdayVisualizer } from '@/components/your-birthday/birthday-visualizer'
+
+/**
+ * Decorative icon + color pairs for the six service tiles.
+ * The strings themselves (title + desc) live in
+ * messages/{ar,en}.json under `yourBirthday.features.services.*` —
+ * icons and colors are decorative, not translated, so they stay here.
+ */
+const SERVICE_DECOR: Array<{ icon: string; color: string }> = [
+  { icon: '🎂', color: '#8B5CF6' },
+  { icon: '🎭', color: '#EC4899' },
+  { icon: '🎈', color: '#00F3FF' },
+  { icon: '🎵', color: '#F97316' },
+  { icon: '💡', color: '#10B981' },
+  { icon: '📸', color: '#EF4444' },
+]
 
 export default function BirthdayFeaturesView() {
   const locale = useLocale() as 'ar' | 'en'
   const router = useRouter()
-  const t = translations[locale]
+  const t = useTranslations('yourBirthday.features')
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
-  const services = locale === 'ar' ? [
-    { icon: '🎂', title: 'تنظيم حفلات أعياد الميلاد', desc: 'تخطيط كامل لحفلة عيد الميلاد من الألف إلى الياء — ديكور، كيك، ألعاب، ومفاجآت', color: '#8B5CF6' },
-    { icon: '🎭', title: 'تأجير أدوات الحفلات', desc: 'رقصات LED مضيئة، أنظمة صوت احترافية، إضاءة مسرح، مؤثرات ليزر، وأكثر', color: '#EC4899' },
-    { icon: '🎈', title: 'الديكور والبالونات', desc: 'تنسيقات بالونات معدنية، زخارف احتفالية، ثيمات مخصصة لكل مناسبة', color: '#00F3FF' },
-    { icon: '🎵', title: 'الصوت والموسيقى', desc: 'مكبرات صوت، DJ equipment، مايكات، وأنظمة صوت محيطية', color: '#F97316' },
-    { icon: '💡', title: 'الإضاءة الاحترافية', desc: 'أضواء مسرح، إضاءة LED ملونة، سبوت لايت، ومؤثرات بصرية', color: '#10B981' },
-    { icon: '📸', title: 'التصوير الفوتوغرافي', desc: 'تصوير احترافي للحفلة، فيديو، وصور ذكريات دائمة', color: '#EF4444' },
-  ] : [
-    { icon: '🎂', title: 'Birthday Party Planning', desc: 'Complete birthday party planning from A to Z — decor, cake, games, and surprises', color: '#8B5CF6' },
-    { icon: '🎭', title: 'Party Equipment Rental', desc: 'LED dance floors, professional sound systems, stage lighting, laser effects, and more', color: '#EC4899' },
-    { icon: '🎈', title: 'Decor & Balloons', desc: 'Metallic balloon arrangements, festive decorations, custom themes for every occasion', color: '#00F3FF' },
-    { icon: '🎵', title: 'Sound & Music', desc: 'Speakers, DJ equipment, microphones, and surround sound systems', color: '#F97316' },
-    { icon: '💡', title: 'Professional Lighting', desc: 'Stage lights, colored LED lighting, spotlights, and visual effects', color: '#10B981' },
-    { icon: '📸', title: 'Photography', desc: 'Professional party photography, video, and lasting memory shots', color: '#EF4444' },
-  ]
+  // Pull the raw services array (each entry: { title, desc }) and merge in
+  // the decorative icon/color from the constant above.
+  const rawServices = (t.raw('services') as Array<{ title: string; desc: string }>) ?? []
+  const services = rawServices.map((s, i) => ({
+    ...s,
+    icon: SERVICE_DECOR[i]?.icon ?? '✨',
+    color: SERVICE_DECOR[i]?.color ?? '#8B5CF6',
+  }))
 
   return (
     <div className="relative w-full min-h-screen bg-[#020204] overflow-hidden">
@@ -44,7 +51,7 @@ export default function BirthdayFeaturesView() {
           className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all font-medium text-xs cursor-pointer"
         >
           <ArrowIcon className="w-4 h-4" />
-          <span>{locale === 'ar' ? 'العودة' : 'Back'}</span>
+          <span>{t('back')}</span>
         </button>
       </div>
 
@@ -67,12 +74,10 @@ export default function BirthdayFeaturesView() {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              {locale === 'ar' ? 'خدماتنا' : 'Our Services'}
+              {t('title')}
             </h2>
             <p className="text-sm text-white/50 max-w-xl mx-auto">
-              {locale === 'ar'
-                ? 'تأجير أدوات الحفلات وأعياد الميلاد وتجهيزها بالكامل'
-                : 'Party & birthday equipment rental and full setup'}
+              {t('subtitle')}
             </p>
             <div className="w-24 h-1 bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#00F3FF] mx-auto rounded-full mt-6" />
           </motion.div>
@@ -85,14 +90,25 @@ export default function BirthdayFeaturesView() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="group relative p-8 rounded-3xl bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
+                className="group relative p-8 rounded-lg bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
               >
                 <div
                   className="absolute -top-12 -end-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                   style={{ background: service.color }}
                 />
                 <div className="relative z-10">
-                  <div className="text-5xl mb-5">{service.icon}</div>
+                  {/* Birthday circular frame — signature ornament around each service icon */}
+                  <div
+                    className="relative size-20 rounded-full border-4 border-deep-purple bg-gold/10 flex items-center justify-center mx-auto mb-5 shadow-luxury transition-transform duration-500 group-hover:scale-110"
+                    style={{ boxShadow: `0 0 0 1px ${service.color}22, 0 4px 16px rgba(75, 24, 88, 0.25)` }}
+                  >
+                    {/* Inner gold ring — matches BirthdayCircularFrame aesthetic */}
+                    <span
+                      className="pointer-events-none absolute inset-1 rounded-full border"
+                      style={{ borderColor: 'rgba(245, 185, 20, 0.4)' }}
+                    />
+                    <span className="text-4xl leading-none" aria-hidden="true">{service.icon}</span>
+                  </div>
                   <h3
                     className="text-xl font-bold mb-3"
                     style={{
@@ -123,7 +139,7 @@ export default function BirthdayFeaturesView() {
                 fontFamily: locale === 'ar' ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
               }}
             >
-              {locale === 'ar' ? 'احجز الآن' : 'Book Now'}
+              {t('bookNow')}
             </button>
           </motion.div>
         </div>

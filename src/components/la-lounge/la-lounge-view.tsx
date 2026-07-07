@@ -1,9 +1,16 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, ArrowDown } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { ArrowLeft, ArrowRight, ArrowDown, ClipboardList, Armchair, Sparkles, type LucideIcon } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
-import PurpleWaves3D from './purple-waves-3d'
+import { LaLoungeSunburst } from '@/components/brand/lalounge-sunburst'
+import { LaLoungeLightSweep } from '@/components/brand/lalounge-light-sweep'
+
+// Lazy-load the 3D purple waves scene so the page's initial JS bundle stays
+// small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
+// the browser; the component itself guards on `shouldEnable3D()`.
+const PurpleWaves3D = dynamic(() => import('./purple-waves-3d'), { ssr: false, loading: () => null })
 
 export default function LaLoungeView() {
   const router = useRouter()
@@ -11,37 +18,37 @@ export default function LaLoungeView() {
   const t = useTranslations()
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
-  const services = locale === 'ar' ? [
+  const services: Array<{ title: string; desc: string; icon: LucideIcon }> = locale === 'ar' ? [
     {
       title: 'التخطيط والتجهيز',
       desc: 'تخطيط كامل للفعاليات من الفكرة إلى التنفيذ — تصاميم مبتكرة، إدارة موقع، وتنسيق متكامل',
-      icon: '📋',
+      icon: ClipboardList,
     },
     {
       title: 'توفير الأثاث',
       desc: 'تشكيلة واسعة من الأثاث الفاخر للفعاليات — كراسي، طاولات، أرائك، خيام، وأنظمة إضاءة',
-      icon: '🪑',
+      icon: Armchair,
     },
     {
       title: 'صنع أثاث مخصص',
       desc: 'تصميم وتصنيع أثاث مخصص حسب طلبك لفعالية معينة — قطع فريدة تعكس هوية مناسبتك',
-      icon: '✨',
+      icon: Sparkles,
     },
   ] : [
     {
       title: 'Planning & Setup',
       desc: 'Complete event planning from concept to execution — innovative designs, site management, and full coordination',
-      icon: '📋',
+      icon: ClipboardList,
     },
     {
       title: 'Furniture Supply',
       desc: 'Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems',
-      icon: '🪑',
+      icon: Armchair,
     },
     {
       title: 'Custom Furniture Making',
       desc: 'Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion',
-      icon: '✨',
+      icon: Sparkles,
     },
   ]
 
@@ -54,6 +61,15 @@ export default function LaLoungeView() {
       {/* === Hero section — title centered, purple 3D background === */}
       <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
         <PurpleWaves3D />
+
+        {/* La Lounge art-deco sunburst — static decorative halo behind the
+            title. Phase 5 motion cleanup: dimmed from opacity-40 to opacity-20
+            so it reads as a faint halo without competing with the LightSweep
+            (which is the La Lounge signature motion). */}
+        <LaLoungeSunburst className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 z-[2] w-[600px] h-[300px] opacity-20" />
+
+        {/* La Lounge light sweep — subtle diagonal beam above hero content */}
+        <LaLoungeLightSweep />
 
         {/* Back button */}
         <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
@@ -124,16 +140,21 @@ export default function LaLoungeView() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {services.map((service, i) => (
-              <div
-                key={i}
-                className="bg-white/80 backdrop-blur-md border border-primary/10 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow"
-              >
-                <div className="text-5xl mb-5">{service.icon}</div>
-                <h3 className="font-serif text-xl text-primary mb-3">{service.title}</h3>
-                <p className="text-sm text-primary/60 leading-relaxed">{service.desc}</p>
-              </div>
-            ))}
+            {services.map((service, i) => {
+              const Icon = service.icon
+              return (
+                <div
+                  key={i}
+                  className="bg-white/80 backdrop-blur-md border border-primary/10 rounded-lg p-8 text-center hover:shadow-lg transition-shadow"
+                >
+                  <div className="flex items-center justify-center mb-5 text-primary">
+                    <Icon className="size-6" />
+                  </div>
+                  <h3 className="font-serif text-xl text-primary mb-3">{service.title}</h3>
+                  <p className="text-sm text-primary/60 leading-relaxed">{service.desc}</p>
+                </div>
+              )
+            })}
           </div>
 
           {/* CTA */}

@@ -12,21 +12,22 @@
   /* === Core Palette === */
   --c-ink: #0A0A0A;            /* Pure black — primary dark */
   --c-paper: #FFFFFF;          /* Pure white — primary light */
-  --c-paper-warm: #F5F5F5;     /* Light gray */
+  --c-paper-warm: #FAF6EF;     /* Warm ivory — LUT "paper" tone */
   --c-paper-deep: #E8E8E8;     /* Slightly darker gray for cards */
 
-  /* === Brand Accent (LUT Red) === */
-  --c-gold: #E62129;           /* LUT brand red — replaces gold */
-  --c-brand: #E62129;          /* Alias for brand red */
+  /* === Brand Accent (LUT Red — canonical #E3222B) === */
+  --c-gold: #E3222B;           /* LUT brand red */
+  --c-brand: #E3222B;          /* Alias for brand red */
   --c-gold-soft: #FF3B3B;      /* Lighter red for hover states */
   --c-brand-soft: #FF3B3B;     /* Alias for brand soft */
   --c-copper: #990000;         /* Deep dark red */
+  --c-brass: #A9812E;          /* LUT brass accent for hairlines */
 
   /* === Expressive Accents === */
   --c-wine: #4A0000;           /* Very deep red */
-  --c-lut: #E62129;            /* LUT brand red */
-  --c-lalounge: #9D174D;       /* La Lounge — magenta */
-  --c-birthday: #FFD700;       /* Your Birthday — gold */
+  --c-lut: #E3222B;            /* LUT brand red */
+  --c-lalounge: #E6007E;       /* La Lounge — magenta */
+  --c-birthday: #F5B914;       /* Your Birthday — gold */
 
   /* === Neutrals === */
   --c-taupe: #999999;          /* Neutral gray */
@@ -36,37 +37,37 @@
 
   /* === shadcn tokens === */
   --radius: 0.375rem;
-  --background: #FFFFFF;
+  --background: #FAF6EF;
   --foreground: #0A0A0A;
   --card: #FFFFFF;
   --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
   --popover-foreground: #0A0A0A;
-  --primary: #E62129;
+  --primary: #E3222B;
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F5F5;
+  --secondary: #F5F0E6;
   --secondary-foreground: #0A0A0A;
-  --muted: #F0F0F0;
+  --muted: #F0EBE0;
   --muted-foreground: #666666;
-  --accent: #E62129;
+  --accent: #E3222B;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --border: #E0E0E0;
   --input: #E0E0E0;
-  --ring: #E62129;
-  --chart-1: #E62129;
+  --ring: #E3222B;
+  --chart-1: #E3222B;
   --chart-2: #0A0A0A;
-  --chart-3: #9D174D;
-  --chart-4: #FFD700;
+  --chart-3: #E6007E;
+  --chart-4: #F5B914;
   --chart-5: #999999;
-  --sidebar: #F5F5F5;
+  --sidebar: #F5F0E6;
   --sidebar-foreground: #0A0A0A;
-  --sidebar-primary: #E62129;
+  --sidebar-primary: #E3222B;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E62129;
+  --sidebar-accent: #E3222B;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #E0E0E0;
-  --sidebar-ring: #E62129;
+  --sidebar-ring: #E3222B;
 }
 
 /* ========================================
@@ -84,69 +85,162 @@
 
 :root,
 :root[data-brand="lut"] {
-  --primary: #E62129;
-  --accent: #E62129;
-  --ring: #E62129;
+  --primary: #E3222B;
+  --accent: #A9812E; /* LUT brass — secondary accent for hairlines/details */
+  --ring: #E3222B;
   /* Brand aliases — LUT is the default identity. */
-  --gold: #E62129;
-  --lut: #E62129;
+  --gold: #E3222B;
+  --lut: #E3222B;
   /* Tailwind utility cascade: text-gold / bg-lut / bg-brand must follow. */
-  --color-gold: #E62129;
-  --color-brand: #E62129;
-  --color-lut: #E62129;
+  --color-gold: #E3222B;
+  --color-brand: #E3222B;
+  --color-lut: #E3222B;
+  /* LUT identity — warm ivory background + ink foreground (paper tone). */
+  --background: #FAF6EF;
+  --foreground: #0A0A0A;
+  --color-background: #FAF6EF;
+  --color-foreground: #0A0A0A;
+  /* Cards stay pure white for contrast against the warm paper background. */
+  --card: #FFFFFF;
+  --card-foreground: #0A0A0A;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0A0A0A;
+  /* LUT fonts: Montserrat (display) + Inter (body) + Cairo (Arabic). */
+  --font-display: var(--font-lut-display);
+  --font-body: var(--font-lut-body);
+  --font-arabic: var(--font-lut-arabic);
 }
 
 :root[data-brand="lalounge"] {
-  --primary: #FF1493;
-  --accent: #FF1493;
-  --ring: #FF1493;
-  /* Brand aliases — every "lut"/"gold" reference becomes LA Lounge pink. */
-  --gold: #FF1493;
-  --lut: #FF1493;
+  --primary: #E6007E;
+  --accent: #C9A24B; /* deco gold */
+  --ring: #E6007E;
+  /* Brand aliases — every "lut"/"gold" reference becomes LA Lounge magenta. */
+  --gold: #E6007E;
+  --lut: #E6007E;
   /* Tailwind utility cascade. */
-  --color-gold: #FF1493;
-  --color-brand: #FF1493;
-  --color-lut: #FF1493;
+  --color-gold: #E6007E;
+  --color-brand: #E6007E;
+  --color-lut: #E6007E;
+  /* La Lounge identity — charcoal background + warm paper foreground. */
+  --background: #150912;
+  --foreground: #FAF6EF;
+  --color-background: #150912;
+  --color-foreground: #FAF6EF;
+  /* Cards slightly lighter than the page background for depth. */
+  --card: #1F0E1A;
+  --card-foreground: #FAF6EF;
+  --color-card: #1F0E1A;
+  --color-card-foreground: #FAF6EF;
+  --border: #2A1525;
+  --input: #2A1525;
+  --color-border: #2A1525;
+  --color-input: #2A1525;
+  /* La Lounge fonts: Poiret One (display) + Questrial (body) + IBM Plex Sans Arabic. */
+  --font-display: var(--font-lalounge-display);
+  --font-body: var(--font-lalounge-body);
+  --font-arabic: var(--font-lalounge-arabic);
 }
 
 :root[data-brand="birthday"] {
-  --primary: #8B5CF6;
-  --accent: #F97316;
-  --ring: #8B5CF6;
-  /* Brand aliases — every "lut"/"gold" reference becomes birthday purple. */
-  --gold: #8B5CF6;
-  --lut: #8B5CF6;
+  --primary: #F5B914; /* gold — Your Birthday's primary IS gold */
+  --accent: #4B1858; /* deep purple */
+  --ring: #F5B914;
+  /* Brand aliases — every "lut"/"gold" reference becomes birthday gold. */
+  --gold: #F5B914;
+  --lut: #F5B914;
   /* Tailwind utility cascade. */
-  --color-gold: #8B5CF6;
-  --color-brand: #8B5CF6;
-  --color-lut: #8B5CF6;
+  --color-gold: #F5B914;
+  --color-brand: #F5B914;
+  --color-lut: #F5B914;
+  /* Your Birthday identity — white background + deep purple foreground. */
+  --background: #FFFFFF;
+  --foreground: #4B1858;
+  --color-background: #FFFFFF;
+  --color-foreground: #4B1858;
+  --card: #FFFFFF;
+  --card-foreground: #4B1858;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #4B1858;
+  --border: #F5C6D9; /* light pink — birthday accent for hairlines */
+  --input: #F5C6D9;
+  --color-border: #F5C6D9;
+  --color-input: #F5C6D9;
+  /* Your Birthday fonts: Luckiest Guy (display) + Baloo 2 (body) + Lalezar. */
+  --font-display: var(--font-birthday-display);
+  --font-body: var(--font-birthday-body);
+  --font-arabic: var(--font-birthday-arabic);
+  /* Backwards-compat aliases — your-birthday-view.tsx historically uses
+     `--font-birthday-headline` / `--font-birthday-sub` for latin display
+     & body. Map them to the new brand fonts so legacy refs still work. */
+  --font-birthday-headline: var(--font-birthday-display);
+  --font-birthday-sub: var(--font-birthday-body);
 }
 
-/* TODO: Dark mode is not currently exposed in the UI (no theme toggle).
-   Commented out to avoid shipping dead tokens. Re-enable when a dark
-   mode toggle is added. */
-/*
-.dark {
+/* ========================================
+   DARK MODE OVERRIDES (Phase 5)
+   - `next-themes` adds `.dark` to <html> when the user toggles via the
+     navbar button. Because <html> also carries `data-brand="lut|lalounge|birthday"`,
+     dark overrides are scoped to BOTH selectors — that way each brand keeps
+     its identity (LUT stays red-on-charcoal, La Lounge stays charcoal, etc.).
+   - La Lounge is naturally dark already (#150912 charcoal) so we only nudge
+     the page background a touch darker — no card/border/text changes.
+   - LUT + Birthday get full dark palettes so their otherwise-light surfaces
+     flip cleanly without leaving the brand identity.
+   ======================================== */
+
+.dark:root[data-brand="lut"],
+:root[data-brand="lut"].dark {
   --background: #0A0A0A;
-  --foreground: #FFFFFF;
+  --foreground: #FAF6EF;
+  --color-background: #0A0A0A;
+  --color-foreground: #FAF6EF;
   --card: #1A1A1A;
-  --card-foreground: #FFFFFF;
+  --card-foreground: #FAF6EF;
   --popover: #1A1A1A;
-  --popover-foreground: #FFFFFF;
-  --primary: #E62129;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1A1A1A;
-  --secondary-foreground: #FFFFFF;
+  --popover-foreground: #FAF6EF;
+  --secondary: #222222;
+  --secondary-foreground: #FAF6EF;
   --muted: #1A1A1A;
   --muted-foreground: #999999;
-  --accent: #E62129;
-  --accent-foreground: #FFFFFF;
-  --destructive: #DC2626;
-  --border: #222222;
-  --input: #222222;
-  --ring: #E62129;
+  --border: #2A2A2A;
+  --input: #2A2A2A;
+  --color-card: #1A1A1A;
+  --color-card-foreground: #FAF6EF;
+  --color-popover: #1A1A1A;
+  --color-popover-foreground: #FAF6EF;
+  --color-border: #2A2A2A;
+  --color-input: #2A2A2A;
 }
-*/
+
+.dark:root[data-brand="birthday"],
+:root[data-brand="birthday"].dark {
+  --background: #4B1858;
+  --foreground: #FAF6EF;
+  --color-background: #4B1858;
+  --color-foreground: #FAF6EF;
+  --card: #5B2568;
+  --card-foreground: #FAF6EF;
+  --popover: #5B2568;
+  --popover-foreground: #FAF6EF;
+  --border: #6B3578;
+  --input: #6B3578;
+  --color-card: #5B2568;
+  --color-card-foreground: #FAF6EF;
+  --color-popover: #5B2568;
+  --color-popover-foreground: #FAF6EF;
+  --color-border: #6B3578;
+  --color-input: #6B3578;
+}
+
+/* La Lounge in dark mode: page is already dark (#150912 charcoal).
+   Just nudge the page background a touch darker for "dim the lights"
+   effect — keep cards/borders/text identical so the deco identity holds. */
+.dark:root[data-brand="lalounge"],
+:root[data-brand="lalounge"].dark {
+  --background: #0A0408;
+  --color-background: #0A0408;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -181,22 +275,50 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* LUT custom colors */
+  /* LUT custom colors (canonical hex per VLM-verified logo) */
   --color-ink: #0A0A0A;
   --color-paper: #FFFFFF;
+  --color-paper-warm: #FAF6EF;
+  --color-brass: #A9812E;
   --color-gold: var(--color-brand);
-  --color-brand: #E62129;
+  --color-brand: #E3222B;
   --color-copper: #990000;
   --color-wine: #4A0000;
-  --color-lut: #E62129;
-  --color-lalounge: #9D174D;
-  --color-birthday: #FFD700;
+  --color-lut: #E3222B;
+  --color-lalounge: #E6007E;
+  --color-birthday: #F5B914;
   --color-taupe: #999999;
 
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 6px);
+  /* === Phase 4 — Brand signature accent tokens (fixed hex per brand) ===
+     These are brand-specific accents (not cascaded via data-brand) so they
+     can be referenced cross-brand for decorative SVG/ornament work. */
+  --color-deco-gold: #C9A24B;   /* La Lounge art-deco gold */
+  --color-deep-purple: #4B1858; /* Your Birthday deep purple */
+  --color-pink-light: #F5C6D9;  /* Your Birthday light pink */
+  --color-balloon-red: #E8291C; /* Your Birthday balloon red */
+
+  /* === Radius scale (2.3) — small/medium/large/full === */
+  --radius-sm: 6px;     /* small buttons, badges */
+  --radius-md: 12px;    /* cards */
+  --radius-lg: 24px;    /* large sections */
+  --radius-full: 9999px; /* pills, circles */
+  /* Keep legacy `--radius-xl` for backwards compat (maps to large). */
+  --radius-xl: var(--radius-lg);
+
+  /* === Spacing scale (2.4) — named tokens for future use === */
+  /* Tailwind v4 already exposes p-2/p-4/p-6/p-8/p-12/p-16 = 8/16/24/32/48/64px. */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+
+  /* === Motion scale (2.5) — durations + luxury easing === */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 300ms;
+  --ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
@@ -299,7 +421,7 @@
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(230, 33, 41, 0.1);
+  border: 1px solid rgba(227, 34, 43, 0.1);
 }
 
 .glass-dark {
@@ -324,20 +446,25 @@
 
 /* Red gradient text (replaces gold gradient) */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #E62129 0%, #FF3B3B 50%, #E62129 100%);
+  background: linear-gradient(135deg, #E3222B 0%, #FF3B3B 50%, #E3222B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Premium shadow */
+/* Premium shadows (Phase 3 — luxury purchase funnel) */
 .shadow-luxury {
-  box-shadow: 0 30px 60px -20px rgba(10, 10, 10, 0.3),
-              0 18px 36px -18px rgba(10, 10, 10, 0.15);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08),
+              0 2px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-luxury-lg {
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15),
+              0 8px 16px -4px rgba(0, 0, 0, 0.08);
 }
 
 .shadow-gold {
-  box-shadow: 0 20px 50px -15px rgba(230, 33, 41, 0.35);
+  box-shadow: 0 20px 50px -15px rgba(227, 34, 43, 0.35);
 }
 
 /* Custom scrollbar */
@@ -390,8 +517,8 @@
 }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(230, 33, 41, 0.3); }
-  50% { box-shadow: 0 0 0 8px rgba(230, 33, 41, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(227, 34, 43, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(227, 34, 43, 0); }
 }
 
 .animate-float {
@@ -455,64 +582,76 @@
 }
 
 /* ========================================
-   LUXURY ARCHED GLASS CARD
-   - Top: smooth arch (cathedral/showroom arch)
-   - Bottom-left: diagonal corner cut for asymmetry
-   - Outer wrapper holds the gold edge
-   - Inner card holds the glass
+   LUXURY FROSTED GLASS SURFACE (Phase 3)
+   - Used for PDP price summary, contact form,
+     and checkout order summary containers.
+   - Per-brand tinted backdrop so the surface
+     reads as part of the active tenant.
    ======================================== */
-.glass-card-shape {
-  clip-path: polygon(
-    0 28px,
-    28px 0,
-    calc(100% - 28px) 0,
-    100% 28px,
-    100% 100%,
-    32px 100%,
-    0 calc(100% - 32px)
-  );
-}
 .glass-card {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(230, 33, 41, 0.35) 0%,
-    rgba(255, 255, 255, 0.12) 40%,
-    rgba(230, 33, 41, 0.25) 100%
-  );
-  padding: 1.5px;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.6s ease,
-              background 0.5s ease;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
-.glass-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  background: linear-gradient(
-    135deg,
-    rgba(230, 33, 41, 0.8) 0%,
-    rgba(255, 255, 255, 0.2) 40%,
-    rgba(230, 33, 41, 0.55) 100%
-  );
-  box-shadow:
-    0 30px 70px -15px rgba(0, 0, 0, 0.7),
-    0 0 50px -8px rgba(230, 33, 41, 0.3);
+:root[data-brand="lalounge"] .glass-card {
+  background: rgba(21, 9, 18, 0.7);
+  border: 1px solid rgba(201, 162, 75, 0.3);
 }
-.glass-card-inner {
-  background: rgba(8, 8, 12, 0.62);
-  backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
-  position: relative;
-  width: 100%;
+:root[data-brand="birthday"] .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(245, 201, 217, 0.5);
+}
+
+/* ========================================
+   LUXURY INPUT FOCUS GLOW (Phase 3)
+   - Brand-colored focus halo for form inputs
+     in the contact form and checkout form.
+   ======================================== */
+.luxury-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* ========================================
+   CART ITEM EXIT ANIMATION (Phase 3)
+   - Slide-out animation when an item is
+     removed from the cart.
+   - Direction is set via --exit-dir (LTR
+     exits left, RTL exits right).
+   ======================================== */
+@keyframes cart-item-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(var(--exit-dir, -20px)); }
+}
+.cart-item-exit {
+  animation: cart-item-out 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ========================================
+   LA LOUNGE LIGHT SWEEP (Phase 4)
+   - Art-deco diagonal beam sweeping across
+     the hero. Deco-gold tint, very subtle.
+   - 6s ease-in-out loop, 2s initial delay.
+   - Hidden under prefers-reduced-motion.
+   ======================================== */
+@keyframes lalounge-sweep {
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
+}
+.lalounge-sweep-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 25%;
   height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 75, 0.18), transparent);
+  animation: lalounge-sweep 6s ease-in-out infinite;
+  animation-delay: 2s;
 }
-.glass-card-accent {
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-}
-.glass-card:hover .glass-card-accent {
-  width: 100% !important;
-}
-.glass-card-desc {
-  transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+@media (prefers-reduced-motion: reduce) {
+  .lalounge-sweep-beam { animation: none; display: none; }
 }
 
 /* ========================================
@@ -723,4 +862,31 @@
   25% { transform: translate(50px, -30px) scale(1.1); }
   50% { transform: translate(-30px, 40px) scale(0.95); }
   75% { transform: translate(20px, 20px) scale(1.05); }
+}
+
+/* ========================================
+   CUSTOM CURSOR — hide native cursor when
+   the premium cursor overlay is active.
+   Only on devices with fine pointer (mouse).
+   Respects prefers-reduced-motion (re-enables native cursor).
+   ======================================== */
+@media (hover: hover) and (pointer: fine) {
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: auto !important;
+  }
+}
+
+/* ========================================
+   MOTION UTILITY (2.5) — luxury easing curve
+   for premium hover/focus transitions.
+   ======================================== */
+.ease-luxury {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }

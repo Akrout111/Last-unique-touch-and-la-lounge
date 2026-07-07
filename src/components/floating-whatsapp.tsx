@@ -1,12 +1,17 @@
 'use client'
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '965XXXXXXXX'
+import { buildWhatsappUrl } from '@/lib/contact-info'
+
 const DEFAULT_MESSAGE = 'مرحباً، أريد الاستفسار عن خدماتكم'
 
 export function FloatingWhatsApp() {
+  const url = buildWhatsappUrl(DEFAULT_MESSAGE)
+  // If no real WhatsApp number is configured, do not render the floating button.
+  if (!url) return null
+
   return (
     <a
-      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(DEFAULT_MESSAGE)}`}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="WhatsApp"

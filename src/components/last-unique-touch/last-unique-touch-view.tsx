@@ -1,9 +1,19 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight, Check, ArrowDown } from 'lucide-react'
-import { Background3D } from '@/components/hero-3d/background-3d'
+import { LutArabesque } from '@/components/brand/lut-arabesque'
+
+// Lazy-load the 3D furniture tunnel so the page's initial JS bundle stays
+// small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
+// the browser; the component itself guards on `shouldEnable3D()` so on
+// low-power devices nothing renders.
+const Background3D = dynamic(
+  () => import('@/components/hero-3d/background-3d').then((m) => ({ default: m.Background3D })),
+  { ssr: false, loading: () => null },
+)
 
 export default function LastUniqueTouchView() {
   const t = useTranslations()
@@ -33,6 +43,12 @@ export default function LastUniqueTouchView() {
             background:
               'radial-gradient(ellipse 70% 50% at 30% 20%, rgba(230, 33, 41, 0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 70% 80%, rgba(230, 33, 41, 0.08) 0%, transparent 50%)',
           }}
+        />
+
+        {/* LUT arabesque — faint background pattern (signature ornament) */}
+        <LutArabesque
+          variant="bg"
+          className="pointer-events-none absolute inset-0 z-[2] h-full w-full opacity-60"
         />
 
         {/* Back button */}
@@ -97,6 +113,9 @@ export default function LastUniqueTouchView() {
       {/* === Services section — revealed on scroll === */}
       <div className="relative z-10 py-20 px-4 bg-ink">
         <div className="max-w-5xl mx-auto">
+          {/* LUT arabesque divider — signature ornament between sections */}
+          <LutArabesque variant="divider" className="w-full max-w-md mx-auto mb-12" />
+
           <h2 className="font-display text-2xl sm:text-4xl text-paper text-center mb-12">
             {locale === 'ar' ? 'ما نقدمه' : 'What We Offer'}
           </h2>
@@ -105,13 +124,14 @@ export default function LastUniqueTouchView() {
             {services.map((service, i) => (
               <div
                 key={i}
-                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center hover:border-gold/30 transition-colors"
+                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-8 text-center hover:border-gold/30 transition-colors"
               >
                 <div className="w-14 h-14 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-5">
                   <Check className="w-7 h-7 text-gold" />
                 </div>
                 <h3 className="font-display text-xl text-paper mb-3">{service.title}</h3>
-                <p className="text-sm text-paper/50 leading-relaxed">{service.desc}</p>
+                {/* Phase 5 contrast: bumped from text-paper/50 → text-paper/70 for WCAG AA on bg-ink charcoal. */}
+                <p className="text-sm text-paper/70 leading-relaxed">{service.desc}</p>
               </div>
             ))}
           </div>

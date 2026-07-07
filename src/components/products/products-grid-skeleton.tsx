@@ -4,7 +4,7 @@ export function ProductsGridSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl overflow-hidden bg-card border border-border"
+          className="rounded-md overflow-hidden bg-card border border-border"
         >
           {/* Image skeleton */}
           <div className="aspect-square bg-muted animate-pulse" />

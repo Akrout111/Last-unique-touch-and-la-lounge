@@ -1,122 +1,132 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# build.sh — Production build for Last Unique Touch & La Lounge & Your Birthday
+#
+# Flow:
+#   1. bun install
+#   2. prisma generate
+#   3. prisma migrate deploy   (apply existing migrations — NEVER db:push)
+#   4. prisma db seed           (idempotent — safe to fail)
+#   5. next build (standalone)
+#   6. mini-services build (if present)
+#   7. package artifacts to /tmp/build_fullstack_${BUILD_ID}.tar.gz
+#
+# P0.3 (v8): rewritten to use migrate deploy (not db:push), correct DB path,
+# and prisma generate before build so the standalone server has a working client.
 
-# 将 stderr 重定向到 stdout，避免 execute_command 因为 stderr 输出而报错
+# Redirect stderr to stdout for log capture.
 exec 2>&1
+set -euo pipefail
 
-set -e
-
-# 获取脚本所在目录（.zscripts 目录，即 workspace-agent/.zscripts）
-# 使用 $0 获取脚本路径（兼容 sh 和 bash）
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
-# Next.js 项目路径
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NEXTJS_PROJECT_DIR="/home/z/my-project"
 
-# 检查 Next.js 项目目录是否存在
 if [ ! -d "$NEXTJS_PROJECT_DIR" ]; then
-    echo "❌ 错误: Next.js 项目目录不存在: $NEXTJS_PROJECT_DIR"
+    echo "❌ ERROR: Next.js project directory does not exist: $NEXTJS_PROJECT_DIR"
     exit 1
 fi
 
-echo "🚀 开始构建 Next.js 应用和 mini-services..."
-echo "📁 Next.js 项目路径: $NEXTJS_PROJECT_DIR"
+echo "🚀 Starting production build..."
+echo "📁 Project: $NEXTJS_PROJECT_DIR"
 
-# 切换到 Next.js 项目目录
-cd "$NEXTJS_PROJECT_DIR" || exit 1
+cd "$NEXTJS_PROJECT_DIR"
 
-# 设置环境变量
 export NEXT_TELEMETRY_DISABLED=1
+# Canonical DB path — must match .env and package.json scripts.
+export DATABASE_URL="file:${NEXTJS_PROJECT_DIR}/prisma/db/app.db"
 
-BUILD_DIR="/tmp/build_fullstack_$BUILD_ID"
-echo "📁 清理并创建构建目录: $BUILD_DIR"
+PRISMA="bun ./node_modules/prisma/build/index.js"
+
+BUILD_DIR="/tmp/build_fullstack_${BUILD_ID:-local}"
+echo "📁 Build dir: $BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
-# 安装依赖
-echo "📦 安装依赖..."
+# --- 1. Install deps ---
+echo "📦 Installing dependencies..."
 bun install
 
-# 构建 Next.js 应用
-echo "🔨 构建 Next.js 应用..."
+# --- 2. Generate Prisma client (required before next build) ---
+echo "🔧 Generating Prisma client..."
+$PRISMA generate
+
+# --- 3. Apply migrations (authoritative — never db:push) ---
+echo "🗄️  Applying migrations..."
+$PRISMA migrate deploy
+
+# --- 4. Seed (idempotent; safe to fail) ---
+echo "🌱 Seeding database..."
+bun prisma/seed.ts || echo "⚠️  Seed failed (may be expected if data already exists). Continuing..."
+
+# --- 5. Build Next.js (standalone) ---
+echo "🔨 Building Next.js..."
 bun run build
 
-# 构建 mini-services
-# 检查 Next.js 项目目录下是否有 mini-services 目录
-if [ -d "$NEXTJS_PROJECT_DIR/mini-services" ]; then
-    echo "🔨 构建 mini-services..."
-    # 使用 workspace-agent 目录下的 mini-services 脚本
-    sh "$SCRIPT_DIR/mini-services-install.sh"
-    sh "$SCRIPT_DIR/mini-services-build.sh"
-
-    # 复制 mini-services-start.sh 到 mini-services-dist 目录
-    echo "  - 复制 mini-services-start.sh 到 $BUILD_DIR"
-    cp "$SCRIPT_DIR/mini-services-start.sh" "$BUILD_DIR/mini-services-start.sh"
-    chmod +x "$BUILD_DIR/mini-services-start.sh"
+# --- 6. Build mini-services (if present) ---
+if [ -d "${NEXTJS_PROJECT_DIR}/mini-services" ]; then
+    echo "🔨 Building mini-services..."
+    sh "${SCRIPT_DIR}/mini-services-install.sh"
+    sh "${SCRIPT_DIR}/mini-services-build.sh"
+    cp "${SCRIPT_DIR}/mini-services-start.sh" "${BUILD_DIR}/mini-services-start.sh"
+    chmod +x "${BUILD_DIR}/mini-services-start.sh"
 else
-    echo "ℹ️  mini-services 目录不存在，跳过"
+    echo "ℹ️  No mini-services directory; skipping."
 fi
 
-# 将所有构建产物复制到临时构建目录
-echo "📦 收集构建产物到 $BUILD_DIR..."
+# --- 7. Collect artifacts ---
+echo "📦 Collecting artifacts to ${BUILD_DIR}..."
 
-# 复制 Next.js standalone 构建输出
 if [ -d ".next/standalone" ]; then
-    echo "  - 复制 .next/standalone"
-    cp -r .next/standalone "$BUILD_DIR/next-service-dist/"
-fi
-
-# 复制 Next.js 静态文件
-if [ -d ".next/static" ]; then
-    echo "  - 复制 .next/static"
-    mkdir -p "$BUILD_DIR/next-service-dist/.next"
-    cp -r .next/static "$BUILD_DIR/next-service-dist/.next/"
-fi
-
-# 复制 public 目录
-if [ -d "public" ]; then
-    echo "  - 复制 public"
-    cp -r public "$BUILD_DIR/next-service-dist/"
-fi
-
-# 将测试环境数据库复制到构建产物中，生产环境直接使用这份数据库
-if [ -f "./db/custom.db" ]; then
-    echo "🗄️  复制测试环境数据库到构建产物..."
-    mkdir -p "$BUILD_DIR/db"
-    cp -r ./db/. "$BUILD_DIR/db/"
-
-    echo "🗄️  同步构建产物中的数据库结构..."
-    DATABASE_URL="file:$BUILD_DIR/db/custom.db" bun run db:push
-    echo "✅ 构建产物数据库已准备完成"
-    ls -lah "$BUILD_DIR/db"
+    cp -r .next/standalone "${BUILD_DIR}/next-service-dist/"
 else
-    echo "❌ 未找到测试环境数据库文件 ./db/custom.db，无法继续构建生产包"
+    echo "❌ ERROR: .next/standalone not found — build failed?"
     exit 1
 fi
 
-# 复制 Caddyfile（如果存在）
-if [ -f "Caddyfile" ]; then
-    echo "  - 复制 Caddyfile"
-    cp Caddyfile "$BUILD_DIR/"
-else
-    echo "ℹ️  Caddyfile 不存在，跳过"
+if [ -d ".next/static" ]; then
+    mkdir -p "${BUILD_DIR}/next-service-dist/.next"
+    cp -r .next/static "${BUILD_DIR}/next-service-dist/.next/"
 fi
 
-# 复制 start.sh 脚本
-echo "  - 复制 start.sh 到 $BUILD_DIR"
-cp "$SCRIPT_DIR/start.sh" "$BUILD_DIR/start.sh"
-chmod +x "$BUILD_DIR/start.sh"
+if [ -d "public" ]; then
+    cp -r public "${BUILD_DIR}/next-service-dist/"
+fi
 
-# 打包到 $BUILD_DIR.tar.gz
+# Bundle the migrations + prisma schema so production can run `migrate deploy`.
+if [ -d "prisma" ]; then
+    mkdir -p "${BUILD_DIR}/next-service-dist/prisma"
+    cp -r prisma/migrations "${BUILD_DIR}/next-service-dist/prisma/"
+    cp prisma/schema.prisma "${BUILD_DIR}/next-service-dist/prisma/"
+    cp prisma/seed.ts "${BUILD_DIR}/next-service-dist/prisma/" 2>/dev/null || true
+fi
+
+# Copy the seeded DB into the artifact so production starts with seed data.
+if [ -f "prisma/db/app.db" ]; then
+    echo "🗄️  Copying seeded database to artifact..."
+    mkdir -p "${BUILD_DIR}/db"
+    cp prisma/db/app.db "${BUILD_DIR}/db/"
+else
+    echo "❌ ERROR: prisma/db/app.db not found — production will start with empty DB."
+    exit 1
+fi
+
+if [ -f "Caddyfile" ]; then
+    cp Caddyfile "${BUILD_DIR}/"
+fi
+
+if [ -f "${SCRIPT_DIR}/start.sh" ]; then
+    cp "${SCRIPT_DIR}/start.sh" "${BUILD_DIR}/start.sh"
+    chmod +x "${BUILD_DIR}/start.sh"
+fi
+
+# --- 8. Tarball ---
 PACKAGE_FILE="${BUILD_DIR}.tar.gz"
 echo ""
-echo "📦 打包构建产物到 $PACKAGE_FILE..."
-cd "$BUILD_DIR" || exit 1
-tar -czf "$PACKAGE_FILE" .
-cd - > /dev/null || exit 1
-
-# # 清理临时目录
-# rm -rf "$BUILD_DIR"
+echo "📦 Packaging to ${PACKAGE_FILE}..."
+cd "${BUILD_DIR}"
+tar -czf "${PACKAGE_FILE}" .
+cd - > /dev/null
 
 echo ""
-echo "✅ 构建完成！所有产物已打包到 $PACKAGE_FILE"
-echo "📊 打包文件大小:"
-ls -lh "$PACKAGE_FILE"
+echo "✅ Build complete!"
+echo "   Standalone: ${BUILD_DIR}/next-service-dist/"
+echo "   Package:    ${PACKAGE_FILE}"
+echo "   Start with: bun ${BUILD_DIR}/next-service-dist/server.js"

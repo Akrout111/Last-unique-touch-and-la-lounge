@@ -53,7 +53,7 @@ export default async function AdminDashboardPage() {
         {statCards.map((card, idx) => {
           const Icon = card.icon
           return (
-            <div key={idx} className="p-5 rounded-xl bg-card border border-border">
+            <div key={idx} className="p-5 rounded-md bg-card border border-border">
               <div className="flex items-center justify-between mb-3">
                 <div className={`w-10 h-10 rounded-full ${card.bg} flex items-center justify-center`}>
                   <Icon className={`w-5 h-5 ${card.color}`} />
@@ -67,7 +67,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Recent bookings */}
-      <div className="p-6 rounded-xl bg-card border border-border">
+      <div className="p-6 rounded-md bg-card border border-border">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-foreground">
             {t('admin.dashboard.recentBookings')}
@@ -123,7 +123,7 @@ export default async function AdminDashboardPage() {
 
       {/* Low stock products */}
       {stats.lowStockProducts.length > 0 && (
-        <div className="p-6 rounded-xl bg-yellow-50 border border-yellow-200">
+        <div className="p-6 rounded-md bg-yellow-50 border border-yellow-200">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-5 h-5 text-yellow-600" />
             <h2 className="text-lg font-bold text-foreground">

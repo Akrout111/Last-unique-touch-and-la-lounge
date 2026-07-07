@@ -62,7 +62,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             return (
               <div
                 key={idx}
-                className="p-6 rounded-xl bg-stone-50 border border-border"
+                className="p-6 rounded-md bg-stone-50 border border-border"
               >
                 <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-gold" />
@@ -84,7 +84,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           {stats.map((stat, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-xl bg-card border border-border text-center"
+              className="p-6 rounded-md bg-card border border-border text-center"
             >
               <p className="text-3xl font-bold text-lut mb-2">{stat.value}</p>
               <p className="text-sm text-muted-foreground">{stat.label}</p>

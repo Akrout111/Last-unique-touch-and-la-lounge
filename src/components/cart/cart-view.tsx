@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import Image from 'next/image'
@@ -14,6 +15,33 @@ export function CartView() {
   const { items, hydrated, removeItem, updateQuantity, rentalTotal, depositTotal, total } = useCart()
 
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
+
+  // Cart item exit animation: track which item is currently animating out.
+  // While an index is set, that row gets the `cart-item-exit` class. After
+  // 200ms we call removeItem() on the underlying cart state.
+  const [exitingIndex, setExitingIndex] = useState<number | null>(null)
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+    }
+  }, [])
+
+  const handleRemove = (index: number) => {
+    // If a previous exit is still in flight, force-flush it now so the new
+    // request can't race against it.
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current)
+      exitTimerRef.current = null
+    }
+    setExitingIndex(index)
+    exitTimerRef.current = setTimeout(() => {
+      removeItem(index)
+      setExitingIndex(null)
+      exitTimerRef.current = null
+    }, 200)
+  }
 
   // Hydration guard
   if (!hydrated) {
@@ -31,13 +59,13 @@ export function CartView() {
         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
           <ShoppingCart className="w-10 h-10 text-muted-foreground" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">
+        <h1 className="font-display text-3xl font-bold text-foreground mb-2">
           {t('cart.empty.title')}
         </h1>
         <p className="text-muted-foreground mb-8">
           {t('cart.empty.subtitle')}
         </p>
-        <Button asChild className="bg-lut hover:bg-lut/90 text-white">
+        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link href="/products">
             {t('cart.empty.cta')}
             <ArrowIcon className="w-4 h-4 ms-2" />
@@ -49,9 +77,17 @@ export function CartView() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-foreground mb-8">
-        {t('cart.title')}
-      </h1>
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+          <span className="eyebrow text-accent text-[0.625rem]">
+            {t('cart.summary.title')}
+          </span>
+        </div>
+        <h1 className="font-display text-3xl font-bold text-foreground">
+          {t('cart.title')}
+        </h1>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Items list */}
@@ -60,14 +96,20 @@ export function CartView() {
             const productName = localizedName(item.nameAr, item.nameEn, locale)
             const startDateFormatted = item.startDate.split('T')[0]
             const endDateFormatted = item.endDate.split('T')[0]
+            const isExiting = exitingIndex === index
 
             return (
               <div
                 key={`${item.productId}-${item.startDate}-${item.endDate}-${index}`}
-                className="flex gap-4 p-4 rounded-xl bg-card border border-border"
+                className={`flex gap-4 p-4 rounded-md bg-card border border-border shadow-luxury ${isExiting ? 'cart-item-exit' : ''}`}
+                style={
+                  isExiting
+                    ? { ['--exit-dir' as string]: locale === 'ar' ? '20px' : '-20px' }
+                    : undefined
+                }
               >
                 {/* Image */}
-                <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-muted">
+                <div className="relative w-24 h-24 shrink-0 rounded-md overflow-hidden bg-muted">
                   {item.image ? (
                     <Image
                       src={item.image}
@@ -88,14 +130,15 @@ export function CartView() {
                   <div className="flex items-start justify-between gap-2">
                     <Link
                       href={`/products/${item.slug}`}
-                      className="font-semibold text-foreground hover:text-lut transition-colors line-clamp-1"
+                      className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-1"
                     >
                       {productName}
                     </Link>
                     <button
-                      onClick={() => removeItem(index)}
-                      className="text-muted-foreground hover:text-lut transition-colors shrink-0"
+                      onClick={() => handleRemove(index)}
+                      className="text-muted-foreground hover:text-primary transition-colors shrink-0"
                       aria-label={t('cart.item.remove')}
+                      disabled={isExiting}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -109,7 +152,7 @@ export function CartView() {
                     })}
                   </p>
 
-                  <p className="text-sm text-lut font-medium mt-1">
+                  <p className="text-sm text-primary font-medium mt-1">
                     {item.rentalPricePerDay} {t('cart.item.perDay')}
                   </p>
 
@@ -119,7 +162,7 @@ export function CartView() {
                       <button
                         onClick={() => updateQuantity(index, item.quantity - 1)}
                         disabled={item.quantity <= 1}
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         aria-label={t('product.quantity.decrease')}
                       >
                         <Minus className="w-3 h-3" />
@@ -129,7 +172,7 @@ export function CartView() {
                       </span>
                       <button
                         onClick={() => updateQuantity(index, item.quantity + 1)}
-                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary transition-colors"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md border border-border bg-card hover:bg-secondary transition-colors"
                         aria-label={t('product.quantity.increase')}
                       >
                         <Plus className="w-3 h-3" />
@@ -159,8 +202,14 @@ export function CartView() {
 
         {/* Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 p-6 rounded-xl bg-stone-50 border border-border">
-            <h2 className="text-lg font-bold text-foreground mb-4">
+          <div className="sticky top-24 p-6 rounded-md bg-card border border-border shadow-luxury">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+              <span className="eyebrow text-accent text-[0.625rem]">
+                {t('cart.summary.title')}
+              </span>
+            </div>
+            <h2 className="font-display text-lg font-bold text-foreground mb-4">
               {t('cart.summary.title')}
             </h2>
 
@@ -170,7 +219,7 @@ export function CartView() {
                   {t('cart.summary.rental')}
                 </span>
                 <span className="font-medium text-foreground">
-                  {rentalTotal.toFixed(3)} KWD
+                  {rentalTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
@@ -178,7 +227,7 @@ export function CartView() {
                   {t('cart.summary.deposit')}
                 </span>
                 <span className="font-medium text-foreground">
-                  {depositTotal.toFixed(3)} KWD
+                  {depositTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
             </div>
@@ -187,14 +236,14 @@ export function CartView() {
               <span className="font-bold text-foreground">
                 {t('cart.summary.total')}
               </span>
-              <span className="text-xl font-bold text-lut">
-                {total.toFixed(3)} KWD
+              <span className="font-display text-xl font-bold text-primary">
+                {total.toFixed(3)} {t('common.currency')}
               </span>
             </div>
 
             <Button
               asChild
-              className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-semibold rounded-md"
             >
               <Link href="/checkout">
                 {t('cart.checkout')}

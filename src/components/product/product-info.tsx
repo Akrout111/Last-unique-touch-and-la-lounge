@@ -5,10 +5,13 @@ import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { DayPicker, type DateRange } from 'react-day-picker'
 import { Minus, Plus, ShoppingCart, Check, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { localizedName, calculateRentalTotal } from '@/lib/products'
 import type { ProductWithImages } from '@/lib/products'
 import { useCart } from '@/components/providers/cart-provider'
+
+import 'react-day-picker/src/style.css'
 
 interface ProductInfoProps {
   product: ProductWithImages
@@ -22,8 +25,8 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const { addItem } = useCart()
 
   const isOutOfStock = product.stock === 0
-  const today = new Date().toISOString().split('T')[0]
 
+  const [range, setRange] = useState<DateRange | undefined>(undefined)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -45,11 +48,11 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const categoryName = localizedName(product.category.nameAr, product.category.nameEn, locale)
   const description = localizedName(product.descriptionAr, product.descriptionEn, locale)
 
-  // Calculate pricing
+  // Calculate pricing — only when both range endpoints are present.
   const priceCalc = (() => {
-    if (!startDate || !endDate) return null
-    const start = new Date(startDate)
-    const end = new Date(endDate)
+    if (!range?.from || !range?.to) return null
+    const start = range.from
+    const end = range.to
     if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return null
     return calculateRentalTotal(
       product.rentalPricePerDay,
@@ -142,10 +145,11 @@ export function ProductInfo({ product }: ProductInfoProps) {
     <div className="space-y-5">
       {/* Category + Name */}
       <div>
-        <Badge variant="outline" className="mb-3 border-brand/40 text-brand bg-brand/5">
-          {categoryName}
-        </Badge>
-        <h1 className="text-3xl font-bold text-foreground mb-2">{productName}</h1>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+          <span className="eyebrow text-accent text-[0.625rem]">{categoryName}</span>
+        </div>
+        <h1 className="font-display text-3xl font-bold text-foreground mb-2">{productName}</h1>
         {isOutOfStock && (
           <Badge className="bg-muted text-muted-foreground border-0">
             {t('product.outOfStock')}
@@ -155,7 +159,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       {/* Price */}
       <div className="space-y-1">
-        <p className="text-3xl font-bold text-lut">
+        <p className="font-display text-3xl font-bold text-primary">
           {product.rentalPricePerDay} {t('product.perDay')}
         </p>
         <p className="text-sm text-muted-foreground">
@@ -173,167 +177,184 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </p>
       </div>
 
-      {/* Rental Period Selector */}
-      <div className="space-y-3 pt-4 border-t border-border">
+      {/* Rental Period — DayPicker range + sticky price summary */}
+      <div className="pt-4 border-t border-border space-y-3">
         <h2 className="text-sm font-semibold text-foreground">
           {t('product.rental.title')}
         </h2>
-        <div className="grid grid-cols-2 gap-3">
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* DayPicker range selector */}
           <div>
-            <label htmlFor="startDate" className="block text-xs text-muted-foreground mb-1">
-              {t('product.rental.startDate')}
-            </label>
-            <input
-              id="startDate"
-              type="date"
-              min={today}
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              disabled={isOutOfStock}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-lut disabled:opacity-50"
+            <DayPicker
+              mode="range"
+              selected={range}
+              onSelect={(r) => {
+                setRange(r ?? undefined)
+                if (r?.from) setStartDate(r.from.toISOString())
+                else setStartDate('')
+                if (r?.to) setEndDate(r.to.toISOString())
+                else setEndDate('')
+              }}
+              min={1}
+              max={30}
+              disabled={[{ before: new Date() }]}
+              dir={locale === 'ar' ? 'rtl' : 'ltr'}
+              numberOfMonths={1}
+              className="rounded-md border border-border/50 p-4 bg-card shadow-luxury"
+              style={{
+                ['--rdp-accent-color' as string]: 'var(--primary)',
+                ['--rdp-accent-background-color' as string]: 'color-mix(in srgb, var(--primary) 15%, transparent)',
+              }}
+              modifiersClassNames={{
+                selected: 'bg-primary text-primary-foreground',
+                range_start: 'bg-primary text-primary-foreground',
+                range_end: 'bg-primary text-primary-foreground',
+                today: 'border-2 border-accent',
+              }}
             />
+
+            {/* Availability status */}
+            {availability === 'checking' && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('product.rental.checking')}
+              </div>
+            )}
+            {availability === 'available' && (
+              <div className="flex items-center gap-2 text-sm text-green-600 mt-3">
+                <CheckCircle2 className="w-4 h-4" />
+                {t('product.rental.available')}
+              </div>
+            )}
+            {availability === 'unavailable' && (
+              <div className="flex items-center gap-2 text-sm text-primary mt-3">
+                <AlertCircle className="w-4 h-4" />
+                {t('product.rental.unavailable')}
+              </div>
+            )}
+            {availability === 'error' && (
+              <p className="flex items-center gap-2 text-sm text-primary mt-3" role="alert">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{t('product.rental.checkError')}</span>
+              </p>
+            )}
+            {availability === 'idle' && startDate && endDate && (
+              <p className="text-sm text-muted-foreground mt-3">
+                {t('product.rental.checking')}
+              </p>
+            )}
+            {availability === 'idle' && (!startDate || !endDate) && (
+              <p className="text-sm text-muted-foreground mt-3">
+                {t('product.rental.selectDates')}
+              </p>
+            )}
           </div>
-          <div>
-            <label htmlFor="endDate" className="block text-xs text-muted-foreground mb-1">
-              {t('product.rental.endDate')}
-            </label>
-            <input
-              id="endDate"
-              type="date"
-              min={startDate || today}
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              disabled={isOutOfStock || !startDate}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-lut disabled:opacity-50"
-            />
+
+          {/* Sticky Price Summary card (desktop) */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <div className="glass-card rounded-md p-6 shadow-luxury space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+                <span className="eyebrow text-accent text-[0.625rem]">
+                  {t('product.priceSummary.title')}
+                </span>
+              </div>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t('product.priceSummary.rentalDays')}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {priceCalc ? priceCalc.days : 0}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t('product.priceSummary.dailyRate')}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {product.rentalPricePerDay.toFixed(3)} {t('common.currency')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t('product.priceSummary.securityDeposit')}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {product.securityDeposit.toFixed(3)} {t('common.currency')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-px bg-border" />
+
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-medium text-foreground">
+                  {t('product.priceSummary.total')}
+                </span>
+                <span className="font-display text-2xl font-bold text-primary">
+                  {priceCalc ? priceCalc.total.toFixed(3) : '0.000'} {t('common.currency')}
+                </span>
+              </div>
+
+              {/* Quantity + Add to cart live inside the summary on desktop */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={isOutOfStock || quantity <= 1}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    aria-label={t('product.quantity.decrease')}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-12 text-center font-semibold text-foreground">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                    disabled={isOutOfStock || quantity >= maxQty}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    aria-label={t('product.quantity.increase')}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs text-muted-foreground ms-2">
+                    {t('product.quantity.label')}: {product.stock}
+                  </span>
+                </div>
+
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={!canAddToCart}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {added ? (
+                    <>
+                      <Check className="w-5 h-5 me-2" />
+                      {t('product.addedToCart')}
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5 me-2" />
+                      {t('product.addToCart')}
+                    </>
+                  )}
+                </Button>
+                {added && (
+                  <Link
+                    href="/cart"
+                    className="block text-center text-sm text-primary hover:underline"
+                  >
+                    {t('product.viewCart')}
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Availability status */}
-        {availability === 'checking' && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {t('product.rental.checking')}
-          </div>
-        )}
-        {availability === 'available' && (
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <CheckCircle2 className="w-4 h-4" />
-            {t('product.rental.available')}
-          </div>
-        )}
-        {availability === 'unavailable' && (
-          <div className="flex items-center gap-2 text-sm text-lut">
-            <AlertCircle className="w-4 h-4" />
-            {t('product.rental.unavailable')}
-          </div>
-        )}
-        {availability === 'error' && (
-          <p className="flex items-center gap-2 text-sm text-lut" role="alert">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{t('product.rental.checkError')}</span>
-          </p>
-        )}
-        {availability === 'idle' && startDate && endDate && (
-          <p className="text-sm text-muted-foreground">
-            {t('product.rental.checking')}
-          </p>
-        )}
-        {availability === 'idle' && (!startDate || !endDate) && (
-          <p className="text-sm text-muted-foreground">
-            {t('product.rental.selectDates')}
-          </p>
-        )}
-      </div>
-
-      {/* Quantity Selector */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          {t('product.quantity.label')}
-        </h2>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            disabled={isOutOfStock || quantity <= 1}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label={t('product.quantity.decrease')}
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <span className="w-12 text-center font-semibold text-foreground">
-            {quantity}
-          </span>
-          <button
-            onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
-            disabled={isOutOfStock || quantity >= maxQty}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            aria-label={t('product.quantity.increase')}
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <span className="text-xs text-muted-foreground ms-2">
-            {t('product.quantity.label')}: {product.stock}
-          </span>
-        </div>
-      </div>
-
-      {/* Price Summary */}
-      {priceCalc && (
-        <div className="p-4 rounded-xl bg-stone-50 border border-border space-y-2">
-          <h3 className="text-sm font-semibold text-foreground mb-2">
-            {t('product.priceSummary.title')}
-          </h3>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>{t('product.priceSummary.days', { count: priceCalc.days })}</span>
-          </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>
-              {t('product.priceSummary.rental', {
-                rate: product.rentalPricePerDay,
-                days: priceCalc.days,
-                qty: quantity,
-                amount: priceCalc.subtotal,
-              })}
-            </span>
-          </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>
-              {t('product.priceSummary.deposit', { amount: priceCalc.deposit })}
-            </span>
-          </div>
-          <div className="flex justify-between text-base font-bold text-lut pt-2 border-t border-border">
-            <span>{t('product.priceSummary.total', { amount: priceCalc.total })}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Add to Cart Button */}
-      <div className="space-y-2">
-        <Button
-          onClick={handleAddToCart}
-          disabled={!canAddToCart}
-          className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {added ? (
-            <>
-              <Check className="w-5 h-5 me-2" />
-              {t('product.addedToCart')}
-            </>
-          ) : (
-            <>
-              <ShoppingCart className="w-5 h-5 me-2" />
-              {t('product.addToCart')}
-            </>
-          )}
-        </Button>
-        {added && (
-          <Link
-            href="/cart"
-            className="block text-center text-sm text-lut hover:underline"
-          >
-            {t('product.viewCart')}
-          </Link>
-        )}
       </div>
     </div>
   )

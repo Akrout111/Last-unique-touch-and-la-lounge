@@ -11,7 +11,7 @@ const ModelCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center h-[400px] bg-muted rounded-xl">
+      <div className="flex items-center justify-center h-[400px] bg-muted rounded-md">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     ),
@@ -31,7 +31,7 @@ export function Product3DViewer({ productSlug, model3dUrl }: Product3DViewerProp
     return (
       <button
         onClick={() => setEnabled(true)}
-        className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 border border-gold/50 rounded-lg text-gold hover:bg-gold/10 transition-colors"
+        className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 border border-gold/50 rounded-md text-gold hover:bg-gold/10 transition-colors"
       >
         <Box className="w-5 h-5" />
         {t('product.3d.enable')}
@@ -54,7 +54,7 @@ export function Product3DViewer({ productSlug, model3dUrl }: Product3DViewerProp
           {t('product.3d.disable')}
         </button>
       </div>
-      <div className="h-[400px] bg-gradient-to-br from-muted to-muted/50 rounded-xl overflow-hidden border border-border relative">
+      <div className="h-[400px] bg-gradient-to-br from-muted to-muted/50 rounded-md overflow-hidden border border-border relative">
         {/* Ambient glow background */}
         <div
           className="absolute inset-0 pointer-events-none"

@@ -84,7 +84,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
         {/* Pay-on-confirmation panel */}
         <div className="lg:col-span-2">
           {/* Order info card */}
-          <div className="p-4 rounded-xl bg-stone-50 border border-border mb-6">
+          <div className="p-4 rounded-md bg-stone-50 border border-border mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -102,18 +102,18 @@ export function PaymentView({ orderId }: PaymentViewProps) {
           </div>
 
           {/* Pay on confirmation message + confirm button */}
-          <div className="space-y-5 p-6 rounded-xl bg-card border border-border">
+          <div className="space-y-5 p-6 rounded-md bg-card border border-border">
             {errorMessage && (
               <div
                 role="alert"
-                className="flex items-start gap-2 p-3 rounded-lg bg-lut/10 border border-lut/30 text-lut text-sm"
+                className="flex items-start gap-2 p-3 rounded-md bg-lut/10 border border-lut/30 text-lut text-sm"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-gold/5 border border-gold/20">
+            <div className="flex items-start gap-3 p-4 rounded-md bg-gold/5 border border-gold/20">
               <Phone className="w-5 h-5 text-gold shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="text-sm font-bold text-foreground">
@@ -133,7 +133,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
               type="button"
               onClick={onConfirmOrder}
               disabled={submitting}
-              className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting
                 ? t('payment.form.processing')
@@ -143,19 +143,19 @@ export function PaymentView({ orderId }: PaymentViewProps) {
 
           {/* Trust badges */}
           <div className="grid grid-cols-3 gap-3 mt-6">
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">
+            <div className="flex items-center gap-2 p-3 rounded-md bg-card border border-border">
               <ShieldCheck className="w-4 h-4 text-gold shrink-0" />
               <span className="text-xs text-foreground">
                 {t('payment.trust.fraud')}
               </span>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">
+            <div className="flex items-center gap-2 p-3 rounded-md bg-card border border-border">
               <Phone className="w-4 h-4 text-gold shrink-0" />
               <span className="text-xs text-foreground">
                 {t('payment.trust.ssl')}
               </span>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-card border border-border">
+            <div className="flex items-center gap-2 p-3 rounded-md bg-card border border-border">
               <CreditCard className="w-4 h-4 text-gold shrink-0" />
               <span className="text-xs text-foreground">
                 {t('payment.trust.cards')}
@@ -166,7 +166,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 p-6 rounded-xl bg-stone-50 border border-border">
+          <div className="sticky top-24 p-6 rounded-md bg-stone-50 border border-border">
             <h2 className="text-lg font-bold text-foreground mb-4">
               {t('payment.orderSummary')}
             </h2>
@@ -178,7 +178,7 @@ export function PaymentView({ orderId }: PaymentViewProps) {
                   const productName = localizedName(item.nameAr, item.nameEn, locale)
                   return (
                     <div key={index} className="flex gap-3">
-                      <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-muted">
+                      <div className="relative w-14 h-14 shrink-0 rounded-md overflow-hidden bg-muted">
                         {item.image ? (
                           <Image
                             src={item.image}

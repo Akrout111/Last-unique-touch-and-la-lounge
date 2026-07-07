@@ -107,7 +107,7 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
       </div>
 
       {/* Table */}
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-md bg-card border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
@@ -131,7 +131,7 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
                   <tr key={product.id} className="border-t border-border">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-muted shrink-0">
+                        <div className="relative w-10 h-10 rounded-md overflow-hidden bg-muted shrink-0">
                           {product.firstImage ? (
                             <Image
                               src={product.firstImage}
@@ -168,7 +168,7 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
                         <Link
                           href={`/admin/products/${product.id}/edit`}
                           aria-label={t('admin.products.edit')}
-                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <Pencil className="w-4 h-4" />
                         </Link>
@@ -176,7 +176,7 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
                           trigger={
                             <span
                               aria-label={t('admin.products.delete')}
-                              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block"
+                              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block"
                             >
                               <Trash2 className="w-4 h-4" />
                             </span>

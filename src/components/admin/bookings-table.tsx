@@ -105,7 +105,7 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
       </div>
 
       {/* Table */}
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="rounded-md bg-card border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
@@ -145,7 +145,7 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
                       <Link
                         href={`/admin/bookings/${booking.id}`}
                         aria-label={t('admin.bookings.view')}
-                        className="p-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        className="p-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <Eye className="w-4 h-4" />
                       </Link>

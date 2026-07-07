@@ -121,7 +121,7 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
         >
           <div
             ref={dialogRef}
-            className="bg-card rounded-xl shadow-xl max-w-sm w-full p-6"
+            className="bg-card rounded-md shadow-xl max-w-sm w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">

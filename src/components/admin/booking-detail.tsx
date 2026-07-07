@@ -86,7 +86,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
           <h1 className="text-2xl font-bold text-foreground">{t('admin.bookings.detail.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono" dir="ltr">#{booking.id}</p>
         </div>
-        <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+        <span className={`px-3 py-1.5 rounded-md text-sm font-medium ${
           booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
           booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
           booking.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
@@ -98,7 +98,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Customer info */}
-        <div className="p-6 rounded-xl bg-card border border-border">
+        <div className="p-6 rounded-md bg-card border border-border">
           <h2 className="text-lg font-bold text-foreground mb-4">{t('admin.bookings.detail.customerInfo')}</h2>
           <dl className="space-y-3">
             <div>
@@ -117,7 +117,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
         </div>
 
         {/* Rental info */}
-        <div className="p-6 rounded-xl bg-card border border-border">
+        <div className="p-6 rounded-md bg-card border border-border">
           <h2 className="text-lg font-bold text-foreground mb-4">{t('admin.bookings.detail.rentalInfo')}</h2>
           <dl className="space-y-3">
             <div>
@@ -145,7 +145,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
       </div>
 
       {/* Financial summary */}
-      <div className="p-6 rounded-xl bg-stone-50 border border-border">
+      <div className="p-6 rounded-md bg-stone-50 border border-border">
         <h2 className="text-lg font-bold text-foreground mb-4">{t('admin.bookings.detail.financialSummary')}</h2>
         <div className="space-y-2 max-w-md">
           <div className="flex justify-between text-sm">
@@ -164,7 +164,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
       </div>
 
       {/* Status change buttons */}
-      <div className="p-6 rounded-xl bg-card border border-border">
+      <div className="p-6 rounded-md bg-card border border-border">
         <h2 className="text-lg font-bold text-foreground mb-4">{t('admin.bookings.detail.changeStatus')}</h2>
         <div className="flex flex-wrap gap-3">
           {booking.status === 'PENDING' && (

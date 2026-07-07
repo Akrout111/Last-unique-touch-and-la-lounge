@@ -158,14 +158,43 @@ export async function POST(req: NextRequest) {
             throw new OrderError('price_mismatch', 400)
           }
 
+          // Verify securityDeposit matches DB (P0.2 — pricing integrity)
+          if (Math.abs(product.securityDeposit - item.securityDeposit) > 0.01) {
+            throw new OrderError('price_mismatch', 400)
+          }
+
           // Verify stock
           if (product.stock < item.quantity) {
             throw new OrderError('insufficient_stock', 400)
           }
 
-          // Verify availability inside the tx (authoritative given isolation level)
+          // Compute days server-side from startDate + endDate (P0.2).
+          // We use UTC midnight difference to avoid DST/timezone off-by-ones.
           const startDate = new Date(item.startDate)
           const endDate = new Date(item.endDate)
+          if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+            throw new OrderError('invalid_dates', 400)
+          }
+          const msPerDay = 1000 * 60 * 60 * 24
+          const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
+          if (calculatedDays <= 0) {
+            throw new OrderError('invalid_dates', 400)
+          }
+          if (item.days !== calculatedDays) {
+            throw new OrderError('days_mismatch', 400)
+          }
+
+          // Recompute total server-side (P0.2): rental × days + security deposit.
+          // For multi-quantity items the deposit is charged once per item
+          // (matching the cart summary shown to the customer).
+          const expectedTotal =
+            product.rentalPricePerDay * calculatedDays * item.quantity +
+            product.securityDeposit * item.quantity
+          if (Math.abs(expectedTotal - item.total) > 0.01) {
+            throw new OrderError('total_mismatch', 400)
+          }
+
+          // Verify availability inside the tx (authoritative given isolation level)
           const available = await checkProductAvailabilityInTx(
             tx,
             item.productId,
@@ -184,6 +213,12 @@ export async function POST(req: NextRequest) {
           const product = txProducts.find((p) => p.id === item.productId)
           const startDate = new Date(item.startDate)
           const endDate = new Date(item.endDate)
+          const msPerDay = 1000 * 60 * 60 * 24
+          const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
+          // Use the server-recomputed total (P0.2) — never trust client-supplied item.total.
+          const expectedTotal =
+            product!.rentalPricePerDay * calculatedDays * item.quantity +
+            product!.securityDeposit * item.quantity
 
           const booking = await tx.booking.create({
             data: {
@@ -195,7 +230,7 @@ export async function POST(req: NextRequest) {
               customerName: customer.customerName,
               customerPhone: customer.customerPhone,
               customerEmail: customer.customerEmail,
-              totalAmount: item.total,
+              totalAmount: expectedTotal,
               currency: 'KWD',
               address: customer.address,
               city: customer.city,

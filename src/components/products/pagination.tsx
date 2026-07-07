@@ -79,7 +79,7 @@ export function Pagination({
       <button
         onClick={() => goTo(currentPage - 1)}
         disabled={currentPage === 1}
-        className="w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="w-10 h-10 flex items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         aria-label={t('products.previous')}
       >
         <PrevIcon className="w-4 h-4" />
@@ -102,7 +102,7 @@ export function Pagination({
           <button
             key={pageNum}
             onClick={() => goTo(pageNum)}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
+            className={`w-10 h-10 flex items-center justify-center rounded-md border text-sm font-medium transition-colors ${
               isActive
                 ? 'bg-lut text-white border-lut'
                 : 'bg-card text-foreground border-border hover:bg-secondary'
@@ -118,7 +118,7 @@ export function Pagination({
       <button
         onClick={() => goTo(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="w-10 h-10 flex items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         aria-label={t('products.next')}
       >
         <NextIcon className="w-4 h-4" />

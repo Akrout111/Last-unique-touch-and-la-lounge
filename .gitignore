@@ -55,3 +55,4 @@ upload/
 prisma/db/*.db
 prisma/db/*.db-journal
 .env
+agent-ctx/

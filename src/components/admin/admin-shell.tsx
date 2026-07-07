@@ -224,7 +224,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                   active
                     ? 'bg-lut text-white'
                     : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -242,7 +242,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors w-full"
+            className="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors w-full"
           >
             <LogOut className="w-5 h-5 shrink-0" />
             {t('admin.nav.logout')}
@@ -287,7 +287,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     key={link.href}
                     href={link.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                       active
                         ? 'bg-lut text-white'
                         : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -300,7 +300,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               })}
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors w-full"
+                className="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors w-full"
               >
                 <LogOut className="w-5 h-5 shrink-0" />
                 {t('admin.nav.logout')}

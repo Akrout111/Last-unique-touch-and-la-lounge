@@ -64,10 +64,10 @@ export function CheckoutView() {
   if (items.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-4">
+        <h1 className="font-display text-2xl font-bold text-foreground mb-4">
           {t('checkout.empty')}
         </h1>
-        <Button asChild className="bg-lut hover:bg-lut/90 text-white">
+        <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link href="/products">
             {t('cart.empty.cta')}
             <ArrowIcon className="w-4 h-4 ms-2" />
@@ -120,23 +120,37 @@ export function CheckoutView() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-foreground mb-8">
-        {t('checkout.title')}
-      </h1>
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+          <span className="eyebrow text-accent text-[0.625rem]">
+            {t('checkout.title')}
+          </span>
+        </div>
+        <h1 className="font-display text-3xl font-bold text-foreground">
+          {t('checkout.title')}
+        </h1>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form */}
         <div className="lg:col-span-2">
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-5 p-6 rounded-xl bg-card border border-border"
+            className="space-y-5 p-6 rounded-md bg-card border border-border shadow-luxury"
           >
-            <h2 className="text-lg font-bold text-foreground">
+            <div className="flex items-center gap-2">
+              <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+              <span className="eyebrow text-accent text-[0.625rem]">
+                {t('checkout.form.customerInfo')}
+              </span>
+            </div>
+            <h2 className="font-display text-lg font-bold text-foreground">
               {t('checkout.form.customerInfo')}
             </h2>
 
               {errorMessage && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-lut/10 border border-lut/30 text-lut text-sm">
+                <div className="flex items-start gap-2 p-3 rounded-md bg-primary/10 border border-primary/30 text-primary text-sm">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{errorMessage}</span>
                 </div>
@@ -151,10 +165,10 @@ export function CheckoutView() {
                   id="customerName"
                   autoComplete="name"
                   {...register('customerName')}
-                  className="bg-background"
+                  className="bg-background luxury-input"
                 />
                 {errors.customerName && (
-                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {errors.customerName?.type === 'required'
@@ -177,10 +191,10 @@ export function CheckoutView() {
                     dir="ltr"
                     autoComplete="tel"
                     {...register('customerPhone')}
-                    className="bg-background"
+                    className="bg-background luxury-input"
                   />
                   {errors.customerPhone && (
-                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.customerPhone?.type === 'required'
@@ -200,10 +214,10 @@ export function CheckoutView() {
                     dir="ltr"
                     autoComplete="email"
                     {...register('customerEmail')}
-                    className="bg-background"
+                    className="bg-background luxury-input"
                   />
                   {errors.customerEmail && (
-                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.customerEmail?.type === 'required'
@@ -225,10 +239,10 @@ export function CheckoutView() {
                   rows={2}
                   autoComplete="street-address"
                   {...register('address')}
-                  className="bg-background"
+                  className="bg-background luxury-input"
                 />
                 {errors.address && (
-                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {errors.address?.type === 'required'
@@ -248,10 +262,10 @@ export function CheckoutView() {
                   id="city"
                   autoComplete="address-level2"
                   {...register('city')}
-                  className="bg-background"
+                  className="bg-background luxury-input"
                 />
                 {errors.city && (
-                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>{t('checkout.form.errors.cityRequired')}</span>
                   </p>
@@ -267,7 +281,7 @@ export function CheckoutView() {
                   id="notes"
                   rows={3}
                   {...register('notes')}
-                  className="bg-background"
+                  className="bg-background luxury-input"
                 />
               </div>
 
@@ -293,7 +307,7 @@ export function CheckoutView() {
               <Button
                 type="submit"
                 disabled={submitting || !termsAccepted}
-                className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -309,8 +323,14 @@ export function CheckoutView() {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 p-6 rounded-xl bg-stone-50 border border-border">
-            <h2 className="text-lg font-bold text-foreground mb-4">
+          <div className="sticky top-24 p-6 rounded-md glass-card shadow-luxury">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+              <span className="eyebrow text-accent text-[0.625rem]">
+                {t('checkout.summary.title')}
+              </span>
+            </div>
+            <h2 className="font-display text-lg font-bold text-foreground mb-4">
               {t('checkout.summary.title')}
             </h2>
 
@@ -320,7 +340,7 @@ export function CheckoutView() {
                 const productName = localizedName(item.nameAr, item.nameEn, locale)
                 return (
                   <div key={index} className="flex gap-3">
-                    <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <div className="relative w-14 h-14 shrink-0 rounded-md overflow-hidden bg-muted">
                       {item.image ? (
                         <Image
                           src={item.image}
@@ -363,7 +383,7 @@ export function CheckoutView() {
                   {t('cart.summary.rental')}
                 </span>
                 <span className="font-medium">
-                  {rentalTotal.toFixed(3)} KWD
+                  {rentalTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
@@ -371,7 +391,7 @@ export function CheckoutView() {
                   {t('cart.summary.deposit')}
                 </span>
                 <span className="font-medium">
-                  {depositTotal.toFixed(3)} KWD
+                  {depositTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
             </div>
@@ -380,8 +400,8 @@ export function CheckoutView() {
               <span className="font-bold text-foreground">
                 {t('checkout.summary.total')}
               </span>
-              <span className="text-xl font-bold text-lut">
-                {total.toFixed(3)} KWD
+              <span className="font-display text-xl font-bold text-primary">
+                {total.toFixed(3)} {t('common.currency')}
               </span>
             </div>
 

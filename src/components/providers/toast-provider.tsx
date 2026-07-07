@@ -54,7 +54,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             role={toast.type === 'error' ? 'alert' : 'status'}
             aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white max-w-sm ${
+            className={`flex items-center gap-3 px-4 py-3 rounded-md shadow-lg text-white max-w-sm ${
               toast.type === 'success'
                 ? 'bg-green-600'
                 : toast.type === 'error'

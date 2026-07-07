@@ -18,6 +18,9 @@ export function CustomCursor() {
     // Only enable on devices with fine pointer (mouse)
     if (window.matchMedia('(pointer: coarse)').matches) return
 
+    // Hide native cursor while the custom cursor overlay is active
+    document.body.classList.add('custom-cursor-active')
+
     const moveCursor = (e: MouseEvent) => {
       cursorX.set(e.clientX - 8)
       cursorY.set(e.clientY - 8)
@@ -38,6 +41,7 @@ export function CustomCursor() {
     return () => {
       window.removeEventListener('mousemove', moveCursor)
       document.removeEventListener('mouseleave', hideCursor)
+      document.body.classList.remove('custom-cursor-active')
     }
   }, [cursorX, cursorY])
 

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, CheckCircle2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram, AlertCircle } from 'lucide-react'
+import { buildWhatsappUrl, getPhoneNumber, isRealNumber } from '@/lib/contact-info'
 
 const contactSchema = z.object({
   name: z.string().min(3).max(100),
@@ -74,18 +75,33 @@ export function ContactView() {
     }
   }
 
-  const contactInfo = [
+  const contactInfo: Array<{
+    icon: typeof MapPin
+    label: string
+    value: string
+    dir?: 'ltr' | 'rtl'
+  }> = [
     { icon: MapPin, label: t('contact.info.address'), value: t('contact.info.addressValue') },
-    { icon: Phone, label: t('contact.info.phone'), value: t('contact.info.phoneValue'), dir: 'ltr' as const },
+    ...(isRealNumber(getPhoneNumber())
+      ? [{ icon: Phone as typeof MapPin, label: t('contact.info.phone'), value: getPhoneNumber() as string, dir: 'ltr' as const }]
+      : []),
     { icon: Mail, label: t('contact.info.email'), value: t('contact.info.emailValue'), dir: 'ltr' as const },
     { icon: Clock, label: t('contact.info.hours'), value: t('contact.info.hoursValue') },
   ]
+
+  const whatsappUrl = buildWhatsappUrl()
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="h-px w-6 bg-accent/50" aria-hidden="true" />
+          <span className="eyebrow text-accent text-[0.625rem]">
+            {t('contact.title')}
+          </span>
+        </div>
+        <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
           {t('contact.title')}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
@@ -98,11 +114,11 @@ export function ContactView() {
         {/* Form */}
         <div className="lg:col-span-2">
           {submitted ? (
-            <div className="p-8 rounded-xl bg-card border border-border text-center">
+            <div className="p-8 rounded-md bg-card border border-border shadow-luxury text-center">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-3">
+              <h2 className="font-display text-2xl font-bold text-foreground mb-3">
                 {t('contact.form.success')}
               </h2>
               <Button
@@ -116,12 +132,12 @@ export function ContactView() {
           ) : (
             <form
               onSubmit={handleSubmit(onSubmit)}
-              className="space-y-5 p-6 rounded-xl bg-card border border-border"
+              className="space-y-5 p-6 rounded-md glass-card shadow-luxury"
             >
               {submitError && (
                 <div
                   role="alert"
-                  className="flex items-start gap-2 p-3 rounded-lg bg-lut/10 border border-lut/30 text-lut text-sm"
+                  className="flex items-start gap-2 p-3 rounded-md bg-primary/10 border border-primary/30 text-primary text-sm"
                 >
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{submitError}</span>
@@ -137,10 +153,10 @@ export function ContactView() {
                   <Input
                     id="name"
                     {...register('name')}
-                    className="bg-background"
+                    className="bg-background luxury-input"
                   />
                   {errors.name && (
-                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.name?.type === 'required'
@@ -159,10 +175,10 @@ export function ContactView() {
                     type="email"
                     dir="ltr"
                     {...register('email')}
-                    className="bg-background"
+                    className="bg-background luxury-input"
                   />
                   {errors.email && (
-                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.email?.type === 'required'
@@ -185,10 +201,10 @@ export function ContactView() {
                     type="tel"
                     dir="ltr"
                     {...register('phone')}
-                    className="bg-background"
+                    className="bg-background luxury-input"
                   />
                   {errors.phone && (
-                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>{t('contact.form.errors.phoneInvalid')}</span>
                     </p>
@@ -201,10 +217,10 @@ export function ContactView() {
                   <Input
                     id="subject"
                     {...register('subject')}
-                    className="bg-background"
+                    className="bg-background luxury-input"
                   />
                   {errors.subject && (
-                    <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.subject?.type === 'required'
@@ -225,10 +241,10 @@ export function ContactView() {
                   id="message"
                   rows={6}
                   {...register('message')}
-                  className="bg-background"
+                  className="bg-background luxury-input"
                 />
                 {errors.message && (
-                  <p className="flex items-center gap-1.5 text-xs text-lut mt-1" role="alert">
+                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {errors.message?.type === 'required'
@@ -243,7 +259,7 @@ export function ContactView() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-lut hover:bg-lut/90 text-white py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -260,7 +276,7 @@ export function ContactView() {
 
         {/* Contact info */}
         <div className="lg:col-span-1">
-          <div className="p-6 rounded-xl bg-stone-50 border border-border space-y-6">
+          <div className="p-6 rounded-md bg-card border border-border shadow-luxury space-y-6">
             {contactInfo.map((info, idx) => {
               const Icon = info.icon
               return (
@@ -286,23 +302,27 @@ export function ContactView() {
             {/* Social */}
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-muted-foreground mb-3">
-                {t('contact.info.whatsapp')} / {t('contact.info.instagram')}
+                {whatsappUrl
+                  ? `${t('contact.info.whatsapp')} / ${t('contact.info.instagram')}`
+                  : t('contact.info.instagram')}
               </p>
               <div className="flex items-center gap-3">
-                <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '965XXXXXXXX'}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-lut hover:text-white hover:border-lut transition-colors"
-                  aria-label="WhatsApp"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </a>
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                    aria-label="WhatsApp"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </a>
+                )}
                 <a
                   href="https://instagram.com/last.unique.touch"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-lut hover:text-white hover:border-lut transition-colors"
+                  className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
                   aria-label="Instagram"
                 >
                   <Instagram className="w-5 h-5" />

@@ -34,15 +34,24 @@ const nextConfig: NextConfig = {
     // Strict-by-default policy. 'unsafe-inline' is required for scripts
     // and styles because Next.js injects inline <script> hydration data
     // and inline <style> tags at runtime. 'unsafe-eval' is deliberately
-    // NOT included — that would defeat the CSP. frame-ancestors 'none'
-    // complements X-Frame-Options: DENY.
+    // NOT included in production — that would defeat the CSP.
+    //
+    // In dev mode, React Refresh (HMR) needs `unsafe-eval` to transform
+    // JSX on the fly. Without it, hydration silently fails and the page
+    // is server-rendered-only (no interactivity, no useState updates).
+    // We add `'unsafe-eval'` to script-src only when NODE_ENV !== 'production'.
+    const isDev = process.env.NODE_ENV !== 'production'
+    const scriptSrc = isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self' 'unsafe-inline'"
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self'",
+      // In dev, allow HMR websocket + eval-based source maps.
+      isDev ? "connect-src 'self' ws: w:" : "connect-src 'self'",
       "frame-ancestors https://*.space-z.ai https://space-z.ai",
       "form-action 'self'",
       "base-uri 'self'",

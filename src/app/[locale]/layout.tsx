@@ -7,9 +7,10 @@ import { MotionConfig } from 'framer-motion'
 import { routing } from '@/i18n/routing'
 import { CartProvider } from '@/components/providers/cart-provider'
 import { ToastProvider } from '@/components/providers/toast-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 import { BrandThemeSetter } from '@/components/providers/brand-theme-setter'
 import { FloatingWhatsApp } from '@/components/floating-whatsapp'
-import { inter, tajawal, cormorant, dmMono, orbitron, rajdhani, cairo } from '@/app/fonts'
+import { inter, tajawal, cormorant, dmMono, lutFonts, laLoungeFonts, birthdayFonts } from '@/app/fonts'
 
 /**
  * Resolve the brand slug from the matched pathname sent by middleware
@@ -46,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#E62129',
+  themeColor: '#E3222B',
 }
 
 export function generateStaticParams() {
@@ -78,12 +79,30 @@ export default async function LocaleLayout({
       lang={locale}
       dir={locale === 'ar' ? 'rtl' : 'ltr'}
       data-brand={brand}
-      className={`${inter.variable} ${tajawal.variable} ${cormorant.variable} ${dmMono.variable} ${orbitron.variable} ${rajdhani.variable} ${cairo.variable}`}
+      className={[
+        // Legacy fonts (still referenced by globals.css body/eyebrow rules).
+        inter.variable,
+        tajawal.variable,
+        cormorant.variable,
+        dmMono.variable,
+        // New per-brand font sets — all 9 variables exposed on <html>.
+        // globals.css `:root[data-brand="X"]` blocks map --font-display /
+        // --font-body / --font-arabic to the active brand's set.
+        lutFonts.display.variable,
+        lutFonts.body.variable,
+        lutFonts.arabic.variable,
+        laLoungeFonts.display.variable,
+        laLoungeFonts.body.variable,
+        laLoungeFonts.arabic.variable,
+        birthdayFonts.display.variable,
+        birthdayFonts.body.variable,
+        birthdayFonts.arabic.variable,
+      ].join(' ')}
       suppressHydrationWarning
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#E62129" />
+        <meta name="theme-color" content="#E3222B" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         {/* Skip-to-content link (WCAG 2.4.1 / C14) — first focusable element */}
@@ -95,24 +114,26 @@ export default async function LocaleLayout({
         </a>
 
         <MotionConfig reducedMotion="user">
-          <NextIntlClientProvider>
-            <CartProvider>
-              <ToastProvider>
-                <BrandThemeSetter />
-                {/*
-                  Centralized <main id="main-content"> so the skip-to-content
-                  link works on every route (storefront, admin, etc.) without
-                  each page having to remember to render one. Individual pages
-                  and AdminShell use plain <div> wrappers for their styling so
-                  we don't end up with nested <main> elements (F6).
-                */}
-                <main id="main-content" className="flex-1">
-                  {children}
-                </main>
-                <FloatingWhatsApp />
-              </ToastProvider>
-            </CartProvider>
-          </NextIntlClientProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+            <NextIntlClientProvider>
+              <CartProvider>
+                <ToastProvider>
+                  <BrandThemeSetter />
+                  {/*
+                    Centralized <main id="main-content"> so the skip-to-content
+                    link works on every route (storefront, admin, etc.) without
+                    each page having to remember to render one. Individual pages
+                    and AdminShell use plain <div> wrappers for their styling so
+                    we don't end up with nested <main> elements (F6).
+                  */}
+                  <main id="main-content" className="flex-1">
+                    {children}
+                  </main>
+                  <FloatingWhatsApp />
+                </ToastProvider>
+              </CartProvider>
+            </NextIntlClientProvider>
+          </ThemeProvider>
         </MotionConfig>
       </body>
     </html>
