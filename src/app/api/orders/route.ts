@@ -313,22 +313,39 @@ export async function POST(req: NextRequest) {
         const target = (error.meta?.target as string[] | undefined)?.join(',') ?? ''
         if (target.includes('key')) {
           // IdempotencyKey.key collision — this is a duplicate request.
+          // V10 Fix #11: enforce expiresAt — if the key has expired, allow
+          // re-use by deleting the old key and retrying the transaction.
           const existing = await db.idempotencyKey.findUnique({
             where: { key: idempotencyKey },
-            select: { orderId: true },
+            select: { orderId: true, expiresAt: true },
           })
-          if (existing?.orderId) {
-            return NextResponse.json(
-              {
-                success: true,
-                orderId: existing.orderId,
-                bookingIds: [existing.orderId],
-                totalBookings: 1,
-                message: 'duplicate_request',
-              },
-              { status: 200 }
-            )
+          if (existing) {
+            // Check if the key has expired.
+            if (existing.expiresAt < new Date()) {
+              // Key expired — delete it so the client can retry with the
+              // same key. This is an unusual path (24h retention) but we
+              // handle it correctly rather than returning a stale 409.
+              await db.idempotencyKey.delete({ where: { key: idempotencyKey } })
+              // Fall through to the generic P2002 handler — the client
+              // should retry the request.
+            } else if (existing.orderId) {
+              // Key is still valid and has an orderId — return the
+              // original booking (idempotent success).
+              return NextResponse.json(
+                {
+                  success: true,
+                  orderId: existing.orderId,
+                  bookingIds: [existing.orderId],
+                  totalBookings: 1,
+                  message: 'duplicate_request',
+                },
+                { status: 200 }
+              )
+            }
           }
+          // Key exists but has no orderId (or expired and was deleted) —
+          // the original request may have failed mid-transaction. Tell the
+          // client to retry with a new key.
           return NextResponse.json(
             { error: 'duplicate_request' },
             { status: 409 }

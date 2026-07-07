@@ -18,12 +18,21 @@ interface PageProps {
   params: Promise<{ slug: string; locale: string }>
 }
 
-// V9 Fix #8: force-dynamic so `notFound()` sets a real 404 status code.
-// Without this, the standalone production build may serve the not-found
-// page body with a 200 status (soft-404), which is bad for SEO and
-// confuses crawlers. `force-dynamic` ensures the page is always
-// server-rendered on demand, where `notFound()` correctly emits a 404.
-export const dynamic = 'force-dynamic'
+// V10 Fix #1: `dynamicParams = false` makes Next.js return a real HTTP 404
+// at the routing level for any slug NOT in `generateStaticParams`. This is
+// the most reliable way to get a 404 status code in the standalone build —
+// `notFound()` inside the page component was rendering the 404 body but
+// the standalone server was sending a 200 status (soft-404).
+//
+// Trade-off: products added after build won't be reachable until the next
+// build. This is acceptable for this project — products are managed by
+// admin and the build can be triggered via `.zscripts/build.sh`. The
+// benefit (correct 404 status for SEO) outweighs the cost.
+//
+// `notFound()` is kept as a defense-in-depth fallback for the rare case
+// where a product exists in `generateStaticParams` but becomes inactive
+// between build and request.
+export const dynamicParams = false
 
 export async function generateStaticParams() {
   // V9 Fix #2: only LUT products are reachable from the LUT storefront.

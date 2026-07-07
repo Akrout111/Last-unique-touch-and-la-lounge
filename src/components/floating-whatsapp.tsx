@@ -1,11 +1,19 @@
 'use client'
 
+import { useLocale } from 'next-intl'
 import { buildWhatsappUrl } from '@/lib/contact-info'
 
-const DEFAULT_MESSAGE = 'مرحباً، أريد الاستفسار عن خدماتكم'
+// V10 Fix #4: locale-aware default messages. Previously the Arabic message
+// was always used even for English-speaking users.
+const MESSAGES = {
+  ar: 'مرحباً، أريد الاستفسار عن خدماتكم',
+  en: 'Hello, I would like to inquire about your services',
+} as const
 
 export function FloatingWhatsApp() {
-  const url = buildWhatsappUrl(DEFAULT_MESSAGE)
+  const locale = useLocale()
+  const message = MESSAGES[locale as 'ar' | 'en'] ?? MESSAGES.ar
+  const url = buildWhatsappUrl(message)
   // If no real WhatsApp number is configured, do not render the floating button.
   if (!url) return null
 

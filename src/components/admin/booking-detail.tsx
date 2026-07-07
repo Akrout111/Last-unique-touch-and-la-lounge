@@ -135,7 +135,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
               <dd className="text-sm font-medium text-foreground">
                 {booking.product
                   ? localizedName(booking.product.nameAr, booking.product.nameEn, locale)
-                  : (locale === 'ar' ? 'باقة عيد الميلاد' : 'Birthday Package')}
+                  : t('admin.birthdayPackage')}
               </dd>
             </div>
             <div>

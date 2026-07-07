@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/routing'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -22,7 +23,13 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { TextScramble } from './text-scramble'
-import { BirthdayVisualizer } from './birthday-visualizer'
+
+// V10 Fix #5: Lazy-load BirthdayVisualizer so Three.js (~150KB) stays out
+// of the initial JS bundle. ssr:false because WebGL only exists in browsers.
+const BirthdayVisualizer = dynamic(
+  () => import('./birthday-visualizer').then((m) => m.BirthdayVisualizer),
+  { ssr: false, loading: () => null },
+)
 
 interface YourBirthdayViewProps {
   onBack: () => void
@@ -274,7 +281,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
               <button
                 onClick={scrollToTop}
-                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-[#EC4899] transition-colors cursor-pointer"
+                className="size-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-[#EC4899] transition-colors cursor-pointer"
                 aria-label={t('nav.top')}
               >
                 <ArrowUp className="w-4 h-4" />

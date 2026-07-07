@@ -245,101 +245,124 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // --- Idempotency: was this (orderId, nonce) already processed? ---
-    // The webhookId combines orderId + nonce so a replay with the same
-    // nonce returns the cached result without re-running side effects.
+    // --- V10 Fix #9: Idempotency check + state guard + update ALL inside
+    //     the Serializable transaction. Previously the idempotency check
+    //     was a `findFirst` OUTSIDE the transaction — two concurrent
+    //     identical webhooks could both pass the check before either
+    //     created the log entry (TOCTOU race). Now the check, the booking
+    //     update, and the idempotency log are all inside a single
+    //     Serializable transaction so concurrent duplicates are serialized.
     const webhookId = `${orderId}:${nonce}`
-    const alreadyProcessed = await db.securityLog.findFirst({
-      where: {
-        event: 'webhook_processed',
-        details: { contains: webhookId },
-      },
-    })
 
-    if (alreadyProcessed) {
-      // Idempotent success — return 200 so the gateway doesn't retry.
+    const result = await db.$transaction(
+      async (tx) => {
+        // 1. Idempotency check INSIDE the transaction.
+        const alreadyProcessed = await tx.securityLog.findFirst({
+          where: {
+            event: 'webhook_processed',
+            details: { contains: webhookId },
+          },
+        })
+
+        if (alreadyProcessed) {
+          return { type: 'already_processed' as const }
+        }
+
+        // 2. Load the booking inside the transaction.
+        const booking = await tx.booking.findUnique({
+          where: { id: orderId },
+        })
+
+        if (!booking) {
+          return { type: 'not_found' as const }
+        }
+
+        // 3. State guard — map gateway status to BookingStatus.
+        const newStatus = gatewayStatusToBookingStatus(status)
+        if (!newStatus) {
+          return { type: 'invalid_input' as const, message: `Unknown gateway status: ${status}` }
+        }
+
+        // 4. No-op if already in target status.
+        if (booking.status === newStatus) {
+          await tx.securityLog.create({
+            data: {
+              event: 'webhook_processed',
+              details: JSON.stringify({ webhookId, orderId, status, noop: true }),
+            },
+          })
+          return { type: 'already_in_target' as const }
+        }
+
+        // 5. Validate the transition against the state machine.
+        if (!VALID_BOOKING_TRANSITIONS[booking.status]?.includes(newStatus)) {
+          return {
+            type: 'invalid_transition' as const,
+            current: booking.status,
+            attempted: newStatus,
+          }
+        }
+
+        // 6. Apply the update + log idempotency atomically.
+        await tx.booking.update({
+          where: { id: orderId },
+          data: { status: newStatus },
+        })
+
+        await tx.securityLog.create({
+          data: {
+            event: 'webhook_processed',
+            details: JSON.stringify({
+              webhookId,
+              orderId,
+              gatewayStatus: status,
+              fromStatus: booking.status,
+              toStatus: newStatus,
+            }),
+          },
+        })
+
+        return { type: 'updated' as const, booking, newStatus }
+      },
+      { isolationLevel: 'Serializable' }
+    )
+
+    // Handle the transaction result outside (HTTP responses can't be
+    // returned from inside the transaction callback).
+    if (result.type === 'already_processed') {
       return NextResponse.json(
         { success: true, message: 'already_processed' },
         { status: 200 }
       )
     }
-
-    // --- Load the booking ---
-    const booking = await db.booking.findUnique({
-      where: { id: orderId },
-    })
-
-    if (!booking) {
+    if (result.type === 'not_found') {
       return NextResponse.json(
         { error: 'order_not_found' },
         { status: 404 }
       )
     }
-
-    // --- State guard (V9 Fix #3) ---
-    // Map the gateway status to a BookingStatus, then verify the
-    // transition is allowed by the state machine.
-    const newStatus = gatewayStatusToBookingStatus(status)
-    if (!newStatus) {
+    if (result.type === 'invalid_input') {
       return NextResponse.json(
-        { error: 'invalid_input', message: `Unknown gateway status: ${status}` },
+        { error: 'invalid_input', message: result.message },
         { status: 400 }
       )
     }
-
-    // No-op if the booking is already in the target status (e.g. a retry
-    // of a success webhook after the booking was already confirmed).
-    // We still log it as processed for idempotency.
-    if (booking.status === newStatus) {
-      await db.securityLog.create({
-        data: {
-          event: 'webhook_processed',
-          details: JSON.stringify({ webhookId, orderId, status, noop: true }),
-        },
-      })
+    if (result.type === 'already_in_target') {
       return NextResponse.json({ success: true, message: 'already_in_target_status' })
     }
-
-    // Validate the transition against the state machine.
-    if (!VALID_BOOKING_TRANSITIONS[booking.status]?.includes(newStatus)) {
+    if (result.type === 'invalid_transition') {
       return NextResponse.json(
         {
           error: 'invalid_state_transition',
-          current: booking.status,
-          attempted: newStatus,
+          current: result.current,
+          attempted: result.attempted,
         },
         { status: 409 }
       )
     }
 
-    // --- Apply the update + log idempotency in a transaction ---
-    // Both writes commit atomically so a crash between them cannot leave
-    // the booking updated but the idempotency log missing (which would
-    // allow a replay to re-run side effects).
-    await db.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id: orderId },
-        data: { status: newStatus },
-      })
-
-      await tx.securityLog.create({
-        data: {
-          event: 'webhook_processed',
-          details: JSON.stringify({
-            webhookId,
-            orderId,
-            gatewayStatus: status,
-            fromStatus: booking.status,
-            toStatus: newStatus,
-          }),
-        },
-      })
-    })
-
-    // --- Side effect: n8n fan-out (only on success → CONFIRMED) ---
-    // Fire-and-forget style but awaited so a failure is logged. The
-    // idempotency log above means a retry won't double-fire.
-    if (status === 'success' && newStatus === 'CONFIRMED') {
+    // result.type === 'updated' — fire n8n webhook on success → CONFIRMED.
+    if (status === 'success' && result.newStatus === 'CONFIRMED') {
       try {
         await triggerOrderConfirmedWebhook(orderId)
       } catch (e) {

@@ -413,7 +413,9 @@
         "addressRequired": "Address is required",
         "addressMinLength": "Address must be at least 10 characters",
         "cityRequired": "City is required"
-      }
+      },
+      "agreePrefix": "I agree to the ",
+      "termsLink": "Terms & Conditions"
     },
     "summary": {
       "title": "Your Order Summary",
@@ -588,8 +590,26 @@
   },
   "laLounge": {
     "back": "Back",
-    "subtitle": "Modern luxury designs for events and exhibitions",
-    "explore": "Explore"
+    "eyebrow": "Event Solutions",
+    "subtitle": "Complete event solutions — from planning to execution, with luxury furniture and custom designs",
+    "featuresButton": "Features & Services",
+    "servicesTitle": "What We Offer",
+    "servicesSubtitle": "Three integrated services to prepare your event from A to Z",
+    "contactButton": "Contact Us",
+    "services": {
+      "planning": {
+        "title": "Planning & Setup",
+        "desc": "Complete event planning from concept to execution — innovative designs, site management, and full coordination"
+      },
+      "furniture": {
+        "title": "Furniture Supply",
+        "desc": "Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems"
+      },
+      "custom": {
+        "title": "Custom Furniture Making",
+        "desc": "Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion"
+      }
+    }
   },
   "featuredProducts": {
     "eyebrow": "Curated For This Season",
@@ -762,6 +782,32 @@
           "desc": "Professional party photography, video, and lasting memory shots"
         }
       ]
+    }
+  },
+  "lut": {
+    "back": "Back",
+    "eyebrow": "Luxury Furniture Rental",
+    "subtitle": "Luxury furniture rental platform in Kuwait — choose from our wide collection of premium furniture",
+    "productsButton": "Products",
+    "servicesTitle": "What We Offer",
+    "services": {
+      "rental": {
+        "title": "Luxury Furniture Rental",
+        "desc": "Wide range of premium furniture for rent — chairs, tables, sofas, accessories"
+      },
+      "delivery": {
+        "title": "Delivery & Setup",
+        "desc": "Professional delivery and installation across Kuwait"
+      },
+      "flexible": {
+        "title": "Flexible Rental Periods",
+        "desc": "Daily, weekly, or monthly rentals to suit your needs"
+      }
+    },
+    "stats": {
+      "items": "Luxury Items",
+      "events": "Events",
+      "years": "Years"
     }
   }
 }

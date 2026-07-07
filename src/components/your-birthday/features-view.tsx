@@ -1,10 +1,17 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { BirthdayVisualizer } from '@/components/your-birthday/birthday-visualizer'
+
+// V10 Fix #5: Lazy-load BirthdayVisualizer so Three.js (~150KB) stays out
+// of the initial JS bundle. ssr:false because WebGL only exists in browsers.
+const BirthdayVisualizer = dynamic(
+  () => import('@/components/your-birthday/birthday-visualizer').then((m) => m.BirthdayVisualizer),
+  { ssr: false, loading: () => null },
+)
 
 /**
  * Decorative icon + color pairs for the six service tiles.

@@ -152,7 +152,9 @@ export async function POST(req: NextRequest) {
       data,
     })
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    // V10 Fix #8: return 201 Created (not 200) since we just persisted a
+    // new SecurityLog row (a resource was created).
+    return NextResponse.json({ success: true }, { status: 201 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
     console.error('Contact form error:', message, error)

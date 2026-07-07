@@ -21,14 +21,11 @@ export default function LastUniqueTouchView() {
   const router = useRouter()
   const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
-  const services = locale === 'ar' ? [
-    { title: 'تأجير الأثاث الفاخر', desc: 'مجموعة واسعة من الأثاث الراقي للإيجار — كراسي، طاولات، أرائك، مكملات' },
-    { title: 'توصيل وتركيب', desc: 'خدمة توصيل وتركيب احترافية لجميع أنحاء الكويت' },
-    { title: 'فترات إيجار مرنة', desc: 'إيجار يومي، أسبوعي، أو شهري حسب احتياجاتك' },
-  ] : [
-    { title: 'Luxury Furniture Rental', desc: 'Wide range of premium furniture for rent — chairs, tables, sofas, accessories' },
-    { title: 'Delivery & Setup', desc: 'Professional delivery and installation across Kuwait' },
-    { title: 'Flexible Rental Periods', desc: 'Daily, weekly, or monthly rentals to suit your needs' },
+  // V10 Fix #3: services array now uses i18n keys instead of inline ternaries.
+  const services = [
+    { title: t('lut.services.rental.title'), desc: t('lut.services.rental.desc') },
+    { title: t('lut.services.delivery.title'), desc: t('lut.services.delivery.desc') },
+    { title: t('lut.services.flexible.title'), desc: t('lut.services.flexible.desc') },
   ]
 
   return (
@@ -58,7 +55,7 @@ export default function LastUniqueTouchView() {
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-paper/70 hover:text-paper hover:border-white/30 transition-all text-xs"
           >
             <ArrowIcon className="w-4 h-4" />
-            <span className="font-medium tracking-wide">{locale === 'ar' ? 'العودة' : 'Back'}</span>
+            <span className="font-medium tracking-wide">{t('lut.back')}</span>
           </button>
         </div>
 
@@ -70,7 +67,7 @@ export default function LastUniqueTouchView() {
           >
             <span className="w-6 sm:w-8 h-px bg-gold/50" />
             <span className="eyebrow text-gold/80 text-[10px] sm:text-xs">
-              {locale === 'ar' ? 'تأجير الأثاث الفاخر' : 'Luxury Furniture Rental'}
+              {t('lut.eyebrow')}
             </span>
             <span className="w-6 sm:w-8 h-px bg-gold/50" />
           </div>
@@ -86,9 +83,7 @@ export default function LastUniqueTouchView() {
             className="animate-hero-in text-sm sm:text-base text-paper/60 max-w-md mb-8"
             style={{ animationDelay: '0.5s' }}
           >
-            {locale === 'ar'
-              ? 'منصة تأجير الأثاث الفاخر في الكويت — اختر من مجموعتنا الواسعة من الأثاث الراقي'
-              : 'Luxury furniture rental platform in Kuwait — choose from our wide collection of premium furniture'}
+            {t('lut.subtitle')}
           </p>
 
           {/* Products button */}
@@ -97,7 +92,7 @@ export default function LastUniqueTouchView() {
             className="animate-hero-up px-10 py-3.5 bg-lut hover:bg-lut/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230,33,41,0.3)] transition-all cursor-pointer"
             style={{ animationDelay: '0.7s' }}
           >
-            {locale === 'ar' ? 'المنتجات' : 'Products'}
+            {t('lut.productsButton')}
           </button>
         </div>
 
@@ -117,7 +112,7 @@ export default function LastUniqueTouchView() {
           <LutArabesque variant="divider" className="w-full max-w-md mx-auto mb-12" />
 
           <h2 className="font-display text-2xl sm:text-4xl text-paper text-center mb-12">
-            {locale === 'ar' ? 'ما نقدمه' : 'What We Offer'}
+            {t('lut.servicesTitle')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -139,9 +134,9 @@ export default function LastUniqueTouchView() {
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 sm:gap-16 mt-16">
             {[
-              { value: '500+', label: locale === 'ar' ? 'منتج فاخر' : 'Luxury Items' },
-              { value: '2000+', label: locale === 'ar' ? 'حدث ناجح' : 'Events' },
-              { value: '5', label: locale === 'ar' ? 'سنوات خبرة' : 'Years' },
+              { value: '500+', label: t('lut.stats.items') },
+              { value: '2000+', label: t('lut.stats.events') },
+              { value: '5', label: t('lut.stats.years') },
             ].map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="font-display text-2xl sm:text-4xl text-gold tabular-nums">{stat.value}</div>

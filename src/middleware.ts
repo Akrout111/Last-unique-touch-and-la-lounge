@@ -98,18 +98,81 @@ function verifySessionCookie(cookieValue: string | undefined): boolean {
 }
 
 /**
+ * V10 Fix #1: Product slug existence check.
+ *
+ * The standalone production build has a quirk where `notFound()` inside the
+ * product page renders the 404 body but the HTTP status remains 200 (a
+ * soft-404). This function calls a lightweight internal API endpoint
+ * (`/api/products/check-slug`) to check if the product exists BEFORE the
+ * request reaches the page component. If the product doesn't exist, the
+ * middleware returns a 404 response directly — which reliably sets the
+ * HTTP 404 status code.
+ *
+ * The API endpoint is excluded from the middleware matcher (`/api/...`),
+ * so the `fetch` call doesn't trigger this middleware again (no circular
+ * dependency).
+ *
+ * Returns:
+ *   - `null` if the product exists (or the check fails — fail open)
+ *   - `NextResponse` with 404 if the product doesn't exist
+ */
+async function checkProductExists(
+  request: NextRequest,
+  locale: string,
+  slug: string
+): Promise<NextResponse | null> {
+  try {
+    const checkUrl = new URL('/api/products/check-slug', request.nextUrl.origin)
+    checkUrl.searchParams.set('slug', slug)
+    checkUrl.searchParams.set('brand', 'LUT')
+
+    const res = await fetch(checkUrl, {
+      // Don't cache — product existence can change between requests.
+      cache: 'no-store',
+      // Short timeout so a slow DB doesn't block the request.
+      signal: AbortSignal.timeout(3_000),
+    })
+
+    if (!res.ok) {
+      // API error — fail open (let the page handle it).
+      return null
+    }
+
+    const data = (await res.json()) as { exists?: boolean }
+    if (data.exists === false) {
+      // Product doesn't exist — return a 404 with a minimal HTML body.
+      // The body is a simple branded 404 page; the key thing is the
+      // HTTP 404 status code for SEO.
+      const html = `<!DOCTYPE html><html lang="${locale}" dir="${locale === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>404 — ${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#FAF6EF;color:#0A0A0A"><div style="text-align:center"><h1 style="font-size:3rem;margin:0;color:#E3222B">404</h1><p style="margin:0.5rem 0 1rem;color:#666">${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</p><a href="/${locale}/products" style="display:inline-block;padding:0.5rem 1rem;background:#E3222B;color:#fff;text-decoration:none;border-radius:0.375rem">${locale === 'ar' ? 'العودة للمنتجات' : 'Back to Products'}</a></div></body></html>`
+      return new NextResponse(html, {
+        status: 404,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      })
+    }
+  } catch {
+    // Network error, timeout, or JSON parse error — fail open.
+    // The page's own `getProductBySlug` + `notFound()` will handle it
+    // (with the 200 status, but at least the 404 body renders).
+  }
+  return null
+}
+
+/**
  * Wraps next-intl's middleware so we can additionally:
  * 1. Enforce admin auth (V9 Fix #1) — redirect unauthenticated /admin/*
  *    requests to /admin/login BEFORE any SSR rendering.
  * 2. Expose the matched pathname to the server layer via the `x-pathname`
  *    response header (used by the root layout to set `data-brand` on <html>
  *    for correct first-paint brand theming).
+ * 3. V10 Fix #1: Check product slug existence for storefront product pages
+ *    and return a real HTTP 404 if the product doesn't exist (closes the
+ *    soft-404 gap in the standalone build).
  *
  * The client-side `BrandThemeSetter` still runs and keeps the attribute in
  * sync during SPA navigations (where the layout server component is not
  * re-rendered but the route changes).
  */
-export default function middleware(request: NextRequest): NextResponse {
+export default async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
   // --- Admin auth guard (V9 Fix #1) ---
@@ -126,6 +189,21 @@ export default function middleware(request: NextRequest): NextResponse {
       // 307 preserves the method (GET) — important if the user later
       // POSTs a form after re-authenticating.
       return NextResponse.redirect(loginUrl, 307)
+    }
+  }
+
+  // --- Product slug existence check (V10 Fix #1) ---
+  // Match /ar/products/<slug> or /en/products/<slug> (but NOT /products
+  // itself, which is the product listing page).
+  const productMatch = pathname.match(/^\/(ar|en)\/products\/([^/]+)$/)
+  if (productMatch) {
+    const [, locale, slug] = productMatch
+    // Skip special non-product slugs (shouldn't match, but defense-in-depth).
+    if (slug !== 'categories' && slug !== 'search' && !slug.startsWith('_')) {
+      const notFoundResponse = await checkProductExists(request, locale, slug)
+      if (notFoundResponse) {
+        return notFoundResponse
+      }
     }
   }
 

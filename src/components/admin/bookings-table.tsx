@@ -137,7 +137,7 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
                     <td className="py-3 px-4 font-medium text-foreground">{booking.customerName}</td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{booking.productName}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[booking.status]}`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[booking.status] ?? 'bg-gray-100 text-gray-700'}`}>
                         {t(`admin.bookings.filterStatus.${booking.status}` as const)}
                       </span>
                     </td>

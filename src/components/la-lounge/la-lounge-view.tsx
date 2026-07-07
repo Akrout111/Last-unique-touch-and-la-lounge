@@ -18,38 +18,13 @@ export default function LaLoungeView() {
   const t = useTranslations()
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
-  const services: Array<{ title: string; desc: string; icon: LucideIcon }> = locale === 'ar' ? [
-    {
-      title: 'التخطيط والتجهيز',
-      desc: 'تخطيط كامل للفعاليات من الفكرة إلى التنفيذ — تصاميم مبتكرة، إدارة موقع، وتنسيق متكامل',
-      icon: ClipboardList,
-    },
-    {
-      title: 'توفير الأثاث',
-      desc: 'تشكيلة واسعة من الأثاث الفاخر للفعاليات — كراسي، طاولات، أرائك، خيام، وأنظمة إضاءة',
-      icon: Armchair,
-    },
-    {
-      title: 'صنع أثاث مخصص',
-      desc: 'تصميم وتصنيع أثاث مخصص حسب طلبك لفعالية معينة — قطع فريدة تعكس هوية مناسبتك',
-      icon: Sparkles,
-    },
-  ] : [
-    {
-      title: 'Planning & Setup',
-      desc: 'Complete event planning from concept to execution — innovative designs, site management, and full coordination',
-      icon: ClipboardList,
-    },
-    {
-      title: 'Furniture Supply',
-      desc: 'Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems',
-      icon: Armchair,
-    },
-    {
-      title: 'Custom Furniture Making',
-      desc: 'Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion',
-      icon: Sparkles,
-    },
+  // V10 Fix #3: services array now uses i18n keys instead of inline ternaries.
+  // The icon components are kept as code (they can't be i18n'd); only the
+  // title/desc strings are translated.
+  const services: Array<{ title: string; desc: string; icon: LucideIcon }> = [
+    { title: t('laLounge.services.planning.title'), desc: t('laLounge.services.planning.desc'), icon: ClipboardList },
+    { title: t('laLounge.services.furniture.title'), desc: t('laLounge.services.furniture.desc'), icon: Armchair },
+    { title: t('laLounge.services.custom.title'), desc: t('laLounge.services.custom.desc'), icon: Sparkles },
   ]
 
   const scrollToServices = () => {
@@ -79,7 +54,7 @@ export default function LaLoungeView() {
           >
             <ArrowIcon className="w-4 h-4" />
             <span className="font-sans font-medium tracking-wide">
-              {locale === 'ar' ? 'العودة' : 'Back'}
+              {t('laLounge.back')}
             </span>
           </button>
         </div>
@@ -90,7 +65,7 @@ export default function LaLoungeView() {
             className="flex items-center gap-2 mb-4"
           >
             <span className="text-primary text-xs tracking-[0.3em] uppercase">
-              {locale === 'ar' ? 'تجهيز الفعاليات' : 'Event Solutions'}
+              {t('laLounge.eyebrow')}
             </span>
           </div>
 
@@ -103,9 +78,7 @@ export default function LaLoungeView() {
           <p
             className="text-sm sm:text-base text-primary/70 font-sans tracking-wide max-w-lg mb-8"
           >
-            {locale === 'ar'
-              ? 'حلول متكاملة للفعاليات — من التخطيط إلى التنفيذ، مع أثاث فاخر وتصاميم مخصصة'
-              : 'Complete event solutions — from planning to execution, with luxury furniture and custom designs'}
+            {t('laLounge.subtitle')}
           </p>
 
           {/* Services button — scrolls to services section */}
@@ -113,7 +86,7 @@ export default function LaLoungeView() {
             onClick={scrollToServices}
             className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(255,20,147,0.3)] hover:shadow-[0_6px_25px_rgba(255,20,147,0.4)] transition-all cursor-pointer border border-primary/30"
           >
-            {locale === 'ar' ? 'الميزات والخدمات' : 'Features & Services'}
+            {t('laLounge.featuresButton')}
           </button>
         </div>
 
@@ -131,12 +104,10 @@ export default function LaLoungeView() {
           <h2
             className="font-serif text-3xl sm:text-5xl text-primary text-center mb-4"
           >
-            {locale === 'ar' ? 'ما نقدمه' : 'What We Offer'}
+            {t('laLounge.servicesTitle')}
           </h2>
           <p className="text-center text-primary/60 mb-12 max-w-xl mx-auto text-sm">
-            {locale === 'ar'
-              ? 'ثلاث خدمات متكاملة لتجهيز فعاليتك من الألف إلى الياء'
-              : 'Three integrated services to prepare your event from A to Z'}
+            {t('laLounge.servicesSubtitle')}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -163,7 +134,7 @@ export default function LaLoungeView() {
               onClick={() => router.push('/contact')}
               className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(255,20,147,0.3)] transition-all cursor-pointer"
             >
-              {locale === 'ar' ? 'تواصل معنا' : 'Contact Us'}
+              {t('laLounge.contactButton')}
             </button>
           </div>
         </div>

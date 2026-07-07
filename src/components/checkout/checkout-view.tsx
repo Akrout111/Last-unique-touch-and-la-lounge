@@ -296,9 +296,9 @@ export function CheckoutView() {
                   onChange={(e) => setTermsAccepted(e.target.checked)}
                 />
                 <label htmlFor="terms" className="text-sm">
-                  {locale === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                  {t('checkout.form.agreePrefix')}
                   <Link href="/terms" target="_blank" className="text-primary underline">
-                    {locale === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
+                    {t('checkout.form.termsLink')}
                   </Link>
                 </label>
               </div>
