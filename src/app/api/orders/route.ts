@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
 
@@ -33,21 +34,35 @@ const orderSchema = z.object({
   idempotencyKey: z.string().min(10),
 })
 
+type TxClient = Parameters<Parameters<typeof db.$transaction>[0]>[0]
+
 /**
- * Check product availability inside a transaction using the transaction client.
- * Returns true if no overlapping CONFIRMED or PENDING booking exists.
+ * Stock-aware availability check (V9 Fix #4).
  *
- * Inlined here (instead of reusing checkProductAvailability from @/lib/products)
- * so it runs against the transaction's view of the data with the requested
- * isolation level (Serializable) — see C5.
+ * Previously this function returned `true` only when ZERO overlapping
+ * CONFIRMED/PENDING bookings existed — which made products with stock>1
+ * effectively unusable (the @@unique constraint also blocked this at the
+ * DB level, but that constraint has been removed in the V9 migration).
+ *
+ * Now we sum the `quantity` of all overlapping active bookings and
+ * compare against `product.stock`. The check runs inside the Serializable
+ * transaction so concurrent orders cannot both pass the check.
+ *
+ * Returns `{ available, availableStock }` so the caller can include the
+ * remaining stock in the error response for better UX.
  */
-async function checkProductAvailabilityInTx(
-  tx: Parameters<Parameters<typeof db.$transaction>[0]>[0],
+async function checkStockAvailabilityInTx(
+  tx: TxClient,
   productId: string,
   startDate: Date,
-  endDate: Date
-): Promise<boolean> {
-  const conflictingBookings = await tx.booking.count({
+  endDate: Date,
+  requestedQuantity: number,
+  productStock: number
+): Promise<{ available: boolean; availableStock: number }> {
+  // Fetch all overlapping CONFIRMED/PENDING bookings and sum their quantities.
+  // We use findMany (not aggregate) because Prisma's SQLite aggregate sum
+  // returns null on an empty set, which is awkward to handle.
+  const overlappingBookings = await tx.booking.findMany({
     where: {
       productId,
       status: { in: ['CONFIRMED', 'PENDING'] },
@@ -58,9 +73,19 @@ async function checkProductAvailabilityInTx(
         { endDate: { gt: startDate } },
       ],
     },
+    select: { quantity: true },
   })
 
-  return conflictingBookings === 0
+  const totalBookedQuantity = overlappingBookings.reduce(
+    (sum, b) => sum + (b.quantity ?? 1),
+    0
+  )
+  const availableStock = Math.max(0, productStock - totalBookedQuantity)
+
+  return {
+    available: availableStock >= requestedQuantity,
+    availableStock,
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -99,27 +124,12 @@ export async function POST(req: NextRequest) {
 
     const { items, customer, idempotencyKey } = parsed.data
 
-    // 1. Idempotency check — prevent duplicate orders (cheap pre-check; the
-    //    authoritative log is created inside the transaction below).
-    const existing = await db.securityLog.findFirst({
-      where: {
-        event: 'order_idempotency',
-        details: { contains: idempotencyKey },
-      },
-    })
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'duplicate_request' },
-        { status: 409 }
-      )
-    }
-
-    // 2. Re-verify products and prices on server (cheap pre-check; the
-    //    authoritative stock/availability checks happen inside the tx).
+    // 1. Cheap pre-check: do all products exist + belong to LUT?
+    //    (V9 Fix #2: brand='LUT' filter). The authoritative idempotency +
+    //    stock checks happen INSIDE the transaction below (V9 Fix #5).
     const productIds = items.map((i) => i.productId)
     const dbProducts = await db.product.findMany({
-      where: { id: { in: productIds }, isActive: true },
+      where: { id: { in: productIds }, brand: 'LUT', isActive: true },
     })
 
     if (dbProducts.length !== items.length) {
@@ -129,135 +139,211 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 3. Re-check availability + stock INSIDE a Serializable transaction (C5).
-    //    This closes the TOCTOU race between the availability check and the
-    //    booking.create: with Serializable isolation (and the
-    //    `@@unique([productId, startDate, endDate])` constraint on Booking),
-    //    two concurrent orders for the same product/date range cannot both
-    //    succeed — the second will fail with a unique-constraint violation.
-    const result = await db.$transaction(
-      async (tx) => {
-        // Re-fetch products inside the tx for an authoritative stock check.
-        const txProducts = await tx.product.findMany({
-          where: { id: { in: productIds }, isActive: true },
-        })
-
-        if (txProducts.length !== items.length) {
-          throw new OrderError('invalid_products', 400)
-        }
-
-        // Verify price, stock, and availability for each item inside the tx.
-        for (const item of items) {
-          const product = txProducts.find((p) => p.id === item.productId)
-          if (!product) {
-            throw new OrderError('invalid_products', 400)
-          }
-
-          // Verify price matches DB
-          if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.01) {
-            throw new OrderError('price_mismatch', 400)
-          }
-
-          // Verify securityDeposit matches DB (P0.2 — pricing integrity)
-          if (Math.abs(product.securityDeposit - item.securityDeposit) > 0.01) {
-            throw new OrderError('price_mismatch', 400)
-          }
-
-          // Verify stock
-          if (product.stock < item.quantity) {
-            throw new OrderError('insufficient_stock', 400)
-          }
-
-          // Compute days server-side from startDate + endDate (P0.2).
-          // We use UTC midnight difference to avoid DST/timezone off-by-ones.
-          const startDate = new Date(item.startDate)
-          const endDate = new Date(item.endDate)
-          if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-            throw new OrderError('invalid_dates', 400)
-          }
-          const msPerDay = 1000 * 60 * 60 * 24
-          const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
-          if (calculatedDays <= 0) {
-            throw new OrderError('invalid_dates', 400)
-          }
-          if (item.days !== calculatedDays) {
-            throw new OrderError('days_mismatch', 400)
-          }
-
-          // Recompute total server-side (P0.2): rental × days + security deposit.
-          // For multi-quantity items the deposit is charged once per item
-          // (matching the cart summary shown to the customer).
-          const expectedTotal =
-            product.rentalPricePerDay * calculatedDays * item.quantity +
-            product.securityDeposit * item.quantity
-          if (Math.abs(expectedTotal - item.total) > 0.01) {
-            throw new OrderError('total_mismatch', 400)
-          }
-
-          // Verify availability inside the tx (authoritative given isolation level)
-          const available = await checkProductAvailabilityInTx(
-            tx,
-            item.productId,
-            startDate,
-            endDate
-          )
-
-          if (!available) {
-            throw new OrderError('not_available', 409)
-          }
-        }
-
-        // Create bookings inside the same tx (C5).
-        const bookings = []
-        for (const item of items) {
-          const product = txProducts.find((p) => p.id === item.productId)
-          const startDate = new Date(item.startDate)
-          const endDate = new Date(item.endDate)
-          const msPerDay = 1000 * 60 * 60 * 24
-          const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
-          // Use the server-recomputed total (P0.2) — never trust client-supplied item.total.
-          const expectedTotal =
-            product!.rentalPricePerDay * calculatedDays * item.quantity +
-            product!.securityDeposit * item.quantity
-
-          const booking = await tx.booking.create({
+    // 2. Re-check idempotency + stock + price INSIDE a Serializable
+    //    transaction (V9 Fix #4 + #5).
+    //
+    //    V9 Fix #5: the idempotency check is now a `create` on the
+    //    IdempotencyKey table with a UNIQUE constraint on `key`. If two
+    //    concurrent requests send the same key, the second one's create
+    //    throws P2002 — which we catch and return 409 duplicate_request.
+    //    This closes the TOCTOU race that existed when the check was a
+    //    `findFirst` outside the transaction.
+    //
+    //    V9 Fix #4: the availability check is now stock-aware — it sums
+    //    the `quantity` of overlapping bookings and compares against
+    //    `product.stock`, so products with stock>1 can be booked multiple
+    //    times for overlapping dates.
+    let result: Array<{ id: string }>
+    try {
+      result = await db.$transaction(
+        async (tx) => {
+          // --- Idempotency: create the key FIRST (V9 Fix #5) ---
+          // If this throws P2002, the key already exists — a concurrent
+          // duplicate request won the race. We catch that outside the tx.
+          const idempotencyRecord = await tx.idempotencyKey.create({
             data: {
-              productId: item.productId,
-              brand: product!.brand,
-              startDate,
-              endDate,
-              status: 'PENDING',
-              customerName: customer.customerName,
-              customerPhone: customer.customerPhone,
-              customerEmail: customer.customerEmail,
-              totalAmount: expectedTotal,
-              currency: 'KWD',
-              address: customer.address,
-              city: customer.city,
-              notes: customer.notes ?? null,
+              key: idempotencyKey,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
             },
           })
 
-          bookings.push(booking)
+          // Re-fetch products inside the tx for an authoritative stock check.
+          // V9 Fix #2: brand='LUT' filter prevents cross-tenant booking.
+          const txProducts = await tx.product.findMany({
+            where: { id: { in: productIds }, brand: 'LUT', isActive: true },
+          })
+
+          if (txProducts.length !== items.length) {
+            throw new OrderError('invalid_products', 400)
+          }
+
+          // Verify price, stock, and availability for each item inside the tx.
+          for (const item of items) {
+            const product = txProducts.find((p) => p.id === item.productId)
+            if (!product) {
+              throw new OrderError('invalid_products', 400)
+            }
+
+            // Verify price matches DB
+            if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.01) {
+              throw new OrderError('price_mismatch', 400)
+            }
+
+            // Verify securityDeposit matches DB (P0.2 — pricing integrity)
+            if (Math.abs(product.securityDeposit - item.securityDeposit) > 0.01) {
+              throw new OrderError('price_mismatch', 400)
+            }
+
+            // Compute days server-side from startDate + endDate (P0.2).
+            const startDate = new Date(item.startDate)
+            const endDate = new Date(item.endDate)
+            if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+              throw new OrderError('invalid_dates', 400)
+            }
+            const msPerDay = 1000 * 60 * 60 * 24
+            const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
+            if (calculatedDays <= 0) {
+              throw new OrderError('invalid_dates', 400)
+            }
+            if (item.days !== calculatedDays) {
+              throw new OrderError('days_mismatch', 400)
+            }
+
+            // Recompute total server-side (P0.2): rental × days × qty + deposit × qty.
+            const expectedTotal =
+              product.rentalPricePerDay * calculatedDays * item.quantity +
+              product.securityDeposit * item.quantity
+            if (Math.abs(expectedTotal - item.total) > 0.01) {
+              throw new OrderError('total_mismatch', 400)
+            }
+
+            // --- Stock-aware availability check (V9 Fix #4) ---
+            // Sum the quantity of all overlapping CONFIRMED/PENDING bookings
+            // and compare against product.stock. This replaces the old
+            // "any overlap = unavailable" check that blocked stock>1 rentals.
+            const { available, availableStock } = await checkStockAvailabilityInTx(
+              tx,
+              item.productId,
+              startDate,
+              endDate,
+              item.quantity,
+              product.stock
+            )
+
+            if (!available) {
+              throw new OrderError(
+                'out_of_stock',
+                409,
+                `Requested ${item.quantity} but only ${availableStock} available`
+              )
+            }
+          }
+
+          // Create bookings inside the same tx (C5).
+          const bookings = []
+          for (const item of items) {
+            const product = txProducts.find((p) => p.id === item.productId)
+            const startDate = new Date(item.startDate)
+            const endDate = new Date(item.endDate)
+            const msPerDay = 1000 * 60 * 60 * 24
+            const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
+            // Use the server-recomputed total (P0.2) — never trust client-supplied item.total.
+            const expectedTotal =
+              product!.rentalPricePerDay * calculatedDays * item.quantity +
+              product!.securityDeposit * item.quantity
+
+            const booking = await tx.booking.create({
+              data: {
+                productId: item.productId,
+                brand: product!.brand,
+                startDate,
+                endDate,
+                status: 'PENDING',
+                customerName: customer.customerName,
+                customerPhone: customer.customerPhone,
+                customerEmail: customer.customerEmail,
+                // V9 Fix #4: store the requested quantity on the booking so
+                // the stock-aware availability check above can sum it for
+                // future overlapping bookings.
+                quantity: item.quantity,
+                totalAmount: expectedTotal,
+                currency: 'KWD',
+                address: customer.address,
+                city: customer.city,
+                notes: customer.notes ?? null,
+              },
+            })
+
+            bookings.push(booking)
+          }
+
+          // --- Link the idempotency key to the resulting bookings (V9 Fix #5) ---
+          // So a replay of the same key can return the original booking IDs
+          // instead of a bare 409 (better UX for the client).
+          await tx.idempotencyKey.update({
+            where: { id: idempotencyRecord.id },
+            data: { orderId: bookings[0]?.id ?? null },
+          })
+
+          // Also log to SecurityLog for audit (kept for backwards compat
+          // with any tooling that reads the old log format).
+          await tx.securityLog.create({
+            data: {
+              event: 'order_idempotency',
+              details: JSON.stringify({
+                idempotencyKey,
+                bookingIds: bookings.map((b) => b.id),
+              }),
+            },
+          })
+
+          return bookings
+        },
+        { isolationLevel: 'Serializable' }
+      )
+    } catch (error: unknown) {
+      // V9 Fix #5: P2002 on IdempotencyKey.key = concurrent duplicate.
+      // Return 409 with the original booking IDs if we can recover them.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // The target of the unique violation. Prisma includes it in
+        // `meta.target` for known errors.
+        const target = (error.meta?.target as string[] | undefined)?.join(',') ?? ''
+        if (target.includes('key')) {
+          // IdempotencyKey.key collision — this is a duplicate request.
+          const existing = await db.idempotencyKey.findUnique({
+            where: { key: idempotencyKey },
+            select: { orderId: true },
+          })
+          if (existing?.orderId) {
+            return NextResponse.json(
+              {
+                success: true,
+                orderId: existing.orderId,
+                bookingIds: [existing.orderId],
+                totalBookings: 1,
+                message: 'duplicate_request',
+              },
+              { status: 200 }
+            )
+          }
+          return NextResponse.json(
+            { error: 'duplicate_request' },
+            { status: 409 }
+          )
         }
+        // Any other P2002 (e.g. on Booking) — surface as a generic conflict.
+        return NextResponse.json(
+          { error: 'not_available' },
+          { status: 409 }
+        )
+      }
+      throw error
+    }
 
-        // Log idempotency key inside the tx so it commits atomically.
-        await tx.securityLog.create({
-          data: {
-            event: 'order_idempotency',
-            details: JSON.stringify({
-              idempotencyKey,
-              bookingIds: bookings.map((b) => b.id),
-            }),
-          },
-        })
-
-        return bookings
-      },
-      { isolationLevel: 'Serializable' }
-    )
-
-    // 4. Return success with first booking ID as order reference
+    // 3. Return success with first booking ID as order reference
     const orderId = result[0]?.id
 
     return NextResponse.json(
@@ -273,22 +359,8 @@ export async function POST(req: NextRequest) {
     // Surface our typed OrderErrors with the appropriate HTTP status.
     if (error instanceof OrderError) {
       return NextResponse.json(
-        { error: error.code },
+        { error: error.code, message: error.detail },
         { status: error.status }
-      )
-    }
-
-    // Handle Prisma unique-constraint violations (e.g. concurrent double-booking).
-    // P2002 = Unique constraint failed on the {fields}.
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2002'
-    ) {
-      return NextResponse.json(
-        { error: 'not_available' },
-        { status: 409 }
       )
     }
 
@@ -308,10 +380,12 @@ export async function POST(req: NextRequest) {
 class OrderError extends Error {
   code: string
   status: number
-  constructor(code: string, status: number) {
+  detail?: string
+  constructor(code: string, status: number, detail?: string) {
     super(code)
     this.name = 'OrderError'
     this.code = code
     this.status = status
+    this.detail = detail
   }
 }

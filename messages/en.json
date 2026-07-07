@@ -298,7 +298,8 @@
         "PENDING": "Pending",
         "CONFIRMED": "Confirmed",
         "CANCELLED": "Cancelled",
-        "COMPLETED": "Completed"
+        "COMPLETED": "Completed",
+        "PAYMENT_FAILED": "Payment Failed"
       },
       "table": {
         "id": "Booking ID",
@@ -331,7 +332,8 @@
         "changeStatus": "Change Status",
         "confirm": "Confirm",
         "cancel": "Cancel",
-        "complete": "Complete"
+        "complete": "Complete",
+        "retryPayment": "Retry Payment"
       },
       "statusChanged": "Booking status changed",
       "invalidTransition": "Cannot change status this way",
@@ -611,13 +613,27 @@
       "cta1": "Book Premium Package",
       "cta2": "Explore Packages",
       "discover": "Discover the Site",
-      "scrambleWords": ["CELEBRATE", "YOUR DAY", "IN STYLE", "YOUR BIRTHDAY"]
+      "scrambleWords": [
+        "CELEBRATE",
+        "YOUR DAY",
+        "IN STYLE",
+        "YOUR BIRTHDAY"
+      ]
     },
     "services": {
       "title": "Our Services",
-      "item1": { "title": "Cake Design", "desc": "Custom luxury birthday cakes with artistic designs to match your party theme." },
-      "item2": { "title": "Balloon Styling", "desc": "Organic balloon arches and arrangements in innovative colors and shapes." },
-      "item3": { "title": "Sound & Lighting", "desc": "Professional sound systems and colored stage lighting to set the party vibe." }
+      "item1": {
+        "title": "Cake Design",
+        "desc": "Custom luxury birthday cakes with artistic designs to match your party theme."
+      },
+      "item2": {
+        "title": "Balloon Styling",
+        "desc": "Organic balloon arches and arrangements in innovative colors and shapes."
+      },
+      "item3": {
+        "title": "Sound & Lighting",
+        "desc": "Professional sound systems and colored stage lighting to set the party vibe."
+      }
     },
     "packages": {
       "title": "Our Packages",

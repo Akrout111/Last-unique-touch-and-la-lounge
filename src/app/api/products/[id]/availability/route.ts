@@ -30,7 +30,11 @@ export async function GET(
       )
     }
 
-    const product = await db.product.findUnique({ where: { id } })
+    // V9 Fix #2: scope by brand='LUT' so a client cannot probe availability
+    // for a La Lounge / Your Birthday product through the LUT storefront API.
+    const product = await db.product.findFirst({
+      where: { id, brand: 'LUT', isActive: true },
+    })
     if (!product) {
       return NextResponse.json({ error: 'product_not_found' }, { status: 404 })
     }
@@ -45,11 +49,15 @@ export async function GET(
       )
     }
 
+    // V9 Fix #4: stock-aware availability. The result now includes
+    // `availableStock` so the PDP can show "5 of 10 available" instead
+    // of a binary available/unavailable.
     const result = await checkProductAvailability(id, startDate, endDate)
 
     return NextResponse.json({
       available: result.available,
       conflictingBookings: result.conflictingBookings,
+      availableStock: result.availableStock,
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'

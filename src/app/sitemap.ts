@@ -19,13 +19,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const locales = ['ar', 'en']
 
-  // Fetch all active products for dynamic product URLs.
-  // If the DB is unavailable, fall back to static-only entries so sitemap
-  // generation doesn't fail (and tank the build / ISR).
+  // Fetch all active LUT products for dynamic product URLs.
+  // V9 Fix #2: scope by brand='LUT' so the sitemap only advertises LUT
+  // product pages. La Lounge / Your Birthday products are not reachable
+  // from the LUT storefront (getProductBySlug now 404s cross-tenant
+  // slugs), so listing them here would create broken / leaking URLs.
   let products: Array<{ slug: string; updatedAt: Date }> = []
   try {
     products = await db.product.findMany({
-      where: { isActive: true },
+      where: { brand: 'LUT', isActive: true },
       select: { slug: true, updatedAt: true },
     })
   } catch (error) {

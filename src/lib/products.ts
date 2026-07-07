@@ -215,12 +215,29 @@ export async function getProducts(params: ProductListParams = {}): Promise<Produ
 
 /**
  * Get a single product by slug (for product detail page — Phase 4).
+ *
+ * `brand` is REQUIRED for the storefront (V9 Fix #2): without it,
+ * `getProductBySlug('gold-luxury-sofa')` would return a La Lounge
+ * product even on the LUT storefront, leaking cross-tenant data.
+ * Admin callers may omit `brand` to look up by slug across tenants.
+ *
+ * The lookup still accepts either a slug OR an id (the `OR` clause) so
+ * the booking detail page can resolve a stored `productId` even if the
+ * admin later changes the slug — but ONLY within the requested brand.
  */
-export async function getProductBySlug(slug: string): Promise<ProductWithImages | null> {
+export async function getProductBySlug(
+  slug: string,
+  brand?: Brand
+): Promise<ProductWithImages | null> {
   const product = await db.product.findFirst({
     where: {
       OR: [{ slug }, { id: slug }],
       isActive: true,
+      // Brand filter — only applied when an explicit brand is provided.
+      // Storefront callers MUST pass brand='LUT' (or their tenant) to
+      // prevent cross-tenant access (V9 Fix #2). Admin callers can omit
+      // it to look up across tenants.
+      ...(brand ? { brand } : {}),
     },
     include: {
       category: {
@@ -239,14 +256,31 @@ export async function getProductBySlug(slug: string): Promise<ProductWithImages 
 
 /**
  * Check if a product is available for booking in a given date range.
- * Returns true if no overlapping CONFIRMED or PENDING booking exists.
+ *
+ * V9 Fix #4: stock-aware. Previously this returned `available: false` if
+ * ANY overlapping CONFIRMED/PENDING booking existed — which made products
+ * with stock>1 effectively unusable (only one booking per date range was
+ * ever allowed, even when the product had 10 in stock). Now we sum the
+ * `quantity` of overlapping bookings and compare against `product.stock`.
+ *
+ * `requestedQuantity` defaults to 1 for backward compatibility with
+ * callers that don't pass it (e.g. the PDP availability check).
  */
 export async function checkProductAvailability(
   productId: string,
   startDate: Date,
-  endDate: Date
-): Promise<{ available: boolean; conflictingBookings: number }> {
-  const conflictingBookings = await db.booking.count({
+  endDate: Date,
+  requestedQuantity: number = 1
+): Promise<{ available: boolean; conflictingBookings: number; availableStock: number }> {
+  // Load the product's stock (needed to compute available stock).
+  const product = await db.product.findUnique({
+    where: { id: productId },
+    select: { stock: true },
+  })
+  const stock = product?.stock ?? 0
+
+  // Fetch all overlapping CONFIRMED/PENDING bookings and sum their quantities.
+  const overlappingBookings = await db.booking.findMany({
     where: {
       productId,
       status: { in: ['CONFIRMED', 'PENDING'] },
@@ -257,11 +291,20 @@ export async function checkProductAvailability(
         { endDate: { gt: startDate } },
       ],
     },
+    select: { quantity: true },
   })
 
+  const conflictingBookings = overlappingBookings.length
+  const totalBookedQuantity = overlappingBookings.reduce(
+    (sum, b) => sum + (b.quantity ?? 1),
+    0
+  )
+  const availableStock = Math.max(0, stock - totalBookedQuantity)
+
   return {
-    available: conflictingBookings === 0,
+    available: availableStock >= requestedQuantity,
     conflictingBookings,
+    availableStock,
   }
 }
 

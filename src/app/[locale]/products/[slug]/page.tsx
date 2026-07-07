@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import type { Brand } from '@prisma/client'
 import { db } from '@/lib/db'
 import { getProductBySlug, getRelatedProducts } from '@/lib/products'
 import { Navbar } from '@/components/layout/navbar'
@@ -17,9 +18,19 @@ interface PageProps {
   params: Promise<{ slug: string; locale: string }>
 }
 
+// V9 Fix #8: force-dynamic so `notFound()` sets a real 404 status code.
+// Without this, the standalone production build may serve the not-found
+// page body with a 200 status (soft-404), which is bad for SEO and
+// confuses crawlers. `force-dynamic` ensures the page is always
+// server-rendered on demand, where `notFound()` correctly emits a 404.
+export const dynamic = 'force-dynamic'
+
 export async function generateStaticParams() {
+  // V9 Fix #2: only LUT products are reachable from the LUT storefront.
+  // Pre-rendering La Lounge / Your Birthday slugs here would let search
+  // engines index cross-tenant URLs and leak brand data.
   const products = await db.product.findMany({
-    where: { isActive: true },
+    where: { brand: 'LUT', isActive: true },
     select: { slug: true },
   })
   return products.map((p) => ({ slug: p.slug }))
@@ -31,7 +42,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string; locale: string }>
 }): Promise<Metadata> {
   const { slug, locale } = await params
-  const product = await getProductBySlug(slug)
+  // V9 Fix #2: scope by brand='LUT' so a La Lounge slug returns 404
+  // (no metadata) instead of leaking the La Lounge product's name/description.
+  const product = await getProductBySlug(slug, 'LUT')
   if (!product) return buildMetadata({ locale: locale as 'ar' | 'en', path: '/products' })
 
   return buildMetadata({
@@ -46,13 +59,20 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: PageProps) {
   const { slug, locale } = await params
 
-  const product = await getProductBySlug(slug)
+  // V9 Fix #2: scope by brand='LUT' so cross-tenant slugs 404 instead of
+  // rendering La Lounge / Your Birthday products on the LUT storefront.
+  const product = await getProductBySlug(slug, 'LUT')
 
   if (!product) {
     notFound()
   }
 
-  const related = await getRelatedProducts(product.id, product.categoryId)
+  // V9 Fix #2: pass the product's own brand to getRelatedProducts so we
+  // never surface related items from another tenant (defense-in-depth —
+  // since getProductBySlug already scoped to LUT, product.brand is LUT,
+  // but this keeps the function correct if it's ever called from a
+  // multi-brand admin view).
+  const related = await getRelatedProducts(product.id, product.categoryId, product.brand as Brand)
 
   const productLd = {
     '@context': 'https://schema.org',

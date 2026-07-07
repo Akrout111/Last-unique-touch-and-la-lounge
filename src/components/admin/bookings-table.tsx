@@ -29,7 +29,8 @@ interface BookingsTableProps {
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
   CONFIRMED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-700',
+  PAYMENT_FAILED: 'bg-red-100 text-red-700',
+  CANCELLED: 'bg-gray-100 text-gray-700',
   COMPLETED: 'bg-blue-100 text-blue-700',
 }
 
@@ -41,7 +42,9 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
   const [searchValue, setSearchValue] = useState(searchParams.get('q') ?? '')
   const isFirstRender = useRef(true)
 
-  const statusFilters = ['all', 'PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']
+  // V9 Fix #6: include PAYMENT_FAILED in the filter chips so admins can
+  // find and retry/cancel bookings whose payment failed.
+  const statusFilters = ['all', 'PENDING', 'CONFIRMED', 'PAYMENT_FAILED', 'CANCELLED', 'COMPLETED']
 
   useEffect(() => {
     if (isFirstRender.current) {

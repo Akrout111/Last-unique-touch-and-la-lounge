@@ -36,6 +36,17 @@ interface BookingDetailProps {
   locale: string
 }
 
+// V9 Fix #6: status → badge color map. Includes PAYMENT_FAILED so the
+// detail page renders a distinct red badge instead of falling through to
+// the default blue.
+const statusBadgeColors: Record<string, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-700',
+  CONFIRMED: 'bg-green-100 text-green-700',
+  PAYMENT_FAILED: 'bg-red-100 text-red-700',
+  CANCELLED: 'bg-gray-100 text-gray-700',
+  COMPLETED: 'bg-blue-100 text-blue-700',
+}
+
 export function BookingDetail({ booking, locale }: BookingDetailProps) {
   const t = useTranslations()
   const { showToast } = useToast()
@@ -53,7 +64,9 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
   const rentalAmount = booking.product ? booking.product.rentalPricePerDay * days : booking.totalAmount
   const depositAmount = booking.product ? booking.product.securityDeposit : 0
 
-  const handleStatusChange = async (newStatus: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
+  const handleStatusChange = async (
+    newStatus: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+  ) => {
     setUpdating(true)
     const result = await updateBookingStatusAction(booking.id, newStatus)
     setUpdating(false)
@@ -87,10 +100,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
           <p className="text-sm text-muted-foreground mt-1 font-mono" dir="ltr">#{booking.id}</p>
         </div>
         <span className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-          booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-          booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-          booking.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-          'bg-blue-100 text-blue-700'
+          statusBadgeColors[booking.status] ?? 'bg-gray-100 text-gray-700'
         }`}>
           {t(`admin.bookings.filterStatus.${booking.status}` as const)}
         </span>
@@ -197,6 +207,29 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4 me-2" />}
                 {t('admin.bookings.detail.complete')}
+              </Button>
+              <Button
+                onClick={() => handleStatusChange('CANCELLED')}
+                disabled={updating}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <X className="w-4 h-4 me-2" />
+                {t('admin.bookings.detail.cancel')}
+              </Button>
+            </>
+          )}
+          {/* V9 Fix #6: PAYMENT_FAILED bookings can be retried (back to PENDING,
+              so the customer can attempt payment again) or cancelled. */}
+          {booking.status === 'PAYMENT_FAILED' && (
+            <>
+              <Button
+                onClick={() => handleStatusChange('PENDING')}
+                disabled={updating}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 me-2" />}
+                {t('admin.bookings.detail.retryPayment')}
               </Button>
               <Button
                 onClick={() => handleStatusChange('CANCELLED')}

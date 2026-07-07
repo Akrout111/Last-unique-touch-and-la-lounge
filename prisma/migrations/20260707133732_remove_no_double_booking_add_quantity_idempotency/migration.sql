@@ -1,5 +1,11 @@
--- DropIndex
-DROP INDEX "Product_brand_slug_idx";
+-- CreateTable
+CREATE TABLE "IdempotencyKey" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "key" TEXT NOT NULL,
+    "orderId" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" DATETIME NOT NULL
+);
 
 -- RedefineTables
 PRAGMA defer_foreign_keys=ON;
@@ -14,6 +20,7 @@ CREATE TABLE "new_Booking" (
     "customerName" TEXT NOT NULL,
     "customerPhone" TEXT NOT NULL,
     "customerEmail" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
     "totalAmount" REAL NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'KWD',
     "address" TEXT,
@@ -29,14 +36,11 @@ ALTER TABLE "new_Booking" RENAME TO "Booking";
 CREATE INDEX "Booking_brand_createdAt_idx" ON "Booking"("brand", "createdAt");
 CREATE INDEX "Booking_productId_startDate_endDate_idx" ON "Booking"("productId", "startDate", "endDate");
 CREATE INDEX "Booking_status_idx" ON "Booking"("status");
-CREATE UNIQUE INDEX "Booking_productId_startDate_endDate_key" ON "Booking"("productId", "startDate", "endDate");
 PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;
 
--- RedefineIndex
-DROP INDEX "category_brand_slug_unique";
-CREATE UNIQUE INDEX "Category_brand_slug_key" ON "Category"("brand", "slug");
+-- CreateIndex
+CREATE UNIQUE INDEX "IdempotencyKey_key_key" ON "IdempotencyKey"("key");
 
--- RedefineIndex
-DROP INDEX "product_brand_slug_unique";
-CREATE UNIQUE INDEX "Product_brand_slug_key" ON "Product"("brand", "slug");
+-- CreateIndex
+CREATE INDEX "IdempotencyKey_key_expiresAt_idx" ON "IdempotencyKey"("key", "expiresAt");

@@ -25,41 +25,58 @@ function getClientIp(req: NextRequest): string {
 }
 
 /**
- * Best-effort n8n webhook fan-out. If N8N_WEBHOOK_URL is unset we simply
- * skip the webhook (e.g. local dev). Any failure is swallowed and logged
- * — the contact message has already been persisted to SecurityLog so we
- * never lose data due to an n8n outage.
+ * Best-effort n8n webhook fan-out (V9 Fix #7).
+ *
+ * Previously this function was `await`ed inside the request handler, which
+ * blocked the response for up to 10s (the AbortController timeout). If n8n
+ * was slow or down, the contact form appeared to hang.
+ *
+ * Now we fire the webhook WITHOUT awaiting — the response returns to the
+ * client immediately after the SecurityLog row is committed. The fetch is
+ * still wrapped in a try/catch (via `.catch()`) so failures are logged but
+ * never surface to the caller. The message itself is already persisted in
+ * SecurityLog so no data is lost on an n8n outage.
+ *
+ * We keep a generous 30s timeout on the fetch itself (vs the previous 10s)
+ * because the fetch now runs in the background — there's no UX cost to
+ * waiting longer for n8n to respond, and a longer timeout is more likely
+ * to succeed under transient n8n latency.
  */
-async function fanOutToN8n(payload: unknown): Promise<void> {
+function fanOutToN8n(payload: unknown): void {
   const webhookUrl = process.env.N8N_WEBHOOK_URL
   if (!webhookUrl) {
     return
   }
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10_000)
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Event': 'contact.submitted',
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      })
+
+  // Fire-and-forget: do NOT await this Promise. The caller returns 200
+  // immediately while the fetch runs in the background. Any error is
+  // caught by `.catch()` so it never surfaces as an unhandled rejection.
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30_000)
+
+  fetch(webhookUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Event': 'contact.submitted',
+    },
+    body: JSON.stringify(payload),
+    signal: controller.signal,
+  })
+    .then((response) => {
       if (!response.ok) {
         console.warn(
           `[contact] n8n webhook returned non-OK status: ${response.status}`
         )
       }
-    } finally {
+    })
+    .catch((error) => {
+      // Catch but don't throw — the message is already persisted locally.
+      console.error('[contact] n8n webhook failed:', error)
+    })
+    .finally(() => {
       clearTimeout(timeout)
-    }
-  } catch (error) {
-    // Catch but don't throw — the message is already persisted locally.
-    console.error('[contact] n8n webhook failed:', error)
-  }
+    })
 }
 
 /**
@@ -69,6 +86,11 @@ async function fanOutToN8n(payload: unknown): Promise<void> {
  * never lose messages even if n8n is down) and fires a best-effort n8n
  * webhook if `N8N_WEBHOOK_URL` is configured. Rate limited to 3
  * requests per minute per IP.
+ *
+ * V9 Fix #7: the n8n fan-out is fire-and-forget (not awaited) so the
+ * response returns to the client immediately after the SecurityLog row
+ * commits. Previously the handler awaited the n8n fetch (up to 10s
+ * timeout), making the contact form appear to hang when n8n was slow.
  */
 export async function POST(req: NextRequest) {
   // --- Rate limit (3/min/IP) ---
@@ -119,8 +141,11 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // 2. Best-effort fan-out to n8n (errors swallowed — see above).
-    await fanOutToN8n({
+    // 2. Best-effort fan-out to n8n (fire-and-forget, V9 Fix #7).
+    //    Not awaited — the response returns immediately. The fetch runs in
+    //    the background; failures are logged via `.catch()` but never
+    //    surface to the caller. The message is already persisted above.
+    fanOutToN8n({
       event: 'contact.submitted',
       timestamp: new Date().toISOString(),
       ip,

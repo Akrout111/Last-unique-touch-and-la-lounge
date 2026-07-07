@@ -84,6 +84,11 @@ model Booking {
   customerName  String
   customerPhone String
   customerEmail String
+  // quantity (V9 Fix #4): number of units booked for this product in this
+  // date range. Allows stock>1 products to be booked multiple times for
+  // overlapping dates (e.g. 5 chairs for a 3-day event when stock=10).
+  // Defaults to 1 for backward compatibility with pre-existing bookings.
+  quantity      Int           @default(1)
   totalAmount   Float
   currency      String        @default("KWD")
   address       String?
@@ -95,10 +100,30 @@ model Booking {
   @@index([brand, createdAt])
   @@index([productId, startDate, endDate])
   @@index([status])
-  // The no_double_booking unique constraint only applies when productId
-  // is set (SQLite treats NULL as distinct, so birthday bookings without
-  // a product won't collide).
-  @@unique([productId, startDate, endDate], name: "no_double_booking")
+  // V9 Fix #4: REMOVED `@@unique([productId, startDate, endDate])` (was
+  // named "no_double_booking"). The unique constraint prevented ANY two
+  // bookings for the same product on the same dates — even when stock>1.
+  // Stock-aware availability is now enforced in code (inside the
+  // /api/orders transaction) by summing booked quantities and comparing
+  // against `product.stock`. The `@@index([productId, startDate, endDate])`
+  // above is kept for query performance on the availability check.
+}
+
+// ===== Idempotency Keys (V9 Fix #5) =====
+// Dedicated table for order idempotency so the `key` column can have a
+// real UNIQUE constraint (SecurityLog.details is a free-form string and
+// cannot be uniquely indexed reliably). The `orderId` column links the
+// key to the resulting Booking once the transaction commits.
+model IdempotencyKey {
+  id        String    @id @default(cuid())
+  key       String    @unique
+  orderId   String?
+  createdAt DateTime  @default(now())
+  // expiresAt lets us garbage-collect old keys (24h retention). Kept
+  // nullable-free so a missing value never causes a query surprise.
+  expiresAt DateTime
+
+  @@index([key, expiresAt])
 }
 
 // ===== Security Event Log =====
