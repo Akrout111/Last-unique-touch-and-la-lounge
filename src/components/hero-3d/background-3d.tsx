@@ -199,7 +199,9 @@ function TunnelItem({
 
 function InfiniteTunnel({ isMobile }: { isMobile: boolean }) {
   // Mobile renders ~45% fewer items — big perf win on low-end GPUs.
-  const itemCount = isMobile ? 10 : 18
+  // V10 user request: increased desktop count from 18 → 28 for a denser,
+  // richer 3D background. Mobile bumped from 10 → 14 proportionally.
+  const itemCount = isMobile ? 14 : 28
   const itemsRef = useRef<THREE.Group[]>([])
 
   const items = useMemo<TunnelItemData[]>(() => {

@@ -105,7 +105,8 @@
     "privacy": "Privacy Policy",
     "refund": "Refund Policy",
     "legal": "Legal",
-    "craftedIn": "Crafted with passion in Kuwait"
+    "craftedIn": "Crafted with passion in Kuwait",
+    "rightsNeutral": "© {year} All rights reserved."
   },
   "common": {
     "loading": "Loading...",
@@ -599,15 +600,27 @@
     "services": {
       "planning": {
         "title": "Planning & Setup",
-        "desc": "Complete event planning from concept to execution — innovative designs, site management, and full coordination"
+        "desc": "Complete event planning from concept to execution — innovative designs, site management, and full coordination",
+        "example1": "Weddings",
+        "example2": "Corporate Events",
+        "example3": "Fashion Shows",
+        "example4": "Conferences"
       },
       "furniture": {
         "title": "Furniture Supply",
-        "desc": "Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems"
+        "desc": "Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems",
+        "example1": "Gold Chiavari Chairs",
+        "example2": "Cocktail Tables",
+        "example3": "Luxury Sofas",
+        "example4": "Display Platforms"
       },
       "custom": {
         "title": "Custom Furniture Making",
-        "desc": "Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion"
+        "desc": "Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion",
+        "example1": "Custom Platforms",
+        "example2": "Stage Decor",
+        "example3": "Themed Furniture",
+        "example4": "Exclusive Designs"
       }
     }
   },
@@ -644,15 +657,27 @@
       "title": "Our Services",
       "item1": {
         "title": "Cake Design",
-        "desc": "Custom luxury birthday cakes with artistic designs to match your party theme."
+        "desc": "Custom luxury birthday cakes with artistic designs to match your party theme.",
+        "example1": "3-Tier Cake",
+        "example2": "Cartoon Character Cake",
+        "example3": "Princess Theme Cake",
+        "example4": "O Musk Bar Cake"
       },
       "item2": {
         "title": "Balloon Styling",
-        "desc": "Organic balloon arches and arrangements in innovative colors and shapes."
+        "desc": "Organic balloon arches and arrangements in innovative colors and shapes.",
+        "example1": "Organic Balloon Arch",
+        "example2": "Balloon Wall",
+        "example3": "Helium Balloons",
+        "example4": "Theme Arrangements"
       },
       "item3": {
         "title": "Sound & Lighting",
-        "desc": "Professional sound systems and colored stage lighting to set the party vibe."
+        "desc": "Professional sound systems and colored stage lighting to set the party vibe.",
+        "example1": "2000W Sound System",
+        "example2": "Colored LED Lighting",
+        "example3": "Professional Laser",
+        "example4": "Stage Smoke"
       }
     },
     "packages": {

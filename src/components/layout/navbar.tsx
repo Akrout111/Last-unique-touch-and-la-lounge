@@ -17,6 +17,17 @@ function resolveBrandFromPath(pathname: string | null): BrandKey {
   return 'lut'
 }
 
+/**
+ * Detect if the current route is the home page (`/` or `/ar` or `/en`).
+ * On the home page the navbar wordmark is hidden — the home page is the
+ * umbrella landing for all 3 brands and should not show any single
+ * brand's name (V10 user request).
+ */
+function isHomePage(pathname: string | null): boolean {
+  if (!pathname) return false
+  return pathname === '/' || pathname === '/ar' || pathname === '/en'
+}
+
 export function Navbar() {
   const t = useTranslations()
   const locale = useLocale()
@@ -28,6 +39,10 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
 
   const brand = resolveBrandFromPath(pathname)
+  // Only treat as home page after mount — during SSR, `usePathname()` may
+  // return null for statically prerendered pages, causing the wordmark to
+  // show on the home page. After hydration, the correct pathname is available.
+  const homePage = mounted ? isHomePage(pathname) : false
 
   useEffect(() => {
     setMounted(true)
@@ -73,29 +88,34 @@ export function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4">
-            {/* LEFT: wordmark (always visible) + desktop nav (md+) */}
+            {/* LEFT: wordmark (hidden on home page) + desktop nav (md+) */}
             <div className="flex items-center gap-8 lg:gap-10 min-w-0">
-              {/* Wordmark — links home */}
-              <Link
-                href="/"
-                className="group flex items-baseline gap-2 min-w-0 shrink-0"
-                aria-label={wordmark.main}
-              >
-                <span
-                  className="font-display tracking-tight whitespace-nowrap transition-colors duration-300 text-primary text-lg sm:text-xl lg:text-2xl"
+              {/* Wordmark — links home.
+                  On the home page the wordmark is hidden — the home page
+                  is the umbrella landing for all 3 brands and should not
+                  show any single brand's name. */}
+              {!homePage && (
+                <Link
+                  href="/"
+                  className="group flex items-baseline gap-2 min-w-0 shrink-0"
+                  aria-label={wordmark.main}
                 >
-                  {wordmark.main}
-                </span>
-                {wordmark.subtitle && (
                   <span
-                    className={`hidden sm:inline text-[10px] lg:text-xs font-sans tracking-[0.2em] uppercase transition-colors duration-300 ${
-                      scrolled ? 'text-paper/60' : 'text-ink/60'
-                    } group-hover:text-primary`}
+                    className="font-display tracking-tight whitespace-nowrap transition-colors duration-300 text-primary text-lg sm:text-xl lg:text-2xl"
                   >
-                    {wordmark.subtitle}
+                    {wordmark.main}
                   </span>
-                )}
-              </Link>
+                  {wordmark.subtitle && (
+                    <span
+                      className={`hidden sm:inline text-[10px] lg:text-xs font-sans tracking-[0.2em] uppercase transition-colors duration-300 ${
+                        scrolled ? 'text-paper/60' : 'text-ink/60'
+                      } group-hover:text-primary`}
+                    >
+                      {wordmark.subtitle}
+                    </span>
+                  )}
+                </Link>
+              )}
 
               {/* Desktop nav links — visible md+ */}
               <div className="hidden md:flex items-center gap-10">
@@ -191,9 +211,13 @@ export function Navbar() {
               className="fixed top-0 end-0 bottom-0 z-50 w-80 max-w-[85vw] bg-ink md:hidden flex flex-col"
             >
               <div className="p-6 border-b border-paper/10 flex items-center justify-between">
-                <span className="font-display text-primary text-lg">
-                  {wordmark.main}
-                </span>
+                {/* Wordmark hidden on home page (umbrella landing — no single brand) */}
+                {!homePage && (
+                  <span className="font-display text-primary text-lg">
+                    {wordmark.main}
+                  </span>
+                )}
+                {homePage && <span />}
                 <button
                   onClick={() => setMobileOpen(false)}
                   className="text-paper/60 hover:text-paper min-w-[44px] min-h-[44px] flex items-center justify-center"

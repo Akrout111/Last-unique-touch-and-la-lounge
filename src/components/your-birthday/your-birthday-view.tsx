@@ -376,11 +376,22 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.15)' },
-                { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: '#EC4899', glow: 'rgba(236, 72, 153, 0.15)' },
-                { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: '#00F3FF', glow: 'rgba(0, 243, 255, 0.15)' },
-              ].map((service, i) => (
+              {(() => {
+                const ex = isRTL ? {
+                  item1: ['كيك ثلاثي الطبقات', 'كيك بشخصيات كرتونية', 'كيك ثيم الأميرة', 'كيك أو مسك بار'],
+                  item2: ['قوس بالونات عضوي', 'جدار بالونات', 'بالونات هيليوم', 'تنسيقات ثيم'],
+                  item3: ['نظام صوت 2000 واط', 'إضاءة LED ملونة', 'ليزر احترافي', 'دخان مسرحي'],
+                } : {
+                  item1: ['3-Tier Cake', 'Cartoon Character Cake', 'Princess Theme Cake', 'O Musk Bar Cake'],
+                  item2: ['Organic Balloon Arch', 'Balloon Wall', 'Helium Balloons', 'Theme Arrangements'],
+                  item3: ['2000W Sound System', 'Colored LED Lighting', 'Professional Laser', 'Stage Smoke'],
+                }
+                return [
+                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.15)', examples: ex.item1 },
+                { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: '#EC4899', glow: 'rgba(236, 72, 153, 0.15)', examples: ex.item2 },
+                { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: '#00F3FF', glow: 'rgba(0, 243, 255, 0.15)', examples: ex.item3 },
+                ]
+              })().map((service, i) => (
                 <div
                   key={i}
                   className="group relative p-8 rounded-lg bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
@@ -410,129 +421,16 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   >
                     {service.title}
                   </h3>
-                  <p className="text-white/60 text-sm leading-relaxed">{service.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* === PACKAGES SECTION === */}
-        <section id="packages-section" className="relative z-10 py-24 bg-[#020204]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-
-            <div className="text-center mb-16 space-y-4">
-              <h2
-                className="text-3xl md:text-5xl font-black uppercase tracking-wider"
-                style={{
-                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
-                  background: 'linear-gradient(135deg, #F97316, #EC4899)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {t('packages.title')}
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[#F97316] to-[#EC4899] mx-auto rounded-full" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-              {[
-                {
-                  name: t('packages.basic.name'),
-                  price: '150',
-                  color: '#8B5CF6',
-                  popular: false,
-                  shadow: 'rgba(139, 92, 246, 0.1)',
-                  features: [
-                    t('packages.basic.feature1'),
-                    t('packages.basic.feature2'),
-                    t('packages.basic.feature3'),
-                    t('packages.basic.feature4'),
-                  ]
-                },
-                {
-                  name: t('packages.premium.name'),
-                  price: '350',
-                  color: '#EC4899',
-                  popular: true,
-                  shadow: 'rgba(236, 72, 153, 0.25)',
-                  features: [
-                    t('packages.premium.feature1'),
-                    t('packages.premium.feature2'),
-                    t('packages.premium.feature3'),
-                    t('packages.premium.feature4'),
-                  ]
-                },
-                {
-                  name: t('packages.luxury.name'),
-                  price: '750',
-                  color: '#00F3FF',
-                  popular: false,
-                  shadow: 'rgba(0, 243, 255, 0.1)',
-                  features: [
-                    t('packages.luxury.feature1'),
-                    t('packages.luxury.feature2'),
-                    t('packages.luxury.feature3'),
-                    t('packages.luxury.feature4'),
-                  ]
-                },
-              ].map((pkg, i) => (
-                <div
-                  key={i}
-                  className={`relative p-8 rounded-lg border transition-all duration-500 backdrop-blur-md flex flex-col justify-between overflow-hidden ${
-                    pkg.popular
-                      ? 'bg-[#0e0a16]/90 border-2 scale-105 z-10 shadow-[0_15px_40px_-5px_rgba(236,72,153,0.3)]'
-                      : 'bg-[#07070d]/80 border-white/5 hover:border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:scale-[1.02]'
-                  }`}
-                  style={pkg.popular ? { borderColor: pkg.color } : {}}
-                >
-                  {pkg.popular && (
-                    <div
-                      className="absolute -top-1 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-b-md text-[10px] sm:text-xs font-black text-white uppercase tracking-widest"
-                      style={{ background: 'linear-gradient(135deg, #EC4899, #8B5CF6)' }}
-                    >
-                      {t('packages.popular')}
-                    </div>
-                  )}
-
-                  <div>
-                    <h3
-                      className="text-2xl font-bold mb-4 tracking-wide"
-                      style={{ fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)' }}
-                    >
-                      {pkg.name}
-                    </h3>
-                    <div className="mb-8 flex items-baseline gap-1">
-                      <span className="text-5xl font-black tracking-tight" style={{ color: pkg.color }}>
-                        {pkg.price}
-                      </span>
-                      <span className="text-white/50 text-sm font-semibold"> {t('packages.currency')}</span>
-                    </div>
-
-                    <ul className="space-y-4 mb-8">
-                      {pkg.features.map((feature, fIdx) => (
-                        <li key={fIdx} className="flex items-center gap-3 text-sm text-white/80">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 bg-white/5 border border-white/10" style={{ color: pkg.color }}>
-                            <Check className="w-3.5 h-3.5" />
-                          </div>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => handleBookingClick(pkg.name)}
-                    className="w-full py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
-                    style={{
-                      background: pkg.popular ? `linear-gradient(135deg, #EC4899, #8B5CF6)` : '#ffffff10',
-                      border: pkg.popular ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                      fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
-                    }}
-                  >
-                    {t('packages.cta')}
-                  </button>
+                  <p className="text-white/60 text-sm leading-relaxed mb-4">{service.desc}</p>
+                  {/* V10 user request: examples list inside each service card */}
+                  <ul className="space-y-2 mt-4 pt-4 border-t border-white/10">
+                    {service.examples.map((example, j) => (
+                      <li key={j} className="text-xs text-white/70 flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: service.color }} />
+                        {example}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>

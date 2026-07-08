@@ -1,8 +1,10 @@
 #!/bin/bash
 # Auto-restart loop for the production server
-# This script runs forever, restarting the server if it crashes
-
 cd /home/z/my-project
+export PORT=3000
+export DATABASE_URL="file:/home/z/my-project/prisma/db/app.db"
+export NODE_ENV=production
+export HOSTNAME=0.0.0.0
 
 while true; do
   echo "[$(date)] Starting server..." >> /tmp/server-loop.log

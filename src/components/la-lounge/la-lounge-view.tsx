@@ -18,13 +18,39 @@ export default function LaLoungeView() {
   const t = useTranslations()
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
-  // V10 Fix #3: services array now uses i18n keys instead of inline ternaries.
-  // The icon components are kept as code (they can't be i18n'd); only the
-  // title/desc strings are translated.
-  const services: Array<{ title: string; desc: string; icon: LucideIcon }> = [
-    { title: t('laLounge.services.planning.title'), desc: t('laLounge.services.planning.desc'), icon: ClipboardList },
-    { title: t('laLounge.services.furniture.title'), desc: t('laLounge.services.furniture.desc'), icon: Armchair },
-    { title: t('laLounge.services.custom.title'), desc: t('laLounge.services.custom.desc'), icon: Sparkles },
+  // V10 user request: added examples for each service to show concrete
+  // items/events the customer can expect.
+  // Note: examples are defined inline (locale-aware) because next-intl's
+  // t() doesn't resolve newly-added keys in the standalone build reliably.
+  const ex = locale === 'ar' ? {
+    planning: ['حفلات الزفاف', 'الفعاليات المؤسسية', 'معارض الأزياء', 'المؤتمرات'],
+    furniture: ['كراسي شيفاري الذهبية', 'طاولات كوكتيل', 'أرائك فاخرة', 'منصات عرض'],
+    custom: ['منصات مخصصة', 'ديكورات مسرحية', 'أثاث ثيماتيكي', 'تصاميم حصرية'],
+  } : {
+    planning: ['Weddings', 'Corporate Events', 'Fashion Shows', 'Conferences'],
+    furniture: ['Gold Chiavari Chairs', 'Cocktail Tables', 'Luxury Sofas', 'Display Platforms'],
+    custom: ['Custom Platforms', 'Stage Decor', 'Themed Furniture', 'Exclusive Designs'],
+  }
+
+  const services: Array<{ title: string; desc: string; icon: LucideIcon; examples: string[] }> = [
+    {
+      title: t('laLounge.services.planning.title'),
+      desc: t('laLounge.services.planning.desc'),
+      icon: ClipboardList,
+      examples: ex.planning,
+    },
+    {
+      title: t('laLounge.services.furniture.title'),
+      desc: t('laLounge.services.furniture.desc'),
+      icon: Armchair,
+      examples: ex.furniture,
+    },
+    {
+      title: t('laLounge.services.custom.title'),
+      desc: t('laLounge.services.custom.desc'),
+      icon: Sparkles,
+      examples: ex.custom,
+    },
   ]
 
   const scrollToServices = () => {
@@ -122,7 +148,16 @@ export default function LaLoungeView() {
                     <Icon className="size-6" />
                   </div>
                   <h3 className="font-serif text-xl text-primary mb-3">{service.title}</h3>
-                  <p className="text-sm text-primary/60 leading-relaxed">{service.desc}</p>
+                  <p className="text-sm text-primary/60 leading-relaxed mb-4">{service.desc}</p>
+                  {/* V10 user request: examples list inside each service card */}
+                  <ul className="text-start space-y-1.5 mt-4 pt-4 border-t border-primary/10">
+                    {service.examples.map((example, j) => (
+                      <li key={j} className="text-xs text-primary/70 flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-primary/50 shrink-0" />
+                        {example}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )
             })}

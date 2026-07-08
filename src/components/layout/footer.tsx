@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
 import { Instagram, Phone } from 'lucide-react'
@@ -14,17 +15,40 @@ function resolveBrandFromPath(pathname: string | null): BrandKey {
   return 'lut'
 }
 
+/**
+ * Detect if the current route is the home page (`/` or `/ar` or `/en`).
+ * On the home page the footer brand name + copyright are neutral — the
+ * home page is the umbrella landing for all 3 brands and should not
+ * show any single brand's name (V10 user request).
+ */
+function isHomePage(pathname: string | null): boolean {
+  if (!pathname) return false
+  return pathname === '/' || pathname === '/ar' || pathname === '/en'
+}
+
 export function Footer() {
   const t = useTranslations()
   const pathname = usePathname()
+  const [mounted, setMounted] = useState(false)
   const brand = resolveBrandFromPath(pathname)
+  // Only treat as home page after mount — during SSR, `usePathname()` may
+  // return null for statically prerendered pages.
+  const homePage = mounted ? isHomePage(pathname) : false
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // On the home page, don't show any single brand's name — the home page
+  // is the umbrella landing for all 3 brands.
   const brandName =
-    brand === 'lalounge'
-      ? t('brand.lalounge')
-      : brand === 'birthday'
-        ? t('brand.birthday')
-        : t('brand.lut')
+    homePage
+      ? null
+      : brand === 'lalounge'
+        ? t('brand.lalounge')
+        : brand === 'birthday'
+          ? t('brand.birthday')
+          : t('brand.lut')
 
   const whatsappUrl = buildWhatsappUrl()
   const phoneNumber = getPhoneNumber()
@@ -41,9 +65,12 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-5">
             <div className="flex items-center gap-2 mb-6">
-              <span className="font-display text-3xl text-paper">
-                {brandName}
-              </span>
+              {/* Brand name hidden on home page (umbrella landing — no single brand) */}
+              {brandName && (
+                <span className="font-display text-3xl text-paper">
+                  {brandName}
+                </span>
+              )}
               <span className="w-2 h-2 rounded-full bg-gold" />
             </div>
             <p className="text-sm leading-relaxed mb-8 max-w-sm">
@@ -146,7 +173,9 @@ export function Footer() {
               WCAG AA (4.5:1) on the bg-ink charcoal footer. The eyebrow
               line below stays decorative (text-paper/30, "Crafted in Kuwait"). */}
           <p className="text-xs text-paper/60">
-            {t('footer.rights', { year: new Date().getFullYear() })}
+            {homePage
+              ? t('footer.rightsNeutral', { year: new Date().getFullYear() })
+              : t('footer.rights', { year: new Date().getFullYear() })}
           </p>
           <p className="eyebrow text-paper/30">
             {t('footer.craftedIn')}
