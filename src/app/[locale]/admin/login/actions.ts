@@ -11,11 +11,17 @@ const LOGIN_WINDOW_MS = 60 * 1000
 
 async function getClientIp(): Promise<string> {
   const h = await headers()
-  return (
-    h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    h.get('x-real-ip') ||
-    'unknown'
-  )
+  // Take the LAST entry of x-forwarded-for — that is the IP set by the
+  // trusted reverse proxy. Earlier entries are client-controllable and
+  // must not be used for rate-limit keying (XFF spoofing fix).
+  const xff = h.get('x-forwarded-for')
+  if (xff) {
+    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+    if (parts.length > 0) {
+      return parts[parts.length - 1] || 'unknown'
+    }
+  }
+  return h.get('x-real-ip') || 'unknown'
 }
 
 // V13 Group B: Wrap the entire loginAction in try/catch so any unexpected

@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
 import { LaLoungeSunburst } from '@/components/brand/lalounge-sunburst'
 import { LaLoungeLightSweep } from '@/components/brand/lalounge-light-sweep'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 // Lazy-load the 3D purple waves scene so the page's initial JS bundle stays
 // small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
@@ -62,10 +63,12 @@ export default function LaLoungeView() {
   }
 
   return (
-    <div className="relative w-full bg-white">
+    <div className="relative w-full bg-background">
       {/* === Hero section — title centered, purple 3D background === */}
       <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
-        <PurpleWaves3D />
+        <ErrorBoundary>
+          <PurpleWaves3D />
+        </ErrorBoundary>
 
         {/* La Lounge art-deco sunburst — static decorative halo behind the
             title. Phase 5 motion cleanup: dimmed from opacity-40 to opacity-20
@@ -106,7 +109,7 @@ export default function LaLoungeView() {
           </h1>
 
           <p
-            className="text-sm sm:text-base text-primary/70 font-sans tracking-wide max-w-lg mb-8"
+            className="text-sm sm:text-base text-foreground/70 font-sans tracking-wide max-w-lg mb-8"
           >
             {t('laLounge.subtitle')}
           </p>
@@ -122,21 +125,21 @@ export default function LaLoungeView() {
 
         {/* Scroll hint */}
         <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-primary/60"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-foreground/60"
         >
           <ArrowDown className="w-5 h-5 animate-bounce" />
         </div>
       </div>
 
       {/* === Services section — revealed on scroll === */}
-      <div id="services" className="relative z-10 py-20 px-4 bg-primary/5">
+      <div id="services" className="relative z-10 py-20 px-4 bg-card">
         <div className="max-w-5xl mx-auto">
           <h2
             className="font-display text-3xl sm:text-5xl text-primary text-center mb-4"
           >
             {t('laLounge.servicesTitle')}
           </h2>
-          <p className="text-center text-primary/60 mb-12 max-w-xl mx-auto text-sm">
+          <p className="text-center text-foreground/60 mb-12 max-w-xl mx-auto text-sm">
             {t('laLounge.servicesSubtitle')}
           </p>
 
@@ -146,17 +149,17 @@ export default function LaLoungeView() {
               return (
                 <div
                   key={i}
-                  className="bg-white/80 backdrop-blur-md border border-primary/10 rounded-lg p-8 text-center hover:shadow-lg transition-shadow"
+                  className="bg-card/80 backdrop-blur-md border border-primary/10 rounded-lg p-8 text-center hover:shadow-lg transition-shadow"
                 >
                   <div className="flex items-center justify-center mb-5 text-primary">
                     <Icon className="size-6" />
                   </div>
                   <h3 className="font-display text-xl text-primary mb-3">{service.title}</h3>
-                  <p className="text-sm text-primary/60 leading-relaxed mb-4">{service.desc}</p>
+                  <p className="text-sm text-foreground/60 leading-relaxed mb-4">{service.desc}</p>
                   {/* V10 user request: examples list inside each service card */}
                   <ul className="text-start space-y-1.5 mt-4 pt-4 border-t border-primary/10">
                     {service.examples.map((example, j) => (
-                      <li key={j} className="text-xs text-primary/70 flex items-center gap-2">
+                      <li key={j} className="text-xs text-foreground/70 flex items-center gap-2">
                         <span className="w-1 h-1 rounded-full bg-primary/50 shrink-0" />
                         {example}
                       </li>

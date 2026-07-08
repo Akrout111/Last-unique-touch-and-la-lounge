@@ -109,7 +109,7 @@ export function Navbar() {
                   {wordmark.subtitle && (
                     <span
                       className={`hidden sm:inline text-[10px] lg:text-xs font-sans tracking-[0.2em] uppercase transition-colors duration-300 ${
-                        scrolled ? 'text-paper/60' : 'text-paper/60'
+                        scrolled ? 'text-paper/60' : 'text-foreground/60'
                       } group-hover:text-primary`}
                     >
                       {wordmark.subtitle}
@@ -127,7 +127,7 @@ export function Navbar() {
                     className={`relative text-sm font-medium tracking-wide transition-colors duration-300 group ${
                       pathname === link.href
                         ? 'text-gold'
-                        : scrolled ? 'text-paper/70 hover:text-paper' : 'text-paper/70 hover:text-paper'
+                        : scrolled ? 'text-paper/70 hover:text-paper' : 'text-foreground/70 hover:text-foreground'
                     }`}
                   >
                     {link.label}
@@ -151,8 +151,8 @@ export function Navbar() {
                   aria-label={t('nav.toggleTheme')}
                   className={`flex items-center justify-center w-9 h-9 min-h-[44px] min-w-[44px] rounded-full transition-colors ${
                     scrolled
-                      ? 'text-paper/70 hover:text-gold hover:bg-paper/10'
-                      : 'text-paper/70 hover:text-gold hover:bg-paper/10'
+                      ? 'text-foreground/70 hover:text-gold hover:bg-foreground/10'
+                      : 'text-foreground/70 hover:text-gold hover:bg-foreground/10'
                   }`}
                 >
                   {resolvedTheme === 'dark' ? (
@@ -170,8 +170,8 @@ export function Navbar() {
                   onClick={switchLocale}
                   className={`flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-xs font-medium transition-colors ${
                     scrolled
-                      ? 'text-paper/70 hover:text-gold'
-                      : 'text-paper/70 hover:text-gold'
+                      ? 'text-foreground/70 hover:text-gold'
+                      : 'text-foreground/70 hover:text-gold'
                   }`}
                 >
                   <Globe className="w-4 h-4" strokeWidth={1.3} />
@@ -181,7 +181,7 @@ export function Navbar() {
 
               {/* Mobile menu button — visible only on mobile */}
               <button
-                className="md:hidden text-paper p-2 min-w-[44px] min-h-[44px]"
+                className="md:hidden text-foreground p-2 min-w-[44px] min-h-[44px]"
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={t('nav.menu')}
                 aria-expanded={mobileOpen}
@@ -221,7 +221,7 @@ export function Navbar() {
                 {homePage && <span />}
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="text-paper/60 hover:text-paper min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="text-foreground/60 hover:text-foreground min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label={t('common.close')}
                 >
                   <X className="w-5 h-5" />
@@ -239,7 +239,7 @@ export function Navbar() {
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className={`block py-3 text-lg font-display ${
-                        pathname === link.href ? 'text-gold' : 'text-paper/70'
+                        pathname === link.href ? 'text-gold' : 'text-foreground/70'
                       }`}
                     >
                       {link.label}

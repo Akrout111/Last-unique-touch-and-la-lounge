@@ -3,10 +3,10 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import {
   type CartItem,
-  CART_KEY,
   getCart,
   addToCart as storageAdd,
   removeFromCart as storageRemove,
+  updateQuantity as storageUpdateQuantity,
   clearCart as storageClear,
 } from '@/lib/cart'
 
@@ -49,27 +49,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(getCart())
   }, [])
 
+  // V11 Fix #6: Storage side-effects (localStorage.setItem + dispatchEvent)
+  // MUST NOT live inside a setState updater function. React may invoke the
+  // updater multiple times (e.g. in StrictMode) which would double-write to
+  // localStorage and double-dispatch events. Instead, mirror the addItem /
+  // removeItem pattern: call a dedicated storage helper, then sync state
+  // from the canonical cart snapshot via getCart().
   const updateQuantity = useCallback((index: number, quantity: number) => {
-    setItems((prev) => {
-      if (index < 0 || index >= prev.length) return prev
-      const item = prev[index]
-      if (!item) return prev
-      const newQty = Math.max(1, quantity)
-      const updated: CartItem = {
-        ...item,
-        quantity: newQty,
-        total:
-          item.rentalPricePerDay * item.days * newQty +
-          item.securityDeposit * newQty,
-      }
-      const next = [...prev]
-      next[index] = updated
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(CART_KEY, JSON.stringify(next))
-        window.dispatchEvent(new Event('cart-updated'))
-      }
-      return next
-    })
+    storageUpdateQuantity(index, quantity)
+    setItems(getCart())
   }, [])
 
   const clear = useCallback(() => {

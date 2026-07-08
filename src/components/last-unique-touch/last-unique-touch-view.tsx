@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight, Check, ArrowDown } from 'lucide-react'
 import { LutArabesque } from '@/components/brand/lut-arabesque'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 // Lazy-load the 3D furniture tunnel so the page's initial JS bundle stays
 // small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
@@ -32,7 +33,9 @@ export default function LastUniqueTouchView() {
     <section className="relative w-full bg-ink">
       {/* === Hero section — title centered, 3D furniture background === */}
       <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
-        <Background3D />
+        <ErrorBoundary>
+          <Background3D />
+        </ErrorBoundary>
 
         <div
           className="absolute inset-0 z-[1] pointer-events-none"

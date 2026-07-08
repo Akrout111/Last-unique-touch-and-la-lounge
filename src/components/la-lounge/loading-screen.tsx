@@ -48,7 +48,7 @@ export function LaLoungeLoadingScreen({ onComplete }: { onComplete: () => void }
         {/* Animated logo */}
         <div className="mb-8">
           <h1
-            className="text-5xl md:text-7xl font-serif font-light tracking-widest"
+            className="text-5xl md:text-7xl font-display font-light tracking-widest"
             style={{
               background: 'linear-gradient(135deg, #7e22ce, #ec4899, #c084fc)',
               WebkitBackgroundClip: 'text',

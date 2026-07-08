@@ -111,8 +111,11 @@ export async function deleteCategoryAction(id: string): Promise<{ success: boole
       return { success: false, error: 'not_found' }
     }
 
-    // Check if category has products
-    const productCount = await db.product.count({ where: { categoryId: id } })
+    // Check if category has products (scoped to the same brand — another
+    // tenant's products in a category with the same id is impossible since
+    // id is globally unique, but scoping by brand is defensive and correct
+    // because `owned` already proved this category belongs to this brand).
+    const productCount = await db.product.count({ where: { categoryId: id, brand } })
     if (productCount > 0) {
       return { success: false, error: 'has_products' }
     }

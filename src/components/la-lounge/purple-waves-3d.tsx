@@ -338,9 +338,21 @@ function EventArchitecture() {
 }
 
 function CameraRig() {
+  // Perf fix: `window.innerWidth` was being read on every frame (60/sec),
+  // which forced a synchronous layout reflow inside the render loop. Hoist
+  // the mobile check to a ref that updates only on resize.
+  const isMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+  useEffect(() => {
+    const onResize = () => {
+      isMobileRef.current = window.innerWidth < 768
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const isMobile = window.innerWidth < 768;
+    const isMobile = isMobileRef.current;
     const m = isMobile ? 1.4 : 1.0;
     
     // Cinematic slow sweep over the blueprint (Adjusted for mobile)

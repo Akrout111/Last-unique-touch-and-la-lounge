@@ -76,7 +76,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const body = await req.json()
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+    }
     const parsed = schema.safeParse(body)
 
     if (!parsed.success) {
@@ -88,52 +93,109 @@ export async function POST(req: NextRequest) {
 
     const { orderId } = parsed.data
 
-    // 1. Find the booking by orderId
-    const booking = await db.booking.findUnique({
-      where: { id: orderId },
-      include: { product: true },
-    })
+    // Fix #2: race-condition hardening. Previously the flow was
+    //   findUnique → status check → update → triggerOrderConfirmedWebhook
+    // with each step on a separate connection. Two concurrent
+    // payment-success webhooks for the same orderId could both observe
+    // PENDING, both pass the guard, and both update + fire n8n.
+    //
+    // Now the findUnique → status guard → update → idempotency-log run
+    // inside a single Serializable transaction (mirroring the pattern in
+    // /api/webhooks/payment-callback/route.ts). The n8n webhook trigger
+    // is moved OUTSIDE the transaction so a slow n8n doesn't hold locks.
+    const txResult = await db.$transaction(
+      async (tx) => {
+        // 1. Idempotency: have we already processed this orderId via
+        //    payment-success? Look for the SecurityLog entry we write
+        //    below on every successful transition.
+        const alreadyProcessed = await tx.securityLog.findFirst({
+          where: {
+            event: 'payment_success_processed',
+            details: { contains: orderId },
+          },
+        })
 
-    if (!booking) {
-      return NextResponse.json(
-        { error: 'order_not_found' },
-        { status: 404 }
-      )
-    }
+        if (alreadyProcessed) {
+          return { type: 'already_confirmed' as const }
+        }
 
-    // Idempotency: already confirmed
-    if (booking.status === 'CONFIRMED') {
+        // 2. Find the booking inside the transaction.
+        const booking = await tx.booking.findUnique({
+          where: { id: orderId },
+          include: { product: true },
+        })
+
+        if (!booking) {
+          return { type: 'not_found' as const }
+        }
+
+        // Idempotency: already confirmed — no-op.
+        if (booking.status === 'CONFIRMED') {
+          return { type: 'already_confirmed' as const }
+        }
+
+        if (booking.status !== 'PENDING') {
+          return { type: 'invalid_status' as const, current: booking.status }
+        }
+
+        // 3. Update booking to CONFIRMED inside the same tx.
+        await tx.booking.update({
+          where: { id: orderId },
+          data: { status: 'CONFIRMED' },
+        })
+
+        // 4. Write the idempotency log INSIDE the tx so a concurrent
+        //    duplicate payment-success webhook (or a retry) sees it on
+        //    the next transaction's findFirst.
+        await tx.securityLog.create({
+          data: {
+            event: 'payment_success_processed',
+            details: JSON.stringify({
+              orderId,
+              fromStatus: booking.status,
+              toStatus: 'CONFIRMED',
+            }),
+          },
+        })
+
+        return { type: 'updated' as const, orderId }
+      },
+      { isolationLevel: 'Serializable' }
+    )
+
+    if (txResult.type === 'already_confirmed') {
       return NextResponse.json({
         success: true,
         alreadyConfirmed: true,
         orderId,
       })
     }
-
-    if (booking.status !== 'PENDING') {
+    if (txResult.type === 'not_found') {
       return NextResponse.json(
-        { error: 'invalid_status' },
+        { error: 'order_not_found' },
+        { status: 404 }
+      )
+    }
+    if (txResult.type === 'invalid_status') {
+      return NextResponse.json(
+        { error: 'invalid_status', current: txResult.current },
         { status: 400 }
       )
     }
 
-    // 2. Update booking to CONFIRMED
-    await db.booking.update({
-      where: { id: orderId },
-      data: { status: 'CONFIRMED' },
-    })
-
-    // 3. Trigger n8n webhook (fire-and-forget, but log failures)
+    // txResult.type === 'updated' — fire n8n webhook OUTSIDE the
+    // transaction so a slow n8n doesn't hold the Serializable lock.
     try {
-      await triggerOrderConfirmedWebhook(booking.id)
+      await triggerOrderConfirmedWebhook(txResult.orderId)
     } catch (webhookError) {
-      // Log failure but don't fail the request
+      // Log failure but don't fail the request — the booking is already
+      // confirmed; n8n failure is a separate concern.
       console.error('n8n webhook failed:', webhookError)
       await db.securityLog.create({
         data: {
           event: 'n8n_webhook_failed',
           details: JSON.stringify({
-            orderId,
+            orderId: txResult.orderId,
             error: webhookError instanceof Error ? webhookError.message : 'unknown',
           }),
         },

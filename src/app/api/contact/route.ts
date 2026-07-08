@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { createHmac } from 'crypto'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
 
@@ -19,10 +20,15 @@ const contactSchema = z.object({
 })
 
 function getClientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    const first = forwarded.split(',')[0]
-    return first ? first.trim() : 'unknown'
+  // Take the LAST entry of x-forwarded-for — that is the IP set by the
+  // trusted reverse proxy. Earlier entries are client-controllable and
+  // must not be used for rate-limit keying (XFF spoofing fix).
+  const xff = req.headers.get('x-forwarded-for')
+  if (xff) {
+    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+    if (parts.length > 0) {
+      return parts[parts.length - 1] || 'unknown'
+    }
   }
   return req.headers.get('x-real-ip') ?? 'unknown'
 }
@@ -51,6 +57,38 @@ function fanOutToN8n(payload: unknown): void {
     return
   }
 
+  // Fix #6: in production the webhook URL MUST be https — otherwise a
+  // misconfigured http URL would leak the (signed) payload + secret-derived
+  // signature over the wire. Skip silently here (rather than throwing) so
+  // the contact form still returns 201 — the message is already persisted.
+  if (process.env.NODE_ENV === 'production' && !webhookUrl.startsWith('https://')) {
+    console.error(
+      '[contact] refusing to send n8n webhook over non-https URL in production'
+    )
+    return
+  }
+
+  // Fix #5: HMAC-sign the body with N8N_WEBHOOK_SECRET so n8n can verify
+  // authenticity (same pattern as src/lib/n8n.ts). In production, if the
+  // secret is unset or too short, skip the webhook entirely rather than
+  // sending an unsigned request that n8n would (correctly) reject.
+  const webhookSecret = process.env.N8N_WEBHOOK_SECRET
+  const body = JSON.stringify(payload)
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Event': 'contact.submitted',
+  }
+
+  if (webhookSecret && webhookSecret.length >= 16) {
+    const signature = createHmac('sha256', webhookSecret).update(body).digest('hex')
+    headers['X-Signature-256'] = `sha256=${signature}`
+  } else if (process.env.NODE_ENV === 'production') {
+    console.error(
+      '[contact] N8N_WEBHOOK_SECRET is unset or too short in production — skipping n8n fan-out'
+    )
+    return
+  }
+
   // Fire-and-forget: do NOT await this Promise. The caller returns 200
   // immediately while the fetch runs in the background. Any error is
   // caught by `.catch()` so it never surfaces as an unhandled rejection.
@@ -59,11 +97,8 @@ function fanOutToN8n(payload: unknown): void {
 
   fetch(webhookUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Event': 'contact.submitted',
-    },
-    body: JSON.stringify(payload),
+    headers,
+    body,
     signal: controller.signal,
   })
     .then((response) => {

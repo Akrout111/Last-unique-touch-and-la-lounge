@@ -1,4 +1,5 @@
 import { type Prisma, type Brand, type Category, type Product } from '@prisma/client'
+import { unstable_cache } from 'next/cache'
 import { db } from './db'
 
 /**
@@ -101,13 +102,23 @@ export async function getFeaturedProducts(
 
 /**
  * Get all categories for a brand (for filter sidebar).
+ *
+ * Perf fix: wrapped in `unstable_cache` so the storefront reads hit the
+ * cached value (TTL 1h) instead of hitting SQLite on every navigation.
+ * The cache is keyed on `brand` (the callback arg) + the static `categories`
+ * key part, and is tagged `categories` so admin mutations can call
+ * `revalidateTag('categories')` to bust it immediately.
  */
-export async function getCategoriesByBrand(brand: Brand = 'LUT'): Promise<Category[]> {
-  return db.category.findMany({
-    where: { brand },
-    orderBy: { nameEn: 'asc' },
-  })
-}
+export const getCategoriesByBrand = unstable_cache(
+  async (brand: Brand = 'LUT'): Promise<Category[]> => {
+    return db.category.findMany({
+      where: { brand },
+      orderBy: { nameEn: 'asc' },
+    })
+  },
+  ['categories'],
+  { revalidate: 3600, tags: ['categories'] }
+)
 
 /**
  * Product list query parameters.
@@ -350,6 +361,14 @@ export function calculateRentalTotal(
   endDate: Date,
   quantity: number = 1
 ): { days: number; subtotal: number; deposit: number; total: number } {
+  // Perf / safety fix: if either date is Invalid Date, `endDate.getTime() -
+  // startDate.getTime()` would yield NaN, which propagates through `Math.max`
+  // and `Math.ceil` into a NaN total that breaks the cart summary UI. Bail
+  // out with zeros instead.
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return { days: 0, subtotal: 0, deposit: 0, total: 0 }
+  }
+
   const msPerDay = 24 * 60 * 60 * 1000
   const days = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay))
   const subtotal = rentalPricePerDay * days * quantity

@@ -54,6 +54,22 @@ export function removeFromCart(index: number): void {
   window.dispatchEvent(new Event('cart-updated'))
 }
 
+export function updateQuantity(index: number, quantity: number): void {
+  if (typeof window === 'undefined') return
+  const cart = getCart()
+  if (index < 0 || index >= cart.length) return
+  const item = cart[index]
+  if (!item) return
+  const newQty = Math.max(1, quantity)
+  cart[index] = {
+    ...item,
+    quantity: newQty,
+    total: item.rentalPricePerDay * item.days * newQty + item.securityDeposit * newQty,
+  }
+  localStorage.setItem(CART_KEY, JSON.stringify(cart))
+  window.dispatchEvent(new Event('cart-updated'))
+}
+
 export function clearCart(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(CART_KEY)

@@ -52,7 +52,7 @@ export function ContactView() {
         error?: string
       }
 
-      if (response.status !== 200 || !result) {
+      if (!response.ok || !result) {
         const code = result?.error ?? 'internal_error'
         const messageMap: Record<string, string> = {
           invalid_input: t('contact.form.errors.invalidInput'),

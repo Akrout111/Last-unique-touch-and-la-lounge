@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
 
@@ -15,8 +16,12 @@ const birthdaySchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().regex(/^\+?[0-9\s-]{8,20}$/),
   email: z.string().email().optional().or(z.literal('')),
-  eventDate: z.string().min(1),
+  // Fix #7: strict YYYY-MM-DD format to prevent Date parsing ambiguity.
+  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   notes: z.string().max(2000).optional().or(z.literal('')),
+  // Fix #3: idempotency key so a retried POST doesn't double-book the
+  // same birthday slot.
+  idempotencyKey: z.string().min(10),
 })
 
 /**
@@ -25,10 +30,15 @@ const birthdaySchema = z.object({
  * than each being unlimited).
  */
 function getClientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    const first = forwarded.split(',')[0]
-    return first ? first.trim() : 'unknown'
+  // Take the LAST entry of x-forwarded-for — that is the IP set by the
+  // trusted reverse proxy. Earlier entries are client-controllable and
+  // must not be used for rate-limit keying (XFF spoofing fix).
+  const xff = req.headers.get('x-forwarded-for')
+  if (xff) {
+    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+    if (parts.length > 0) {
+      return parts[parts.length - 1] || 'unknown'
+    }
   }
   return req.headers.get('x-real-ip') ?? 'unknown'
 }
@@ -70,7 +80,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { name, phone, email, eventDate, notes } = parsed.data
+  const { name, phone, email, eventDate, notes, idempotencyKey } = parsed.data
 
   // Normalise the event date: the user supplies a calendar date (e.g.
   // "2026-08-14"); we store it as a Date, using the start of that day
@@ -82,29 +92,127 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   }
+
+  // Fix #7: roundtrip check — the parsed Date's UTC date components must
+  // match the input string. This rejects values like "2026-13-40" which
+  // `new Date(...)` would happily roll over into the next valid month.
+  const [yStr, mStr, dStr] = eventDate.split('-')
+  if (
+    start.getUTCFullYear() !== Number(yStr) ||
+    start.getUTCMonth() + 1 !== Number(mStr) ||
+    start.getUTCDate() !== Number(dStr)
+  ) {
+    return NextResponse.json(
+      { error: 'invalid_event_date' },
+      { status: 400 }
+    )
+  }
+
+  // Fix #7: range check — the event must be today or later, and no more
+  // than 18 months in the future (prevents absurd dates / date-flood DoS).
+  const todayUtcMidnight = new Date()
+  todayUtcMidnight.setUTCHours(0, 0, 0, 0)
+  const maxFuture = new Date(todayUtcMidnight.getTime() + 18 * 30 * 24 * 60 * 60 * 1000)
+  if (start < todayUtcMidnight || start > maxFuture) {
+    return NextResponse.json(
+      { error: 'event_date_out_of_range' },
+      { status: 400 }
+    )
+  }
+
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1)
 
   try {
-    const booking = await db.booking.create({
-      data: {
-        brand: 'YOUR_BIRTHDAY',
-        productId: null,
-        startDate: start,
-        endDate: end,
-        status: 'PENDING',
-        customerName: name,
-        customerPhone: phone,
-        customerEmail: email || '',
-        totalAmount: 0,
-        currency: 'KWD',
-        notes: notes ? `Date: ${eventDate}${notes ? ` | Notes: ${notes}` : ''}` : `Date: ${eventDate}`,
-      },
-    })
+    // Fix #3: idempotency — create the IdempotencyKey row INSIDE a
+    // Serializable transaction before creating the Booking. On P2002
+    // (duplicate key) we return the original booking id (idempotent
+    // success) or 409. Mirrors /api/orders/route.ts.
+    try {
+      const booking = await db.$transaction(
+        async (tx) => {
+          // --- Idempotency: create the key FIRST (Fix #3) ---
+          const idempotencyRecord = await tx.idempotencyKey.create({
+            data: {
+              key: idempotencyKey,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
+            },
+          })
 
-    return NextResponse.json(
-      { success: true, bookingId: booking.id },
-      { status: 201 }
-    )
+          const created = await tx.booking.create({
+            data: {
+              brand: 'YOUR_BIRTHDAY',
+              productId: null,
+              startDate: start,
+              endDate: end,
+              status: 'PENDING',
+              customerName: name,
+              customerPhone: phone,
+              customerEmail: email || '',
+              totalAmount: 0,
+              currency: 'KWD',
+              notes: notes
+                ? `Date: ${eventDate} | Notes: ${notes}`
+                : `Date: ${eventDate}`,
+            },
+          })
+
+          // Link the idempotency key to the resulting booking so a replay
+          // can return the original booking id.
+          await tx.idempotencyKey.update({
+            where: { id: idempotencyRecord.id },
+            data: { orderId: created.id },
+          })
+
+          return created
+        },
+        { isolationLevel: 'Serializable' }
+      )
+
+      return NextResponse.json(
+        { success: true, bookingId: booking.id },
+        { status: 201 }
+      )
+    } catch (error: unknown) {
+      // P2002 on IdempotencyKey.key = concurrent duplicate request.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = (error.meta?.target as string[] | undefined)?.join(',') ?? ''
+        if (target.includes('key')) {
+          const existing = await db.idempotencyKey.findUnique({
+            where: { key: idempotencyKey },
+            select: { orderId: true, expiresAt: true },
+          })
+          if (existing) {
+            if (existing.expiresAt < new Date()) {
+              // Expired key — delete so the client can retry.
+              await db.idempotencyKey.delete({ where: { key: idempotencyKey } })
+              return NextResponse.json(
+                { error: 'duplicate_request' },
+                { status: 409 }
+              )
+            }
+            if (existing.orderId) {
+              // Idempotent success — return the original booking id.
+              return NextResponse.json(
+                {
+                  success: true,
+                  bookingId: existing.orderId,
+                  message: 'duplicate_request',
+                },
+                { status: 200 }
+              )
+            }
+          }
+          return NextResponse.json(
+            { error: 'duplicate_request' },
+            { status: 409 }
+          )
+        }
+      }
+      throw error
+    }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
     console.error('Birthday booking creation error:', message, error)

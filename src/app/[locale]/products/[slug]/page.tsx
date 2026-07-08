@@ -38,11 +38,20 @@ export async function generateStaticParams() {
   // V9 Fix #2: only LUT products are reachable from the LUT storefront.
   // Pre-rendering La Lounge / Your Birthday slugs here would let search
   // engines index cross-tenant URLs and leak brand data.
-  const products = await db.product.findMany({
-    where: { brand: 'LUT', isActive: true },
-    select: { slug: true },
-  })
-  return products.map((p) => ({ slug: p.slug }))
+  //
+  // Perf fix: wrap in try/catch so an empty / unavailable DB at build time
+  // returns [] (mirrors `src/app/sitemap.ts:28-35`) instead of failing the
+  // entire Next.js build.
+  try {
+    const products = await db.product.findMany({
+      where: { brand: 'LUT', isActive: true },
+      select: { slug: true },
+    })
+    return products.map((p) => ({ slug: p.slug }))
+  } catch (error) {
+    console.warn('[generateStaticParams] DB query failed, returning []:', error)
+    return []
+  }
 }
 
 export async function generateMetadata({

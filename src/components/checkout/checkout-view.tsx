@@ -92,26 +92,43 @@ export function CheckoutView() {
         }),
       })
 
-      const result = await response.json()
+      // V11 Fix #8: Defensive JSON parse — a 5xx from a misconfigured proxy
+      // or an empty body would otherwise throw here and mask the real error
+      // behind a generic "internal error" message.
+      const result = (await response.json().catch(() => ({}))) as { error?: string; orderId?: string }
 
       if (!response.ok) {
-        const errorCode = result.error as string | undefined
-        const errorKeys: Record<string, string> = {
-          price_mismatch: 'checkout.errors.priceMismatch',
-          insufficient_stock: 'checkout.errors.insufficientStock',
-          not_available: 'checkout.errors.notAvailable',
-          duplicate_request: 'checkout.errors.duplicateRequest',
-          invalid_input: 'checkout.errors.invalidInput',
-          internal_error: 'checkout.errors.internalError',
-        }
-        setErrorMessage(t(errorKeys[errorCode ?? 'internal_error'] || 'checkout.errors.internalError'))
+        // V11 Fix #8: Complete error code map covering every error code the
+        // /api/orders route can return. Unknown codes fall through to the
+        // generic internal-error message.
+        const errorKey =
+          result.error === 'price_mismatch' ? 'checkout.errors.priceMismatch'
+          : result.error === 'insufficient_stock' || result.error === 'out_of_stock' ? 'checkout.errors.insufficientStock'
+          : result.error === 'not_available' ? 'checkout.errors.notAvailable'
+          : result.error === 'duplicate_request' ? 'checkout.errors.duplicateRequest'
+          : result.error === 'invalid_input' ? 'checkout.errors.invalidInput'
+          : result.error === 'invalid_products' ? 'checkout.errors.invalidProducts'
+          : result.error === 'invalid_dates' ? 'checkout.errors.invalidDates'
+          : result.error === 'days_mismatch' ? 'checkout.errors.daysMismatch'
+          : result.error === 'total_mismatch' ? 'checkout.errors.totalMismatch'
+          : result.error === 'rate_limited' ? 'checkout.errors.rateLimited'
+          : result.error === 'invalid_json' ? 'checkout.errors.invalidInput'
+          : 'checkout.errors.internalError'
+        setErrorMessage(t(errorKey))
         setSubmitting(false)
         return
       }
 
-      // Success — redirect to payment page (cart cleared after payment)
-      const orderId = result.orderId as string
-      router.push(`/checkout/payment?order=${orderId}`)
+      // Success — redirect to payment page (cart cleared after payment).
+      // V11 Fix #8: null-guard orderId. If the API returns 200 but with a
+      // missing/empty orderId (malformed response), surface the generic
+      // internal-error message instead of navigating to `/checkout/payment?order=undefined`.
+      if (!result?.orderId) {
+        setErrorMessage(t('checkout.errors.internalError'))
+        setSubmitting(false)
+        return
+      }
+      router.push(`/checkout/payment?order=${result.orderId}`)
     } catch {
       setErrorMessage(t('checkout.errors.internalError'))
       setSubmitting(false)

@@ -19,28 +19,37 @@ export function CartView() {
   // Cart item exit animation: track which item is currently animating out.
   // While an index is set, that row gets the `cart-item-exit` class. After
   // 200ms we call removeItem() on the underlying cart state.
+  // V11 Fix #7: When a second remove is clicked while a timer is pending we
+  // FLUSH the first removal (execute it immediately) before starting the new
+  // one. Otherwise the first item would be silently dropped (timer cleared
+  // without ever calling removeItem). The ref stores both the timeout id and
+  // the index it will remove.
   const [exitingIndex, setExitingIndex] = useState<number | null>(null)
-  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const exitTimerRef = useRef<{ id: ReturnType<typeof setTimeout>; index: number } | null>(null)
 
   useEffect(() => {
     return () => {
-      if (exitTimerRef.current) clearTimeout(exitTimerRef.current)
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current.id)
     }
   }, [])
 
   const handleRemove = (index: number) => {
     // If a previous exit is still in flight, force-flush it now so the new
-    // request can't race against it.
+    // request can't race against it. Clearing the timer without executing
+    // the pending removal would leak that item (user clicked remove but the
+    // item stays in the cart).
     if (exitTimerRef.current) {
-      clearTimeout(exitTimerRef.current)
+      clearTimeout(exitTimerRef.current.id)
+      removeItem(exitTimerRef.current.index)
       exitTimerRef.current = null
     }
     setExitingIndex(index)
-    exitTimerRef.current = setTimeout(() => {
+    const id = setTimeout(() => {
       removeItem(index)
       setExitingIndex(null)
       exitTimerRef.current = null
     }, 200)
+    exitTimerRef.current = { id, index }
   }
 
   // Hydration guard

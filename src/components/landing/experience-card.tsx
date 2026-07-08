@@ -78,12 +78,25 @@ export function ExperienceCard({
       setAnimState(isExiting ? 'exit' : 'enter')
     }
 
+    // Perf fix: throttle scroll handler with requestAnimationFrame so we
+    // never run more than one layout read per frame. The resize listener
+    // is also marked { passive: true }.
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        update()
+        ticking = false
+      })
+    }
+
     update()
-    window.addEventListener('scroll', update, { passive: true })
-    window.addEventListener('resize', update)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
     return () => {
-      window.removeEventListener('scroll', update)
-      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
     }
   }, [])
 
@@ -201,7 +214,7 @@ export function ExperienceCard({
               }}
             />
           </div>
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-serif text-white tracking-wide font-light">{title}</h2>
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-display text-white tracking-wide font-light">{title}</h2>
           <div className={cn(
             'flex items-center gap-2 text-[9px] md:text-[11px] lg:text-[12px] font-bold tracking-[0.25em] uppercase mt-0.5 transition-all duration-700',
             isComingSoon ? 'text-white/30' : 'text-white/60 group-hover:text-white',

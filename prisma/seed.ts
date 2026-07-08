@@ -255,17 +255,21 @@ async function main() {
     },
   ]
 
+  // V11 Fix #4: Seed is create-only. Once a row exists, re-running the
+  // seed must NOT overwrite admin edits (price changes, stock updates,
+  // image swaps, etc.). We therefore pass `update: {}` (a no-op) for every
+  // product upsert and rely on the compound unique key to find existing rows.
   for (const product of products) {
     await prisma.product.upsert({
       where: {
         product_brand_slug_unique: { brand: product.brand, slug: product.slug },
       },
-      update: {
+      update: {},
+      create: {
         ...product,
         images: product.images,
         model3dUrl: product.model3dUrl ?? null,
       },
-      create: product,
     })
   }
 
@@ -342,6 +346,22 @@ async function main() {
       isActive: true,
       categoryId: laLoungeFurniture.id,
     },
+    // V11 Fix #5: Populate the previously-empty `events` category so it is
+    // not orphaned in the admin UI.
+    {
+      slug: 'red-carpet',
+      brand: 'LA_LOUNGE' as const,
+      nameAr: 'سجادة حمراء',
+      nameEn: 'Red Carpet',
+      descriptionAr: 'سجادة حمراء فاخرة للفعاليات',
+      descriptionEn: 'Luxury red carpet for events',
+      rentalPricePerDay: 25,
+      securityDeposit: 50,
+      images: JSON.stringify(['/products/lalounge_modern.webp']),
+      stock: 5,
+      isActive: true,
+      categoryId: laLoungeEvents.id,
+    },
   ]
 
   for (const product of laLoungeProducts) {
@@ -349,7 +369,7 @@ async function main() {
       where: {
         product_brand_slug_unique: { brand: product.brand, slug: product.slug },
       },
-      update: product,
+      update: {},
       create: product,
     })
   }
@@ -405,7 +425,7 @@ async function main() {
       where: {
         product_brand_slug_unique: { brand: product.brand, slug: product.slug },
       },
-      update: product,
+      update: {},
       create: product,
     })
   }

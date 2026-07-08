@@ -199,7 +199,14 @@ async function checkProductExists(
     const exists = data.exists !== false
 
     // Cache the result
-    slugCache.set(slug, { exists, expires: Date.now() + SLUG_CACHE_TTL })
+    // Sweep expired entries when cache gets large
+  if (slugCache.size > 500) {
+    const now = Date.now()
+    for (const [k, v] of slugCache) {
+      if (v.expires < now) slugCache.delete(k)
+    }
+  }
+  slugCache.set(slug, { exists, expires: Date.now() + SLUG_CACHE_TTL })
 
     if (!exists) {
       return buildNotFoundResponse(locale)

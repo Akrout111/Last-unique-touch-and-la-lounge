@@ -71,6 +71,14 @@ export async function createProductAction(formData: FormData): Promise<{ success
       return { success: false, error: 'slug_exists' }
     }
 
+    // Ensure the selected category belongs to the same brand as the new
+    // product. Without this check an admin could attach a product to another
+    // tenant's category by submitting a foreign categoryId.
+    const category = await db.category.findFirst({ where: { id: parsed.data.categoryId, brand } })
+    if (!category) {
+      return { success: false, error: 'invalid_category' }
+    }
+
     await db.product.create({
       data: {
         ...parsed.data,
@@ -142,6 +150,16 @@ export async function updateProductAction(id: string, formData: FormData): Promi
     })
     if (existing) {
       return { success: false, error: 'slug_exists' }
+    }
+
+    // Ensure the selected category (if provided) belongs to the same brand as
+    // the product being edited. Without this check an admin could re-assign a
+    // product to another tenant's category by submitting a foreign categoryId.
+    if (parsed.data.categoryId) {
+      const category = await db.category.findFirst({ where: { id: parsed.data.categoryId, brand } })
+      if (!category) {
+        return { success: false, error: 'invalid_category' }
+      }
     }
 
     await db.product.update({

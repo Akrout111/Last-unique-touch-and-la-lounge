@@ -22,6 +22,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { TextScramble } from './text-scramble'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 // V10 Fix #5: Lazy-load BirthdayVisualizer so Three.js (~150KB) stays out
 // of the initial JS bundle. ssr:false because WebGL only exists in browsers.
@@ -292,7 +293,9 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         {/* === HERO SECTION === */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
           {/* 3D Background */}
-          <BirthdayVisualizer />
+          <ErrorBoundary>
+            <BirthdayVisualizer />
+          </ErrorBoundary>
 
           {/* Gradient overlay */}
           <div className="absolute inset-0 z-1 bg-gradient-to-t from-[#020204] via-transparent to-[#020204]/50 pointer-events-none" />
@@ -614,7 +617,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md rounded-lg bg-[#09090f] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden text-white z-10"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[#09090f] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden text-white z-10"
               style={{ direction: isRTL ? 'rtl' : 'ltr' }}
             >
               {/* Decorative glows */}

@@ -163,8 +163,12 @@ export async function login(password: string): Promise<boolean> {
 }
 
 export async function logout(): Promise<void> {
-  const cookieStore = await cookies()
-  cookieStore.delete(SESSION_COOKIE)
+  try {
+    const cookieStore = await cookies()
+    cookieStore.delete(SESSION_COOKIE)
+  } catch (error) {
+    console.error('[auth] Failed to delete session cookie:', error)
+  }
 }
 
 export async function isAuthenticated(): Promise<boolean> {

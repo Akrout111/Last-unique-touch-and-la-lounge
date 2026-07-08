@@ -90,9 +90,17 @@ async function checkStockAvailabilityInTx(
 
 export async function POST(req: NextRequest) {
   // --- Rate limit (10/min/IP) — D5 ---
-  const forwarded = req.headers.get('x-forwarded-for')
-  const firstFwd = forwarded ? forwarded.split(',')[0] : null
-  const ip = firstFwd ? firstFwd.trim() : (req.headers.get('x-real-ip') ?? 'unknown')
+  // Take the LAST entry of x-forwarded-for — that is the IP set by the
+  // trusted reverse proxy. Earlier entries are client-controllable and
+  // must not be used for rate-limit keying (XFF spoofing fix).
+  const xff = req.headers.get('x-forwarded-for')
+  let ip: string
+  if (xff) {
+    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
+    ip = parts.length > 0 ? (parts[parts.length - 1] || 'unknown') : (req.headers.get('x-real-ip') ?? 'unknown')
+  } else {
+    ip = req.headers.get('x-real-ip') ?? 'unknown'
+  }
   const rl = rateLimit(`orders:${ip}`, 10, 60_000)
   if (!rl.allowed) {
     return NextResponse.json(
@@ -185,12 +193,12 @@ export async function POST(req: NextRequest) {
             }
 
             // Verify price matches DB
-            if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.01) {
+            if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.001) {
               throw new OrderError('price_mismatch', 400)
             }
 
             // Verify securityDeposit matches DB (P0.2 — pricing integrity)
-            if (Math.abs(product.securityDeposit - item.securityDeposit) > 0.01) {
+            if (Math.abs(product.securityDeposit - item.securityDeposit) > 0.001) {
               throw new OrderError('price_mismatch', 400)
             }
 
@@ -213,7 +221,7 @@ export async function POST(req: NextRequest) {
             const expectedTotal =
               product.rentalPricePerDay * calculatedDays * item.quantity +
               product.securityDeposit * item.quantity
-            if (Math.abs(expectedTotal - item.total) > 0.01) {
+            if (Math.abs(expectedTotal - item.total) > 0.001) {
               throw new OrderError('total_mismatch', 400)
             }
 
@@ -242,7 +250,6 @@ export async function POST(req: NextRequest) {
           // Create bookings inside the same tx (C5).
           const bookings = []
           for (const item of items) {
-            const product = txProducts.find((p) => p.id === item.productId)
             const startDate = new Date(item.startDate)
             const endDate = new Date(item.endDate)
             const msPerDay = 1000 * 60 * 60 * 24
