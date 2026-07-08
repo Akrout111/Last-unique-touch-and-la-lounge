@@ -617,7 +617,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[#09090f] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden text-white z-10"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[#09090f] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-x-hidden text-white z-10"
               style={{ direction: isRTL ? 'rtl' : 'ltr' }}
             >
               {/* Decorative glows */}

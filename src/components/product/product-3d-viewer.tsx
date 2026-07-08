@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import dynamic from 'next/dynamic'
 import { Loader2, Box, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -62,15 +63,17 @@ export function Product3DViewer({ productSlug, model3dUrl }: Product3DViewerProp
             background: 'radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.08) 0%, transparent 70%)',
           }}
         />
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
-          }
-        >
-          <ModelCanvas modelUrl={model3dUrl ?? ''} productSlug={productSlug} />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            <ModelCanvas modelUrl={model3dUrl ?? ''} productSlug={productSlug} />
+          </Suspense>
+        </ErrorBoundary>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
         {t('product.3d.hint')}
