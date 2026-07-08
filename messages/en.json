@@ -220,7 +220,8 @@
       "submitting": "Signing in...",
       "invalid": "Invalid password",
       "rateLimited": "Too many attempts. Please try again in a minute.",
-      "devHint": "In development, use password \"dev\""
+      "devHint": "In development, use password \"dev\"",
+      "serverError": "Server error. Please try again."
     },
     "nav": {
       "dashboard": "Dashboard",
@@ -808,5 +809,8 @@
       "events": "Events",
       "years": "Years"
     }
+  },
+  "hero3d": {
+    "reducedMotion": "3D motion is reduced"
   }
 }

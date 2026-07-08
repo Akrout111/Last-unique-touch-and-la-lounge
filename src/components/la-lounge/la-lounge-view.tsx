@@ -100,7 +100,7 @@ export default function LaLoungeView() {
           </div>
 
           <h1
-            className="text-5xl sm:text-7xl md:text-8xl font-serif font-light text-primary tracking-widest drop-shadow-sm mb-4"
+            className="text-5xl sm:text-7xl md:text-8xl font-display font-light text-primary tracking-widest drop-shadow-sm mb-4"
           >
             {t('brandSelector.lalounge.name')}
           </h1>
@@ -132,7 +132,7 @@ export default function LaLoungeView() {
       <div id="services" className="relative z-10 py-20 px-4 bg-primary/5">
         <div className="max-w-5xl mx-auto">
           <h2
-            className="font-serif text-3xl sm:text-5xl text-primary text-center mb-4"
+            className="font-display text-3xl sm:text-5xl text-primary text-center mb-4"
           >
             {t('laLounge.servicesTitle')}
           </h2>
@@ -151,7 +151,7 @@ export default function LaLoungeView() {
                   <div className="flex items-center justify-center mb-5 text-primary">
                     <Icon className="size-6" />
                   </div>
-                  <h3 className="font-serif text-xl text-primary mb-3">{service.title}</h3>
+                  <h3 className="font-display text-xl text-primary mb-3">{service.title}</h3>
                   <p className="text-sm text-primary/60 leading-relaxed mb-4">{service.desc}</p>
                   {/* V10 user request: examples list inside each service card */}
                   <ul className="text-start space-y-1.5 mt-4 pt-4 border-t border-primary/10">

@@ -61,9 +61,8 @@ function safeEqualStrings(a: string, b: string): boolean {
   if (a.length !== b.length) {
     // Still iterate to keep timing roughly constant.
     const maxLen = Math.max(a.length, b.length)
-    let result = 1
     for (let i = 0; i < maxLen; i++) {
-      result |= (a.charCodeAt(i % a.length) ^ b.charCodeAt(i % b.length))
+      void (a.charCodeAt(i % a.length) ^ b.charCodeAt(i % b.length))
     }
     return false
   }
@@ -134,6 +133,22 @@ async function verifySessionCookie(cookieValue: string | undefined): Promise<boo
   return true
 }
 
+// V13 Group C8: In-memory cache for product slug existence checks.
+// Reduces per-request DB roundtrip to one query per 60s per slug.
+const slugCache = new Map<string, { exists: boolean; expires: number }>()
+const SLUG_CACHE_TTL = 60_000 // 60 seconds
+
+/**
+ * Build a branded 404 HTML response for a non-existent product slug.
+ */
+function buildNotFoundResponse(locale: string): NextResponse {
+  const html = `<!DOCTYPE html><html lang="${locale}" dir="${locale === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>404 — ${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#FAF6EF;color:#0A0A0A"><div style="text-align:center"><h1 style="font-size:3rem;margin:0;color:#E3222B">404</h1><p style="margin:0.5rem 0 1rem;color:#666">${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</p><a href="/${locale}/products" style="display:inline-block;padding:0.5rem 1rem;background:#E3222B;color:#fff;text-decoration:none;border-radius:0.375rem">${locale === 'ar' ? 'العودة للمنتجات' : 'Back to Products'}</a></div></body></html>`
+  return new NextResponse(html, {
+    status: 404,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  })
+}
+
 /**
  * V10 Fix #1: Product slug existence check.
  *
@@ -145,9 +160,8 @@ async function verifySessionCookie(cookieValue: string | undefined): Promise<boo
  * middleware returns a 404 response directly — which reliably sets the
  * HTTP 404 status code.
  *
- * The API endpoint is excluded from the middleware matcher (`/api/...`),
- * so the `fetch` call doesn't trigger this middleware again (no circular
- * dependency).
+ * V13 Group C8: Results are cached for 60 seconds per slug to avoid a
+ * DB roundtrip on every product page request.
  *
  * Returns:
  *   - `null` if the product exists (or the check fails — fail open)
@@ -158,33 +172,37 @@ async function checkProductExists(
   locale: string,
   slug: string
 ): Promise<NextResponse | null> {
+  // Check cache first
+  const cached = slugCache.get(slug)
+  if (cached && cached.expires > Date.now()) {
+    if (!cached.exists) {
+      return buildNotFoundResponse(locale)
+    }
+    return null
+  }
+
   try {
     const checkUrl = new URL('/api/products/check-slug', request.nextUrl.origin)
     checkUrl.searchParams.set('slug', slug)
     checkUrl.searchParams.set('brand', 'LUT')
 
     const res = await fetch(checkUrl, {
-      // Don't cache — product existence can change between requests.
       cache: 'no-store',
-      // Short timeout so a slow DB doesn't block the request.
       signal: AbortSignal.timeout(3_000),
     })
 
     if (!res.ok) {
-      // API error — fail open (let the page handle it).
       return null
     }
 
     const data = (await res.json()) as { exists?: boolean }
-    if (data.exists === false) {
-      // Product doesn't exist — return a 404 with a minimal HTML body.
-      // The body is a simple branded 404 page; the key thing is the
-      // HTTP 404 status code for SEO.
-      const html = `<!DOCTYPE html><html lang="${locale}" dir="${locale === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>404 — ${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#FAF6EF;color:#0A0A0A"><div style="text-align:center"><h1 style="font-size:3rem;margin:0;color:#E3222B">404</h1><p style="margin:0.5rem 0 1rem;color:#666">${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</p><a href="/${locale}/products" style="display:inline-block;padding:0.5rem 1rem;background:#E3222B;color:#fff;text-decoration:none;border-radius:0.375rem">${locale === 'ar' ? 'العودة للمنتجات' : 'Back to Products'}</a></div></body></html>`
-      return new NextResponse(html, {
-        status: 404,
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-      })
+    const exists = data.exists !== false
+
+    // Cache the result
+    slugCache.set(slug, { exists, expires: Date.now() + SLUG_CACHE_TTL })
+
+    if (!exists) {
+      return buildNotFoundResponse(locale)
     }
   } catch {
     // Network error, timeout, or JSON parse error — fail open.
@@ -216,7 +234,11 @@ export default async function proxy(request: NextRequest): Promise<NextResponse>
   // Protect every /admin/* route EXCEPT the login page itself. Both
   // `/(dashboard)/...` and `/login` live under `/[locale]/admin/`, so we
   // match on the `/admin/` segment regardless of locale prefix.
-  if (pathname.includes('/admin') && !pathname.includes('/admin/login')) {
+  // V13 Group D11: use precise path-segment matching instead of loose includes.
+  // `includes('/admin')` matched false positives like `/blog/admin-tips`.
+  const isAdminPath = /^\/(ar|en)\/admin(\/|$)/.test(pathname)
+  const isAdminLogin = /^\/(ar|en)\/admin\/login(\/|$)/.test(pathname)
+  if (isAdminPath && !isAdminLogin) {
     const session = request.cookies.get(SESSION_COOKIE)?.value
     // V11 Fix #9: verifySessionCookie is now async (Web Crypto API).
     if (!await verifySessionCookie(session)) {

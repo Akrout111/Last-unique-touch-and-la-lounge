@@ -1,4 +1,4 @@
-import { Prisma, type Brand, type Category, type Product } from '@prisma/client'
+import { type Prisma, type Brand, type Category, type Product } from '@prisma/client'
 import { db } from './db'
 
 /**

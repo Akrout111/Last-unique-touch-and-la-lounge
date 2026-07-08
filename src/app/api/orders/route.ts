@@ -248,14 +248,17 @@ export async function POST(req: NextRequest) {
             const msPerDay = 1000 * 60 * 60 * 24
             const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
             // Use the server-recomputed total (P0.2) — never trust client-supplied item.total.
+            // V13 Group D2: replace non-null assertions with a guarded local variable.
+            const p = txProducts.find((pr) => pr.id === item.productId)
+            if (!p) throw new OrderError('invalid_products', 400)
             const expectedTotal =
-              product!.rentalPricePerDay * calculatedDays * item.quantity +
-              product!.securityDeposit * item.quantity
+              p.rentalPricePerDay * calculatedDays * item.quantity +
+              p.securityDeposit * item.quantity
 
             const booking = await tx.booking.create({
               data: {
                 productId: item.productId,
-                brand: product!.brand,
+                brand: p.brand,
                 startDate,
                 endDate,
                 status: 'PENDING',

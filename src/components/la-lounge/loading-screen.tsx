@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter } from '@/i18n/routing'
 import { useLocale } from 'next-intl'
 
 export function LaLoungeLoadingScreen({ onComplete }: { onComplete: () => void }) {

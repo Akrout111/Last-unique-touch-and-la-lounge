@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { MotionConfig } from 'framer-motion'
 import { routing } from '@/i18n/routing'
@@ -13,15 +12,13 @@ import { FloatingWhatsApp } from '@/components/floating-whatsapp'
 import { inter, tajawal, cormorant, dmMono, lutFonts, laLoungeFonts, birthdayFonts } from '@/app/fonts'
 
 /**
- * Resolve the brand slug from the matched pathname sent by middleware
- * (src/middleware.ts sets the `x-pathname` response header on every request).
+ * Resolve the brand slug from the locale segment.
  *
- * This lets the server-rendered <html> ship with the correct `data-brand`
- * attribute on the FIRST response — before client hydration — so per-brand
- * CSS variables (defined in globals.css) apply without a flash and the
- * initial HTML is brand-correct for SEO / scrapers / no-JS clients.
- *
- * Fallbacks to `'lut'` for safety (LUT is the default brand).
+ * V13 Group C9: Removed `headers()` call that forced every route to be
+ * dynamically rendered. The `data-brand` attribute is now set client-side
+ * by `BrandThemeSetter` (which runs on every navigation). For SSR, we
+ * default to 'lut' — the `BrandThemeSetter` corrects it immediately on
+ * hydration. This allows ~10 routes to be statically prerendered.
  */
 function resolveBrandFromPath(pathname: string | null): 'lut' | 'lalounge' | 'birthday' {
   if (!pathname) return 'lut'
@@ -68,11 +65,9 @@ export default async function LocaleLayout({
 
   const t = await getTranslations()
 
-  // Read the matched pathname from the middleware-set header so we can
-  // server-render the correct `data-brand` attribute on <html>.
-  const h = await headers()
-  const pathname = h.get('x-pathname')
-  const brand = resolveBrandFromPath(pathname)
+  // V13 Group C9: No more headers() call — default to 'lut' for SSR.
+  // BrandThemeSetter corrects data-brand on hydration.
+  const brand = resolveBrandFromPath(null)
 
   return (
     <html

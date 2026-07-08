@@ -158,7 +158,7 @@ function EventArchitecture() {
     items.push(<lineSegments key="podium" geometry={track(new THREE.EdgesGeometry(podiumGeo))} material={matAccent} position={[0, stageHeight + 1.25, stageZ + 4]} />);
     
     // Stage Projection Cones (Lighting)
-    for (let lx of [-15, -5, 5, 15]) {
+    for (const lx of [-15, -5, 5, 15]) {
       const lightCone = track(new THREE.ConeGeometry(3, 15, 8, 1, true));
       items.push(<lineSegments key={`light_${lx}`} geometry={track(new THREE.EdgesGeometry(lightCone))} material={matSub} position={[lx, stageHeight + 15, stageZ + 5]} rotation={[Math.PI/6, 0, 0]} />);
     }

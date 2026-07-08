@@ -15,21 +15,30 @@ export function LoginPageView() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // V13 Group B: wrap onSubmit in try/catch + handle server_error
   const onSubmit = async (formData: FormData) => {
     setSubmitting(true)
     setError(null)
 
-    const result = await loginAction(formData)
+    try {
+      const result = await loginAction(formData)
 
-    if (result.success) {
-      router.push('/admin')
-      router.refresh()
-    } else {
-      setError(
-        result.error === 'rate_limited'
-          ? t('admin.login.rateLimited')
-          : t('admin.login.invalid')
-      )
+      if (result.success) {
+        router.push('/admin')
+        router.refresh()
+      } else {
+        setError(
+          result.error === 'rate_limited'
+            ? t('admin.login.rateLimited')
+            : result.error === 'server_error'
+              ? t('admin.login.serverError')
+              : t('admin.login.invalid')
+        )
+        setSubmitting(false)
+      }
+    } catch (error) {
+      console.error('[auth] onSubmit error:', error)
+      setError(t('admin.login.serverError'))
       setSubmitting(false)
     }
   }
@@ -96,9 +105,12 @@ export function LoginPageView() {
             )}
           </Button>
 
-          <p className="text-xs text-muted-foreground text-center">
-            {t('admin.login.devHint')}
-          </p>
+          {/* V13 Group B: hide devHint in production */}
+          {process.env.NODE_ENV !== 'production' && (
+            <p className="text-xs text-muted-foreground text-center">
+              {t('admin.login.devHint')}
+            </p>
+          )}
         </form>
       </div>
     </div>

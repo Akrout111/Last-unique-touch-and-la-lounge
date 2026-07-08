@@ -109,7 +109,7 @@ export function Navbar() {
                   {wordmark.subtitle && (
                     <span
                       className={`hidden sm:inline text-[10px] lg:text-xs font-sans tracking-[0.2em] uppercase transition-colors duration-300 ${
-                        scrolled ? 'text-paper/60' : 'text-ink/60'
+                        scrolled ? 'text-paper/60' : 'text-paper/60'
                       } group-hover:text-primary`}
                     >
                       {wordmark.subtitle}
@@ -127,7 +127,7 @@ export function Navbar() {
                     className={`relative text-sm font-medium tracking-wide transition-colors duration-300 group ${
                       pathname === link.href
                         ? 'text-gold'
-                        : scrolled ? 'text-paper/70 hover:text-paper' : 'text-ink/70 hover:text-ink'
+                        : scrolled ? 'text-paper/70 hover:text-paper' : 'text-paper/70 hover:text-paper'
                     }`}
                   >
                     {link.label}
@@ -152,7 +152,7 @@ export function Navbar() {
                   className={`flex items-center justify-center w-9 h-9 min-h-[44px] min-w-[44px] rounded-full transition-colors ${
                     scrolled
                       ? 'text-paper/70 hover:text-gold hover:bg-paper/10'
-                      : 'text-ink/70 hover:text-gold hover:bg-ink/5'
+                      : 'text-paper/70 hover:text-gold hover:bg-paper/10'
                   }`}
                 >
                   {resolvedTheme === 'dark' ? (
@@ -171,7 +171,7 @@ export function Navbar() {
                   className={`flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-xs font-medium transition-colors ${
                     scrolled
                       ? 'text-paper/70 hover:text-gold'
-                      : 'text-ink/70 hover:text-gold'
+                      : 'text-paper/70 hover:text-gold'
                   }`}
                 >
                   <Globe className="w-4 h-4" strokeWidth={1.3} />

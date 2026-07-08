@@ -96,10 +96,15 @@ model Booking {
   notes         String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  // V13 Group D3: reverse relation for IdempotencyKey FK
+  idempotencyKeys IdempotencyKey[]
 
   @@index([brand, createdAt])
   @@index([productId, startDate, endDate])
   @@index([status])
+  // V13 Group D4: additional indexes for admin queries
+  @@index([brand, startDate])
+  @@index([customerEmail])
   // V9 Fix #4: REMOVED `@@unique([productId, startDate, endDate])` (was
   // named "no_double_booking"). The unique constraint prevented ANY two
   // bookings for the same product on the same dates — even when stock>1.
@@ -118,12 +123,18 @@ model IdempotencyKey {
   id        String    @id @default(cuid())
   key       String    @unique
   orderId   String?
+  // V13 Group D3: FK relation to Booking — prevents orphaned idempotency keys
+  // when a booking is deleted.
+  booking   Booking?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
   createdAt DateTime  @default(now())
   // expiresAt lets us garbage-collect old keys (24h retention). Kept
   // nullable-free so a missing value never causes a query surprise.
   expiresAt DateTime
 
   @@index([key, expiresAt])
+  // V13 Group D4: standalone index for orderId lookups + expiresAt GC sweep
+  @@index([orderId])
+  @@index([expiresAt])
 }
 
 // ===== Security Event Log =====

@@ -143,15 +143,23 @@ export async function login(password: string): Promise<boolean> {
   // Constant-time password comparison.
   if (!safeEqualStrings(password, adminPassword)) return false
 
-  const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE, createSessionToken(), {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'lax',
-    maxAge: SESSION_MAX_AGE,
-    path: '/',
-  })
-  return true
+  // V13 Group B: Wrap cookie creation in try/catch so a cookie-setting
+  // failure (e.g. in edge/preview environments where cookies() may throw)
+  // returns false instead of crashing the server action.
+  try {
+    const cookieStore = await cookies()
+    cookieStore.set(SESSION_COOKIE, createSessionToken(), {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: SESSION_MAX_AGE,
+      path: '/',
+    })
+    return true
+  } catch (error) {
+    console.error('[auth] Failed to create session:', error)
+    return false
+  }
 }
 
 export async function logout(): Promise<void> {
