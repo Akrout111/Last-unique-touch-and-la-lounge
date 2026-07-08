@@ -6,6 +6,8 @@ import { rateLimit } from '@/lib/rate-limiter'
 /**
  * Contact form schema. Mirrors the client-side schema in
  * `contact-view.tsx` so server and client agree on what "valid" means.
+ * V11 Fix #11: added optional `brand` field so messages can be scoped
+ * to the tenant they were submitted from.
  */
 const contactSchema = z.object({
   name: z.string().min(3).max(100),
@@ -13,6 +15,7 @@ const contactSchema = z.object({
   phone: z.string().regex(/^\+?[0-9\s-]{8,20}$/).optional().or(z.literal('')),
   subject: z.string().min(5).max(200),
   message: z.string().min(20).max(2000),
+  brand: z.enum(['LUT', 'LA_LOUNGE', 'YOUR_BIRTHDAY']).default('LUT'),
 })
 
 function getClientIp(req: NextRequest): string {
@@ -125,17 +128,32 @@ export async function POST(req: NextRequest) {
   const data = parsed.data
 
   try {
-    // 1. Persist locally so we never lose the message even if n8n is down.
+    // V11 Fix #11: persist in the dedicated ContactMessage table so messages
+    // can be queried, filtered, and displayed in the admin panel. The
+    // SecurityLog entry below is kept for backwards-compat audit logging.
+    const contactMessage = await db.contactMessage.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
+        subject: data.subject,
+        message: data.message,
+        brand: data.brand,
+      },
+    })
+
+    // 1. Also persist in SecurityLog for audit (backwards compat).
     await db.securityLog.create({
       data: {
         event: 'contact_submission',
         ip,
         details: JSON.stringify({
+          contactMessageId: contactMessage.id,
           name: data.name,
           email: data.email,
           phone: data.phone ?? null,
           subject: data.subject,
-          message: data.message,
+          brand: data.brand,
           submittedAt: new Date().toISOString(),
         }),
       },
@@ -153,8 +171,9 @@ export async function POST(req: NextRequest) {
     })
 
     // V10 Fix #8: return 201 Created (not 200) since we just persisted a
-    // new SecurityLog row (a resource was created).
-    return NextResponse.json({ success: true }, { status: 201 })
+    // new ContactMessage row (a resource was created).
+    // V11 Fix #11: return the contact message ID so the admin can look it up.
+    return NextResponse.json({ success: true, id: contactMessage.id }, { status: 201 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
     console.error('Contact form error:', message, error)

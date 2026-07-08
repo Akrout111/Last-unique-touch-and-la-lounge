@@ -42,6 +42,10 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "mini-services/**",
     "prisma/**",
     "scripts/**",
+    // V11 Fix #13: ignore upload/ (reference files, not part of the project)
+    "upload/**",
+    // V11 Fix #13: ignore tool-results/ (internal agent artifacts)
+    "tool-results/**",
   ],
 }];
 

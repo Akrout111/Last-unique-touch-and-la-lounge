@@ -1,23 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
-import { createHmac, timingSafeEqual } from 'crypto'
 import { routing } from './i18n/routing'
 
 const intlMiddleware = createMiddleware(routing)
 
 // ===== Admin session verification (V9 Fix #1) =====
 //
-// Moving admin auth into the middleware (rather than only the admin layout's
-// `requireAuth()` call) closes the SSR auth bypass: in Next.js 16 the page
-// component can begin rendering in parallel with the layout, so a redirect
-// issued from `requireAuth()` in the layout becomes an RSC instruction that
-// may still leak HTML. The middleware runs BEFORE any rendering, so an
-// unauthenticated request never reaches the React tree.
+// Moving admin auth into the proxy (formerly middleware) closes the SSR auth
+// bypass: in Next.js 16 the page component can begin rendering in parallel
+// with the layout, so a redirect issued from `requireAuth()` in the layout
+// becomes an RSC instruction that may still leak HTML. The proxy runs BEFORE
+// any rendering, so an unauthenticated request never reaches the React tree.
 //
-// The cookie format is `timestamp.signature` where signature =
-// HMAC-SHA256(SESSION_SECRET, timestamp). This mirrors `verifySessionToken`
-// in `src/lib/auth.ts` but is duplicated here because the middleware runs
-// in the Edge runtime and cannot import `next/headers`-dependent code.
+// V11 Fix #9: Uses the Web Crypto API (`crypto.subtle`) instead of Node.js
+// `crypto` module so the proxy is Edge Runtime compatible. The cookie format
+// is `timestamp.signature` where signature = HMAC-SHA256(SESSION_SECRET,
+// timestamp).
 
 const SESSION_COOKIE = 'lut_admin_session'
 const SESSION_MAX_AGE_MS = 60 * 60 * 24 * 7 * 1000 // 7 days (matches auth.ts)
@@ -33,41 +31,80 @@ function getSessionSecret(): string | null {
 
   if (isProduction) {
     // Fail closed — no secret means no token is valid.
-    console.error('[middleware] FATAL: SESSION_SECRET not set in production')
+    console.error('[proxy] FATAL: SESSION_SECRET not set in production')
     return null
   }
 
   // Dev fallback (with warning)
   if (!envSecret) {
     console.warn(
-      '[middleware] WARNING: SESSION_SECRET not set. Using dev-only secret.'
+      '[proxy] WARNING: SESSION_SECRET not set. Using dev-only secret.'
     )
     return DEV_ONLY_SESSION_SECRET
   }
 
   // envSecret provided but too short in dev — warn but allow.
   console.warn(
-    `[middleware] WARNING: SESSION_SECRET shorter than 32 chars (got ${envSecret.length}).`
+    `[proxy] WARNING: SESSION_SECRET shorter than 32 chars (got ${envSecret.length}).`
   )
   return envSecret
 }
 
+/**
+ * Constant-time string comparison (V11 Fix #9 — Edge Runtime compatible).
+ * Does NOT use Node.js `crypto.timingSafeEqual` (not available on Edge).
+ * Instead, manually XORs each char code — the result is 0 iff all bytes
+ * match, and the loop always iterates over the longer string so timing
+ * doesn't leak the length.
+ */
 function safeEqualStrings(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a, 'utf8')
-  const bBuf = Buffer.from(b, 'utf8')
-  if (aBuf.length !== bBuf.length) {
-    // Still perform a comparison to keep timing roughly constant.
-    timingSafeEqual(aBuf, aBuf)
+  if (a.length !== b.length) {
+    // Still iterate to keep timing roughly constant.
+    const maxLen = Math.max(a.length, b.length)
+    let result = 1
+    for (let i = 0; i < maxLen; i++) {
+      result |= (a.charCodeAt(i % a.length) ^ b.charCodeAt(i % b.length))
+    }
     return false
   }
-  return timingSafeEqual(aBuf, bBuf)
+  let result = 0
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return result === 0
+}
+
+/**
+ * Compute HMAC-SHA256(secret, data) as a hex string using the Web Crypto
+ * API (V11 Fix #9 — Edge Runtime compatible). Does NOT use Node.js
+ * `crypto.createHmac`.
+ */
+async function hmacSha256Hex(secret: string, data: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data))
+  // Convert ArrayBuffer to hex string.
+  const bytes = new Uint8Array(signature)
+  let hex = ''
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0')
+  }
+  return hex
 }
 
 /**
  * Verify the admin session cookie value (`timestamp.signature`).
  * Returns true iff the signature is valid AND the token has not expired.
+ *
+ * V11 Fix #9: async because Web Crypto API is async (returns Promises).
  */
-function verifySessionCookie(cookieValue: string | undefined): boolean {
+async function verifySessionCookie(cookieValue: string | undefined): Promise<boolean> {
   if (!cookieValue || !cookieValue.includes('.')) return false
   const parts = cookieValue.split('.')
   if (parts.length !== 2) return false
@@ -76,7 +113,7 @@ function verifySessionCookie(cookieValue: string | undefined): boolean {
   const secret = getSessionSecret()
   if (!secret) return false
 
-  const expectedSignature = createHmac('sha256', secret).update(timestamp).digest('hex')
+  const expectedSignature = await hmacSha256Hex(secret, timestamp)
 
   let sigMatch = false
   try {
@@ -172,7 +209,7 @@ async function checkProductExists(
  * sync during SPA navigations (where the layout server component is not
  * re-rendered but the route changes).
  */
-export default async function middleware(request: NextRequest): Promise<NextResponse> {
+export default async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
   // --- Admin auth guard (V9 Fix #1) ---
@@ -181,7 +218,8 @@ export default async function middleware(request: NextRequest): Promise<NextResp
   // match on the `/admin/` segment regardless of locale prefix.
   if (pathname.includes('/admin') && !pathname.includes('/admin/login')) {
     const session = request.cookies.get(SESSION_COOKIE)?.value
-    if (!verifySessionCookie(session)) {
+    // V11 Fix #9: verifySessionCookie is now async (Web Crypto API).
+    if (!await verifySessionCookie(session)) {
       // Build the localized login URL preserving the current locale.
       const localeMatch = pathname.match(/^\/(ar|en)\//)
       const locale = localeMatch ? localeMatch[1] : 'ar'

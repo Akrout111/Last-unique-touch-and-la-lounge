@@ -18,38 +18,42 @@ export default function LaLoungeView() {
   const t = useTranslations()
   const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
+  // V11 Fix #1: migrated inline locale ternaries to i18n keys.
   // V10 user request: added examples for each service to show concrete
   // items/events the customer can expect.
-  // Note: examples are defined inline (locale-aware) because next-intl's
-  // t() doesn't resolve newly-added keys in the standalone build reliably.
-  const ex = locale === 'ar' ? {
-    planning: ['حفلات الزفاف', 'الفعاليات المؤسسية', 'معارض الأزياء', 'المؤتمرات'],
-    furniture: ['كراسي شيفاري الذهبية', 'طاولات كوكتيل', 'أرائك فاخرة', 'منصات عرض'],
-    custom: ['منصات مخصصة', 'ديكورات مسرحية', 'أثاث ثيماتيكي', 'تصاميم حصرية'],
-  } : {
-    planning: ['Weddings', 'Corporate Events', 'Fashion Shows', 'Conferences'],
-    furniture: ['Gold Chiavari Chairs', 'Cocktail Tables', 'Luxury Sofas', 'Display Platforms'],
-    custom: ['Custom Platforms', 'Stage Decor', 'Themed Furniture', 'Exclusive Designs'],
-  }
-
   const services: Array<{ title: string; desc: string; icon: LucideIcon; examples: string[] }> = [
     {
       title: t('laLounge.services.planning.title'),
       desc: t('laLounge.services.planning.desc'),
       icon: ClipboardList,
-      examples: ex.planning,
+      examples: [
+        t('laLounge.services.planning.ex1'),
+        t('laLounge.services.planning.ex2'),
+        t('laLounge.services.planning.ex3'),
+        t('laLounge.services.planning.ex4'),
+      ],
     },
     {
       title: t('laLounge.services.furniture.title'),
       desc: t('laLounge.services.furniture.desc'),
       icon: Armchair,
-      examples: ex.furniture,
+      examples: [
+        t('laLounge.services.furniture.ex1'),
+        t('laLounge.services.furniture.ex2'),
+        t('laLounge.services.furniture.ex3'),
+        t('laLounge.services.furniture.ex4'),
+      ],
     },
     {
       title: t('laLounge.services.custom.title'),
       desc: t('laLounge.services.custom.desc'),
       icon: Sparkles,
-      examples: ex.custom,
+      examples: [
+        t('laLounge.services.custom.ex1'),
+        t('laLounge.services.custom.ex2'),
+        t('laLounge.services.custom.ex3'),
+        t('laLounge.services.custom.ex4'),
+      ],
     },
   ]
 
@@ -110,7 +114,7 @@ export default function LaLoungeView() {
           {/* Services button — scrolls to services section */}
           <button
             onClick={scrollToServices}
-            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(255,20,147,0.3)] hover:shadow-[0_6px_25px_rgba(255,20,147,0.4)] transition-all cursor-pointer border border-primary/30"
+            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] hover:shadow-[0_6px_25px_rgba(230, 0, 126,0.4)] transition-all cursor-pointer border border-primary/30"
           >
             {t('laLounge.featuresButton')}
           </button>
@@ -167,7 +171,7 @@ export default function LaLoungeView() {
           <div className="text-center mt-12">
             <button
               onClick={() => router.push('/contact')}
-              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(255,20,147,0.3)] transition-all cursor-pointer"
+              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] transition-all cursor-pointer"
             >
               {t('laLounge.contactButton')}
             </button>

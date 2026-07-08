@@ -5,6 +5,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { shouldEnable3D } from '@/lib/device-capabilities';
+// V11 Fix #12: use BRAND_COLORS constant instead of hardcoded hexes.
+import { BRAND_COLORS } from '@/lib/brand-colors';
 
 function BlueprintGrid() {
   const gridGroup = useRef<THREE.Group>(null);
@@ -36,7 +38,7 @@ function BlueprintGrid() {
       {/* Radar Sweep */}
       <mesh ref={radarRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.012, 0]}>
         <circleGeometry args={[100, 64]} />
-        <meshBasicMaterial color="#FF6B9D" transparent opacity={0.04} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={BRAND_COLORS.LA_LOUNGE_LIGHT} transparent opacity={0.04} side={THREE.DoubleSide} />
       </mesh>
 
       {/* Crosshairs */}
@@ -79,7 +81,7 @@ function FloatingParticles() {
           args={[positions, 3]}
         />
       </bufferGeometry>
-      <PointMaterial transparent color="#FF1493" size={0.15} sizeAttenuation={true} depthWrite={false} opacity={0.6} />
+      <PointMaterial transparent color={BRAND_COLORS.LA_LOUNGE} size={0.15} sizeAttenuation={true} depthWrite={false} opacity={0.6} />
     </points>
   );
 }
@@ -113,9 +115,9 @@ function EventArchitecture() {
     
     // Materials that look like blueprint ink
     const matBold = new THREE.LineBasicMaterial({ color: '#8B0A50', transparent: true, opacity: 0.95 });
-    const matMain = new THREE.LineBasicMaterial({ color: '#FF1493', transparent: true, opacity: 0.8 });
-    const matSub = new THREE.LineBasicMaterial({ color: '#FF1493', transparent: true, opacity: 0.5 });
-    const matAccent = new THREE.LineBasicMaterial({ color: '#FF6B9D', transparent: true, opacity: 0.9 });
+    const matMain = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE, transparent: true, opacity: 0.8 });
+    const matSub = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE, transparent: true, opacity: 0.5 });
+    const matAccent = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE_LIGHT, transparent: true, opacity: 0.9 });
     
     const addBoundingBox = (w: number, h: number, d: number, x: number, y: number, z: number) => {
       const box = track(new THREE.BoxGeometry(w + 0.5, h + 0.5, d + 0.5));
@@ -319,7 +321,7 @@ function EventArchitecture() {
             args={[new Float32Array(nodes.flatMap(v => [v.x, v.y, v.z])), 3]}
           />
         </bufferGeometry>
-        <pointsMaterial color="#FF1493" size={0.5} sizeAttenuation={true} />
+        <pointsMaterial color={BRAND_COLORS.LA_LOUNGE} size={0.5} sizeAttenuation={true} />
       </points>
 
       {/* Animated Center Focal Point (Dance Floor / Core) */}
@@ -327,7 +329,7 @@ function EventArchitecture() {
         {[8, 12, 16].map((r, i) => (
           <mesh key={`cring_${i}`} rotation={[-Math.PI / 2, 0, 0]}>
             <ringGeometry args={[r, r + 0.2, 64]} />
-            <meshBasicMaterial color="#FF1493" transparent opacity={0.6} side={THREE.DoubleSide} />
+            <meshBasicMaterial color={BRAND_COLORS.LA_LOUNGE} transparent opacity={0.6} side={THREE.DoubleSide} />
           </mesh>
         ))}
       </group>

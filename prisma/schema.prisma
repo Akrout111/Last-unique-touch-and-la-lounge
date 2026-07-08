@@ -137,3 +137,22 @@ model SecurityLog {
 
   @@index([event, createdAt])
 }
+
+// ===== Contact Messages (V11 Fix #11) =====
+// Dedicated table for contact form submissions so they can be queried,
+// filtered, and displayed in the admin panel. Previously contact messages
+// were only stored in SecurityLog (free-form JSON details string) which
+// made them hard to manage.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  brand     Brand    @default(LUT)
+  createdAt DateTime @default(now())
+
+  @@index([brand, createdAt])
+  @@index([email])
+}

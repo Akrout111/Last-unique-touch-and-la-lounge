@@ -269,7 +269,148 @@ async function main() {
     })
   }
 
-  console.log('✅ Products created:', products.length)
+  console.log('✅ LUT Products created:', products.length)
+
+  // V11 Fix #10: Add LA_LOUNGE + YOUR_BIRTHDAY sample products for testing.
+  // These are not shown on the LUT storefront (scoped by brand='LUT') but
+  // are visible in the admin panel when the admin switches brand.
+
+  // === LA_LOUNGE categories ===
+  const laLoungeEvents = await prisma.category.upsert({
+    where: { category_brand_slug_unique: { brand: 'LA_LOUNGE', slug: 'events' } },
+    update: {},
+    create: {
+      slug: 'events',
+      brand: 'LA_LOUNGE',
+      nameAr: 'فعاليات',
+      nameEn: 'Events',
+    },
+  })
+
+  const laLoungeFurniture = await prisma.category.upsert({
+    where: { category_brand_slug_unique: { brand: 'LA_LOUNGE', slug: 'event-furniture' } },
+    update: {},
+    create: {
+      slug: 'event-furniture',
+      brand: 'LA_LOUNGE',
+      nameAr: 'أثاث الفعاليات',
+      nameEn: 'Event Furniture',
+    },
+  })
+
+  // === LA_LOUNGE products ===
+  const laLoungeProducts = [
+    {
+      slug: 'gold-chiavari-chair',
+      brand: 'LA_LOUNGE' as const,
+      nameAr: 'كرسي كيافاري ذهبي',
+      nameEn: 'Gold Chiavari Chair',
+      descriptionAr: 'كرسي كيافاري ذهبي أنيق للفعاليات والحفلات',
+      descriptionEn: 'Elegant gold Chiavari chair for events and weddings',
+      rentalPricePerDay: 8,
+      securityDeposit: 20,
+      images: JSON.stringify(['/products/gold-chiavari-chair.webp']),
+      stock: 100,
+      isActive: true,
+      categoryId: laLoungeFurniture.id,
+    },
+    {
+      slug: 'cocktail-table',
+      brand: 'LA_LOUNGE' as const,
+      nameAr: 'طاولة كوكتيل',
+      nameEn: 'Cocktail Table',
+      descriptionAr: 'طاولة كوكتيل عصرية للفعاليات',
+      descriptionEn: 'Modern cocktail table for events',
+      rentalPricePerDay: 15,
+      securityDeposit: 40,
+      images: JSON.stringify(['/products/cocktail-table.webp']),
+      stock: 30,
+      isActive: true,
+      categoryId: laLoungeFurniture.id,
+    },
+    {
+      slug: 'luxury-sofa-set',
+      brand: 'LA_LOUNGE' as const,
+      nameAr: 'طقم أرائك فاخر',
+      nameEn: 'Luxury Sofa Set',
+      descriptionAr: 'طقم أرائك فاخر للمناطق VIP في الفعاليات',
+      descriptionEn: 'Luxury sofa set for VIP areas at events',
+      rentalPricePerDay: 45,
+      securityDeposit: 100,
+      images: JSON.stringify(['/products/luxury-sofa-set.webp']),
+      stock: 10,
+      isActive: true,
+      categoryId: laLoungeFurniture.id,
+    },
+  ]
+
+  for (const product of laLoungeProducts) {
+    await prisma.product.upsert({
+      where: {
+        product_brand_slug_unique: { brand: product.brand, slug: product.slug },
+      },
+      update: product,
+      create: product,
+    })
+  }
+
+  console.log('✅ LA_LOUNGE Products created:', laLoungeProducts.length)
+
+  // === YOUR_BIRTHDAY categories ===
+  const birthdayDecor = await prisma.category.upsert({
+    where: { category_brand_slug_unique: { brand: 'YOUR_BIRTHDAY', slug: 'decor' } },
+    update: {},
+    create: {
+      slug: 'decor',
+      brand: 'YOUR_BIRTHDAY',
+      nameAr: 'ديكور',
+      nameEn: 'Decor',
+    },
+  })
+
+  // === YOUR_BIRTHDAY products ===
+  const birthdayProducts = [
+    {
+      slug: 'balloon-arch',
+      brand: 'YOUR_BIRTHDAY' as const,
+      nameAr: 'قوس بالونات عضوي',
+      nameEn: 'Organic Balloon Arch',
+      descriptionAr: 'قوس بالونات عضوي لحفلات أعياد الميلاد',
+      descriptionEn: 'Organic balloon arch for birthday parties',
+      rentalPricePerDay: 50,
+      securityDeposit: 100,
+      images: JSON.stringify(['/products/balloon-arch.webp']),
+      stock: 20,
+      isActive: true,
+      categoryId: birthdayDecor.id,
+    },
+    {
+      slug: 'led-dance-floor',
+      brand: 'YOUR_BIRTHDAY' as const,
+      nameAr: 'رقصة LED مضيئة',
+      nameEn: 'LED Dance Floor',
+      descriptionAr: 'رقصة LED ملونة لحفلات أعياد الميلاد',
+      descriptionEn: 'Colored LED dance floor for birthday parties',
+      rentalPricePerDay: 80,
+      securityDeposit: 200,
+      images: JSON.stringify(['/products/led-dance-floor.webp']),
+      stock: 5,
+      isActive: true,
+      categoryId: birthdayDecor.id,
+    },
+  ]
+
+  for (const product of birthdayProducts) {
+    await prisma.product.upsert({
+      where: {
+        product_brand_slug_unique: { brand: product.brand, slug: product.slug },
+      },
+      update: product,
+      create: product,
+    })
+  }
+
+  console.log('✅ YOUR_BIRTHDAY Products created:', birthdayProducts.length)
   console.log('🌱 Seed completed!')
 }
 

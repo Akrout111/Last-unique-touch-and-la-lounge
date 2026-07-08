@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Check,
   Phone,
   User,
   MapPin,
@@ -376,22 +375,11 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {(() => {
-                const ex = isRTL ? {
-                  item1: ['كيك ثلاثي الطبقات', 'كيك بشخصيات كرتونية', 'كيك ثيم الأميرة', 'كيك أو مسك بار'],
-                  item2: ['قوس بالونات عضوي', 'جدار بالونات', 'بالونات هيليوم', 'تنسيقات ثيم'],
-                  item3: ['نظام صوت 2000 واط', 'إضاءة LED ملونة', 'ليزر احترافي', 'دخان مسرحي'],
-                } : {
-                  item1: ['3-Tier Cake', 'Cartoon Character Cake', 'Princess Theme Cake', 'O Musk Bar Cake'],
-                  item2: ['Organic Balloon Arch', 'Balloon Wall', 'Helium Balloons', 'Theme Arrangements'],
-                  item3: ['2000W Sound System', 'Colored LED Lighting', 'Professional Laser', 'Stage Smoke'],
-                }
-                return [
-                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.15)', examples: ex.item1 },
-                { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: '#EC4899', glow: 'rgba(236, 72, 153, 0.15)', examples: ex.item2 },
-                { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: '#00F3FF', glow: 'rgba(0, 243, 255, 0.15)', examples: ex.item3 },
-                ]
-              })().map((service, i) => (
+              {[
+                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.15)', examples: [t('services.item1.ex1'), t('services.item1.ex2'), t('services.item1.ex3'), t('services.item1.ex4')] },
+                { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: '#EC4899', glow: 'rgba(236, 72, 153, 0.15)', examples: [t('services.item2.ex1'), t('services.item2.ex2'), t('services.item2.ex3'), t('services.item2.ex4')] },
+                { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: '#00F3FF', glow: 'rgba(0, 243, 255, 0.15)', examples: [t('services.item3.ex1'), t('services.item3.ex2'), t('services.item3.ex3'), t('services.item3.ex4')] },
+              ].map((service, i) => (
                 <div
                   key={i}
                   className="group relative p-8 rounded-lg bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
@@ -564,7 +552,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               </h2>
               <p className="text-white/60 mb-8 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">{t('cta.subtitle')}</p>
               <button
-                onClick={() => handleBookingClick(t('packages.luxury.name'))}
+                onClick={() => handleBookingClick(t('booking.bookEvent'))}
                 className="px-10 py-4.5 rounded-full font-bold text-white text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(236,72,153,0.3)]"
                 style={{
                   background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
@@ -662,9 +650,11 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       <h3 id="booking-modal-title" className="text-xl font-bold">
                         {t('booking.modalTitle')}
                       </h3>
+                      {/* V11 Fix #3: removed selectedPackageLabel — packages section
+                          was deleted, so showing "Selected Package: ..." was misleading. */}
                       {selectedPkgName && (
                         <p className="text-xs text-white/60 font-medium tracking-wide mt-0.5">
-                          {t('booking.selectedPackageLabel')} <span className="text-[#00F3FF] font-bold">{selectedPkgName}</span>
+                          {selectedPkgName}
                         </p>
                       )}
                     </div>

@@ -39,10 +39,11 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
 
   const brand = resolveBrandFromPath(pathname)
-  // Only treat as home page after mount — during SSR, `usePathname()` may
-  // return null for statically prerendered pages, causing the wordmark to
-  // show on the home page. After hydration, the correct pathname is available.
-  const homePage = mounted ? isHomePage(pathname) : false
+  // V11 Fix #7: use `usePathname()` directly (no `mounted` flag) to avoid
+  // SSR hydration flash. Next.js 16's `usePathname()` returns the correct
+  // path during SSR for client components, so the wordmark is hidden on
+  // the home page from the very first paint — no flash.
+  const homePage = isHomePage(pathname)
 
   useEffect(() => {
     setMounted(true)

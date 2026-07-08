@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getLocale } from 'next-intl/server'
 import { db } from '@/lib/db'
 import { getAdminBrand } from '@/lib/admin-brand'
 import { BookingDetail } from '@/components/admin/booking-detail'
@@ -10,7 +10,6 @@ interface PageProps {
 
 export default async function AdminBookingDetailPage({ params }: PageProps) {
   const locale = await getLocale()
-  const t = await getTranslations()
   const { id } = await params
   const brand = await getAdminBrand()
 

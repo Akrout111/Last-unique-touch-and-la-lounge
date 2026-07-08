@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
 import { Instagram, Phone } from 'lucide-react'
@@ -29,15 +28,10 @@ function isHomePage(pathname: string | null): boolean {
 export function Footer() {
   const t = useTranslations()
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
   const brand = resolveBrandFromPath(pathname)
-  // Only treat as home page after mount — during SSR, `usePathname()` may
-  // return null for statically prerendered pages.
-  const homePage = mounted ? isHomePage(pathname) : false
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // V11 Fix #7: use `usePathname()` directly (no `mounted` flag) to avoid
+  // SSR hydration flash.
+  const homePage = isHomePage(pathname)
 
   // On the home page, don't show any single brand's name — the home page
   // is the umbrella landing for all 3 brands.
