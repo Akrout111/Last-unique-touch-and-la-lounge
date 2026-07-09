@@ -3,6 +3,15 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/get-client-ip'
+
+// security/data-fix #5: KWD (Kuwaiti Dinar) uses 3 decimal places, so the
+// smallest unit is 1 fil = 0.001 KWD. Server-side price/deposit/total
+// re-computation can legitimately differ from the client-supplied value by
+// floating-point rounding noise below 1 fil; comparisons must allow that
+// tolerance rather than doing exact `===` checks (which would reject
+// otherwise-valid orders due to JS float arithmetic).
+const KWD_TOLERANCE = 0.001 // 1 fil precision for KWD (3 decimal places)
 
 const itemSchema = z.object({
   productId: z.string().min(1),
@@ -14,7 +23,7 @@ const itemSchema = z.object({
   securityDeposit: z.number().nonnegative(),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
-  quantity: z.number().int().positive(),
+  quantity: z.number().int().positive().max(10000),
   days: z.number().int().positive(),
   total: z.number().positive(),
 })
@@ -31,7 +40,7 @@ const customerSchema = z.object({
 const orderSchema = z.object({
   items: z.array(itemSchema).min(1),
   customer: customerSchema,
-  idempotencyKey: z.string().min(10),
+  idempotencyKey: z.string().min(10).max(255),
 })
 
 type TxClient = Parameters<Parameters<typeof db.$transaction>[0]>[0]
@@ -90,17 +99,12 @@ async function checkStockAvailabilityInTx(
 
 export async function POST(req: NextRequest) {
   // --- Rate limit (10/min/IP) — D5 ---
-  // Take the LAST entry of x-forwarded-for — that is the IP set by the
-  // trusted reverse proxy. Earlier entries are client-controllable and
-  // must not be used for rate-limit keying (XFF spoofing fix).
-  const xff = req.headers.get('x-forwarded-for')
-  let ip: string
-  if (xff) {
-    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
-    ip = parts.length > 0 ? (parts[parts.length - 1] || 'unknown') : (req.headers.get('x-real-ip') ?? 'unknown')
-  } else {
-    ip = req.headers.get('x-real-ip') ?? 'unknown'
-  }
+  // security/data-fix #8: IP resolution now uses the shared `getClientIp`
+  // helper (`@/lib/get-client-ip`). Same logic — take the LAST entry of
+  // x-forwarded-for (the IP set by the trusted reverse proxy) and fall back
+  // to x-real-ip / 'unknown' — but extracted to one place so all rate-
+  // limited routes agree on what "the caller's IP" means.
+  const ip = getClientIp(req)
   const rl = rateLimit(`orders:${ip}`, 10, 60_000)
   if (!rl.allowed) {
     return NextResponse.json(
@@ -193,12 +197,12 @@ export async function POST(req: NextRequest) {
             }
 
             // Verify price matches DB
-            if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > 0.001) {
+            if (Math.abs(product.rentalPricePerDay - item.rentalPricePerDay) > KWD_TOLERANCE) {
               throw new OrderError('price_mismatch', 400)
             }
 
             // Verify securityDeposit matches DB (P0.2 — pricing integrity)
-            if (Math.abs(product.securityDeposit - item.securityDeposit) > 0.001) {
+            if (Math.abs(product.securityDeposit - item.securityDeposit) > KWD_TOLERANCE) {
               throw new OrderError('price_mismatch', 400)
             }
 
@@ -221,7 +225,7 @@ export async function POST(req: NextRequest) {
             const expectedTotal =
               product.rentalPricePerDay * calculatedDays * item.quantity +
               product.securityDeposit * item.quantity
-            if (Math.abs(expectedTotal - item.total) > 0.001) {
+            if (Math.abs(expectedTotal - item.total) > KWD_TOLERANCE) {
               throw new OrderError('total_mismatch', 400)
             }
 

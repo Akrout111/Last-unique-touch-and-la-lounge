@@ -14,14 +14,26 @@ import { shouldEnable3D } from '@/lib/device-capabilities'
  *
  * Performance: shouldEnable3D() guard + IntersectionObserver + frameloop gating + dispose.
  */
+
+/** Minimal structural type for the post-processing composer we use. */
+type Composer = {
+  render: () => void
+  setSize: (w: number, h: number) => void
+  addPass: (...args: never[]) => void
+  dispose: () => void
+}
+
 export function BirthdayVisualizer() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [enabled, setEnabled] = useState(false)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const composerRef = useRef<any>(null)
+  const composerRef = useRef<Composer | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const animationIdRef = useRef<number>(0)
-  const disposablesRef = useRef<any[]>([])
+  // Items pushed here are a mix of geometries/materials (which have dispose)
+  // and meshes/groups/lights (which don't). The cleanup loop uses `'dispose' in d`
+  // to narrow the union before calling dispose, mirroring the runtime guard.
+  const disposablesRef = useRef<Array<THREE.BufferGeometry | THREE.Material | THREE.Object3D>>([])
 
   // Enable 3D only on capable devices
   useEffect(() => {
@@ -37,10 +49,26 @@ export function BirthdayVisualizer() {
     const container = containerRef.current
     const isMobile = window.innerWidth < 768
 
+    // Read neon brand palette from CSS variables (single source of truth —
+    // see :root[data-brand="birthday"] in globals.css). Three.js accepts
+    // hex strings as ColorRepresentation, so we resolve the CSS vars once
+    // at scene init and pass the resulting strings into the materials/
+    // lights. Fallbacks keep the visual identical if the var is missing.
+    const computedStyle = getComputedStyle(document.documentElement)
+    const brandVar = (name: string, fallback: string) => {
+      const v = computedStyle.getPropertyValue(name).trim()
+      return v || fallback
+    }
+    const birthdayBg = brandVar('--c-birthday-bg', '#020204')
+    const birthdayPurple = brandVar('--c-birthday-purple', '#8B5CF6')
+    const birthdayPink = brandVar('--c-birthday-pink', '#EC4899')
+    const birthdayCyan = brandVar('--c-birthday-cyan', '#00F3FF')
+    const birthdayOrange = brandVar('--c-birthday-orange', '#F97316')
+
     // === SCENE ===
     const scene = new THREE.Scene()
-    scene.fog = new THREE.FogExp2(0x020204, 0.012)
-    scene.background = new THREE.Color(0x020204)
+    scene.fog = new THREE.FogExp2(birthdayBg, 0.012)
+    scene.background = new THREE.Color(birthdayBg)
     sceneRef.current = scene
 
     // === CAMERA ===
@@ -63,19 +91,19 @@ export function BirthdayVisualizer() {
     rendererRef.current = renderer
 
     // === POST PROCESSING (Bloom) — desktop only ===
-    let composer: any = null
+    let composer: Composer | null = null
     if (!isMobile) {
       try {
-        composer = new EffectComposer(renderer)
+        composer = new EffectComposer(renderer) as Composer
         const renderPass = new RenderPass(scene, camera)
-        composer.addPass(renderPass)
+        composer.addPass(renderPass as unknown as never)
         const bloomPass = new UnrealBloomPass(
           new THREE.Vector2(container.clientWidth, container.clientHeight),
           1.8,  // strength
           0.4,  // radius
           0.7   // threshold
         )
-        composer.addPass(bloomPass)
+        composer.addPass(bloomPass as unknown as never)
         composerRef.current = composer
       } catch (err) {
         console.warn('Failed to initialize UnrealBloomPass, falling back to standard renderer:', err)
@@ -89,26 +117,26 @@ export function BirthdayVisualizer() {
     disposablesRef.current.push(ambientLight)
 
     // Colored point lights for party atmosphere
-    const purpleLight = new THREE.PointLight(0x8B5CF6, 120, 100)
+    const purpleLight = new THREE.PointLight(birthdayPurple, 120, 100)
     purpleLight.position.set(-20, 15, 10)
     scene.add(purpleLight)
 
-    const pinkLight = new THREE.PointLight(0xEC4899, 100, 100)
+    const pinkLight = new THREE.PointLight(birthdayPink, 100, 100)
     pinkLight.position.set(20, 10, 15)
     scene.add(pinkLight)
 
-    const cyanLight = new THREE.PointLight(0x00F3FF, 80, 80)
+    const cyanLight = new THREE.PointLight(birthdayCyan, 80, 80)
     cyanLight.position.set(0, -5, 20)
     scene.add(cyanLight)
 
-    const orangeLight = new THREE.PointLight(0xF97316, 60, 80)
+    const orangeLight = new THREE.PointLight(birthdayOrange, 60, 80)
     orangeLight.position.set(10, 20, -10)
     scene.add(orangeLight)
     disposablesRef.current.push(purpleLight, pinkLight, cyanLight, orangeLight)
 
     // === VINYL RECORDS (spinning) ===
     const vinyls: THREE.Group[] = []
-    const vinylColors = [0x8B5CF6, 0xEC4899, 0x00F3FF, 0xF97316]
+    const vinylColors = [birthdayPurple, birthdayPink, birthdayCyan, birthdayOrange]
     const vinylCount = isMobile ? 2 : 4
 
     for (let i = 0; i < vinylCount; i++) {
@@ -229,7 +257,7 @@ export function BirthdayVisualizer() {
     // === STAGE LIGHTS (cones) ===
     const stageLights: THREE.SpotLight[] = []
     const stageLightTargets: THREE.Object3D[] = []
-    const lightColors = [0x8B5CF6, 0xEC4899, 0x00F3FF, 0xF97316]
+    const lightColors = [birthdayPurple, birthdayPink, birthdayCyan, birthdayOrange]
     for (let i = 0; i < (isMobile ? 2 : 4); i++) {
       const spot = new THREE.SpotLight(lightColors[i % lightColors.length], 50, 60, 0.4, 0.5, 1)
       spot.position.set((i - (isMobile ? 0.5 : 1.5)) * 10, 20, -5)
@@ -277,7 +305,7 @@ export function BirthdayVisualizer() {
 
         // Center cap
         const capGeo = new THREE.SphereGeometry(0.4, 16, 16)
-        const capMat = new THREE.MeshStandardMaterial({ color: 0xEC4899, emissive: 0xEC4899, emissiveIntensity: 0.5 })
+        const capMat = new THREE.MeshStandardMaterial({ color: birthdayPink, emissive: birthdayPink, emissiveIntensity: 0.5 })
         const cap = new THREE.Mesh(capGeo, capMat)
         cap.position.set(0, yOffset, 1.6)
         speakerGroup.add(cap)
@@ -290,7 +318,7 @@ export function BirthdayVisualizer() {
 
     // === FLOATING METALLIC BALLOONS ===
     const balloons: THREE.Group[] = []
-    const balloonColors = [0x8B5CF6, 0xEC4899, 0x00F3FF, 0xF97316, 0xEF4444, 0x10B981]
+    const balloonColors = [birthdayPurple, birthdayPink, birthdayCyan, birthdayOrange, 0xEF4444, 0x10B981]
     const balloonCount = isMobile ? 4 : 8
 
     for (let i = 0; i < balloonCount; i++) {
@@ -341,7 +369,7 @@ export function BirthdayVisualizer() {
     // === STAGE LASER BEAMS ===
     const lasers: THREE.Mesh[] = []
     const laserMatList: THREE.MeshBasicMaterial[] = []
-    const laserColors = [0x00F3FF, 0xEC4899]
+    const laserColors = [birthdayCyan, birthdayPink]
 
     for (let i = 0; i < 2; i++) {
       // Stand
@@ -374,8 +402,8 @@ export function BirthdayVisualizer() {
     // === GIANT CELEBRATION RING ===
     const ringGeo = new THREE.TorusGeometry(18, 0.5, 16, 100)
     const ringMat = new THREE.MeshStandardMaterial({
-      color: 0x8B5CF6,
-      emissive: 0x8B5CF6,
+      color: birthdayPurple,
+      emissive: birthdayPurple,
       emissiveIntensity: 1.5,
       metalness: 0.2,
       roughness: 0.2,
@@ -539,9 +567,10 @@ export function BirthdayVisualizer() {
       window.removeEventListener('resize', onResize)
       clearTimeout(resizeTimer)
 
-      // Dispose all resources
+      // Dispose all resources (only geometries/materials actually have dispose —
+      // meshes/groups/lights are skipped via the `'dispose' in d` narrowing).
       disposablesRef.current.forEach((d) => {
-        if (d && typeof d.dispose === 'function') d.dispose()
+        if (d && 'dispose' in d && typeof d.dispose === 'function') d.dispose()
       })
       disposablesRef.current = []
 

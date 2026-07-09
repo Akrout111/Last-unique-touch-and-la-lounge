@@ -1,8 +1,5 @@
 import {
   Inter,
-  Tajawal,
-  Cormorant_Garamond,
-  DM_Mono,
   Cairo,
   Montserrat,
   Poiret_One,
@@ -12,43 +9,6 @@ import {
   Baloo_2,
   Lalezar,
 } from 'next/font/google'
-
-/* ============================================================
-   LEGACY FONTS — kept for backwards compatibility.
-   These are still loaded on every page so existing
-   `var(--font-inter)` / `var(--font-tajawal)` / `var(--font-display)`
-   / `var(--font-mono)` references keep resolving. Per-brand fonts
-   (below) override `--font-display` / `--font-body` / `--font-arabic`
-   via the `data-brand` cascade in globals.css.
-   ============================================================ */
-
-export const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
-
-export const tajawal = Tajawal({
-  subsets: ['arabic'],
-  display: 'swap',
-  variable: '--font-tajawal',
-  weight: ['300', '400', '500', '700', '900'],
-})
-
-export const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-display',
-  weight: ['300', '400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-})
-
-export const dmMono = DM_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-mono',
-  weight: ['400', '500'],
-})
 
 /* ============================================================
    BRAND-SPECIFIC FONTS (Phase 2.2)
@@ -61,6 +21,16 @@ export const dmMono = DM_Mono({
      at module scope, so each font is declared individually below and
      then grouped into the exported `lutFonts` / `laLoungeFonts` /
      `birthdayFonts` objects.
+
+   PERF (V14): the 4 legacy loaders (Inter→--font-inter, Tajawal→
+   --font-tajawal, Cormorant→--font-display, DM Mono→--font-mono)
+   were removed. next/font preloads every woff2 for every loader
+   whose `.variable` class is attached to the DOM, so the 4 legacy
+   loaders forced 4 extra woff2 preloads on every route — even
+   though globals.css now resolves --font-display / --font-body /
+   --font-arabic via the brand cascade. References to --font-mono
+   in `.eyebrow` now fall back to Tailwind v4's default monospace
+   stack (ui-monospace, SFMono-Regular, …).
    ============================================================ */
 
 // --- LUT: Montserrat (display) + Inter (body) + Cairo (Arabic) ---
@@ -141,6 +111,3 @@ export const birthdayFonts = {
   body: birthdayBody,
   arabic: birthdayArabic,
 }
-
-// Default (home page + SSR fallback) — LUT fonts are the neutral default.
-export const defaultFonts = lutFonts

@@ -143,6 +143,13 @@
 }
 
 :root[data-brand="birthday"] {
+  /* V14: Birthday neon palette as CSS variables */
+  --c-birthday-bg: #020204;
+  --c-birthday-card: #09090f;
+  --c-birthday-purple: #8B5CF6;
+  --c-birthday-pink: #EC4899;
+  --c-birthday-cyan: #00F3FF;
+  --c-birthday-orange: #F97316;
   --primary: #F5B914; /* gold — Your Birthday's primary IS gold */
   --accent: #4B1858; /* deep purple */
   --ring: #F5B914;
@@ -351,7 +358,7 @@
 
   /* Editorial serif for display headings */
   .font-display {
-    font-family: var(--font-display), 'Tajawal', Georgia, serif;
+    font-family: var(--font-display), Georgia, serif;
     font-weight: 500;
     letter-spacing: -0.02em;
   }
@@ -361,9 +368,10 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Eyebrow / label text */
+  /* Eyebrow / label text — PERF (V14): legacy --font-mono (DM Mono) loader
+     was removed; fall back to Tailwind v4's default monospace stack. */
   .eyebrow {
-    font-family: var(--font-mono), 'Inter', monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.7rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;

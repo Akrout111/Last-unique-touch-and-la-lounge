@@ -88,6 +88,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   /**
    * Persist the selected brand to the `admin-brand` cookie and trigger a
    * server re-render so every admin page picks up the new tenant scope.
+   *
+   * security/data-fix #4: the `secure` flag is added in production so the
+   * cookie is only transmitted over HTTPS (defense-in-depth against MITM
+   * cookie theft on public Wi-Fi). Dev/local runs over plain http so the
+   * flag is omitted there.
    */
   const handleBrandChange = (brand: AdminBrandKey) => {
     if (brand === activeBrand) return
@@ -95,8 +100,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     // merges into the cookie jar rather than clobbering it). The
     // react-hooks/immutability rule misflags it as a foreign mutation, so
     // disable the rule for this single statement.
+    const secure = process.env.NODE_ENV === 'production' ? '; secure' : ''
     // eslint-disable-next-line react-hooks/immutability
-    document.cookie = `${ADMIN_BRAND_COOKIE}=${brand}; path=/; max-age=${ADMIN_BRAND_COOKIE_MAX_AGE}; samesite=lax`
+    document.cookie = `${ADMIN_BRAND_COOKIE}=${brand}; path=/; max-age=${ADMIN_BRAND_COOKIE_MAX_AGE}; samesite=lax${secure}`
     setActiveBrand(brand)
     router.refresh()
   }
@@ -205,7 +211,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="min-h-screen bg-background flex" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-[100dvh] bg-background flex" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       {/* Sidebar — desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-stone-950 text-white shrink-0">
         <div className="p-6 border-b border-white/10">

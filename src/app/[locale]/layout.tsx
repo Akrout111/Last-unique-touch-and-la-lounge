@@ -9,7 +9,7 @@ import { ToastProvider } from '@/components/providers/toast-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { BrandThemeSetter } from '@/components/providers/brand-theme-setter'
 import { FloatingWhatsApp } from '@/components/floating-whatsapp'
-import { inter, tajawal, cormorant, dmMono, lutFonts, laLoungeFonts, birthdayFonts } from '@/app/fonts'
+import { lutFonts, laLoungeFonts, birthdayFonts } from '@/app/fonts'
 
 /**
  * Resolve the brand slug from the locale segment.
@@ -75,14 +75,16 @@ export default async function LocaleLayout({
       dir={locale === 'ar' ? 'rtl' : 'ltr'}
       data-brand={brand}
       className={[
-        // Legacy fonts (still referenced by globals.css body/eyebrow rules).
-        inter.variable,
-        tajawal.variable,
-        cormorant.variable,
-        dmMono.variable,
-        // New per-brand font sets — all 9 variables exposed on <html>.
+        // Per-brand font sets — all 9 variables exposed on <html>.
         // globals.css `:root[data-brand="X"]` blocks map --font-display /
         // --font-body / --font-arabic to the active brand's set.
+        //
+        // PERF (V14): the 4 legacy loaders (Inter→--font-inter, Tajawal→
+        // --font-tajawal, Cormorant→--font-display, DM Mono→--font-mono)
+        // were removed. next/font preloads every woff2 for every loader
+        // whose `.variable` class is attached to the DOM, so applying
+        // 13 .variable classes on <html> forced 4 extra woff2 preloads
+        // per page. We now apply only the 9 brand-scoped variables.
         lutFonts.display.variable,
         lutFonts.body.variable,
         lutFonts.arabic.variable,
@@ -96,10 +98,11 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#E3222B" />
+        {/* `theme-color` is exported via the `viewport` export below —
+            declaring it again here would duplicate the meta tag and pin it
+            to the LUT brand red regardless of which brand is active. */}
       </head>
-      <body className="min-h-screen flex flex-col antialiased">
+      <body className="min-h-[100dvh] flex flex-col antialiased">
         {/* Skip-to-content link (WCAG 2.4.1 / C14) — first focusable element */}
         <a
           href="#main-content"

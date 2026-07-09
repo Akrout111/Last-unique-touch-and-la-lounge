@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac } from 'crypto'
+import { safeEqualStrings } from '@/lib/crypto-utils'
 
 const SESSION_COOKIE = 'lut_admin_session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
@@ -72,21 +73,6 @@ function getAdminPassword(): string {
   return 'dev'
 }
 
-/**
- * Constant-time string comparison to prevent timing attacks on passwords.
- * Returns true iff the two strings are byte-equal.
- */
-function safeEqualStrings(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a, 'utf8')
-  const bBuf = Buffer.from(b, 'utf8')
-  if (aBuf.length !== bBuf.length) {
-    // Still perform a comparison to keep timing roughly constant.
-    timingSafeEqual(aBuf, aBuf)
-    return false
-  }
-  return timingSafeEqual(aBuf, bBuf)
-}
-
 function createSessionToken(): string {
   const secret = getSessionSecret()
   const timestamp = Date.now().toString()
@@ -125,6 +111,8 @@ function verifySessionToken(token: string): boolean {
 
   const age = Date.now() - timestampNum
   if (age > SESSION_MAX_AGE * 1000) return false
+  // V14: reject future timestamps (mirror proxy.ts guard)
+  if (age < -60_000) return false
 
   return true
 }

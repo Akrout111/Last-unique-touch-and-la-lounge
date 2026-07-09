@@ -23,16 +23,3 @@ export type Brand = keyof typeof BRAND_COLORS
 export function getBrandColor(brand: string): string {
   return BRAND_COLORS[brand as Brand] || BRAND_COLORS.LUT
 }
-
-/**
- * Convert a brand's hex color to an rgba() string with the given alpha.
- * Used by Three.js components (which can't read CSS variables) and by
- * admin components that need a semi-transparent brand tint.
- */
-export function getBrandColorRgba(brand: string, alpha: number = 1): string {
-  const hex = getBrandColor(brand)
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}

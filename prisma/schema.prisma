@@ -10,6 +10,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// CHECK CONSTRAINTS (security/data-fix #3 — documentation only)
+// ----------------------------------------------------------------------------
+// Prisma's schema DSL does not support CHECK constraints, and SQLite cannot
+// ALTER TABLE ADD CONSTRAINT on existing tables (it would require recreating
+// the table — too risky for a minimal change). The following invariants are
+// therefore enforced at the APPLICATION LAYER (see `src/app/api/orders/
+// route.ts` and `src/app/api/bookings/birthday/route.ts`). When this project
+// migrates to PostgreSQL (Phase 10), add the corresponding CHECK constraints
+// to the migration SQL:
+//
+//   Product:
+//     CHECK (rentalPricePerDay >= 0)
+//     CHECK (securityDeposit  >= 0)
+//     CHECK (stock            >= 0)
+//
+//   Booking:
+//     CHECK (totalAmount >= 0)
+//     CHECK ("endDate" >= "startDate")
+//     CHECK (quantity   >  0)
+//
+//   IdempotencyKey:
+//     CHECK ("expiresAt" >= "createdAt")
+// ============================================================================
+
 // ===== Multi-tenant: Brands =====
 // Note: SQLite doesn't support native enums — Prisma stores these as Strings
 enum Brand {

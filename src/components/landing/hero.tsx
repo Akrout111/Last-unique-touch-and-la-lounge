@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { useScroll, useTransform, motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
@@ -19,13 +19,10 @@ export function Hero() {
 
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
 
-  useEffect(() => {
-  }, [])
-
   return (
     <section
       ref={ref}
-      className="relative min-h-screen w-full overflow-hidden bg-ink flex flex-col"
+      className="relative min-h-[100dvh] w-full overflow-hidden bg-ink flex flex-col"
     >
       {/* CSS-based luxury background (different from LUT's 3D tunnel) */}
       {/* Animated gradient mesh */}

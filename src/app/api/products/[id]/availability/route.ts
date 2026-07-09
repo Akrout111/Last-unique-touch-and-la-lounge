@@ -32,8 +32,15 @@ export async function GET(
 
     // V9 Fix #2: scope by brand='LUT' so a client cannot probe availability
     // for a La Lounge / Your Birthday product through the LUT storefront API.
+    //
+    // PERF (V14): collapsed the previous 2 product queries (findFirst for
+    // brand verification + findUnique for stock) into a single findFirst
+    // that selects both `id` AND `stock`. The stock value is passed through
+    // to `checkProductAvailability` via the new `productStock` param so the
+    // availability check only issues ONE more query (the booking sum).
     const product = await db.product.findFirst({
       where: { id, brand: 'LUT', isActive: true },
+      select: { id: true, stock: true },
     })
     if (!product) {
       return NextResponse.json({ error: 'product_not_found' }, { status: 404 })
@@ -52,7 +59,16 @@ export async function GET(
     // V9 Fix #4: stock-aware availability. The result now includes
     // `availableStock` so the PDP can show "5 of 10 available" instead
     // of a binary available/unavailable.
-    const result = await checkProductAvailability(id, startDate, endDate)
+    //
+    // PERF (V14): pass `product.stock` so the helper skips its internal
+    // `db.product.findUnique` — saving one round-trip per request.
+    const result = await checkProductAvailability(
+      id,
+      startDate,
+      endDate,
+      1,
+      product.stock
+    )
 
     return NextResponse.json({
       available: result.available,

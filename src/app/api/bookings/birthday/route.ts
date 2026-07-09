@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/get-client-ip'
 
 /**
  * Birthday booking request schema.
@@ -21,27 +22,8 @@ const birthdaySchema = z.object({
   notes: z.string().max(2000).optional().or(z.literal('')),
   // Fix #3: idempotency key so a retried POST doesn't double-book the
   // same birthday slot.
-  idempotencyKey: z.string().min(10),
+  idempotencyKey: z.string().min(10).max(255),
 })
-
-/**
- * Resolve the caller's IP for rate-limit keying. Falls back to a
- * sentinel so all unidentified callers share a single bucket (rather
- * than each being unlimited).
- */
-function getClientIp(req: NextRequest): string {
-  // Take the LAST entry of x-forwarded-for — that is the IP set by the
-  // trusted reverse proxy. Earlier entries are client-controllable and
-  // must not be used for rate-limit keying (XFF spoofing fix).
-  const xff = req.headers.get('x-forwarded-for')
-  if (xff) {
-    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
-    if (parts.length > 0) {
-      return parts[parts.length - 1] || 'unknown'
-    }
-  }
-  return req.headers.get('x-real-ip') ?? 'unknown'
-}
 
 /**
  * POST /api/bookings/birthday

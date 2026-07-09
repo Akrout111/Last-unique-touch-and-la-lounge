@@ -50,7 +50,20 @@ export function Navbar() {
   }, [])
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    // rAF-throttled scroll handler — coalesces multiple scroll events into a
+    // single state update per animation frame so we never setState more than
+    // ~60×/s (the browser paints at vsync anyway, so extra updates are
+    // wasted work). `ticking` is a closure-scoped flag so the in-flight rAF
+    // can't be re-scheduled by a follow-up event.
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 40)
+        ticking = false
+      })
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -108,8 +121,8 @@ export function Navbar() {
                   </span>
                   {wordmark.subtitle && (
                     <span
-                      className={`hidden sm:inline text-[10px] lg:text-xs font-sans tracking-[0.2em] uppercase transition-colors duration-300 ${
-                        scrolled ? 'text-paper/60' : 'text-foreground/60'
+                      className={`hidden sm:inline text-[10px] lg:text-xs tracking-[0.2em] uppercase transition-colors duration-300 ${
+                        (homePage || scrolled) ? 'text-paper/60' : 'text-foreground/60'
                       } group-hover:text-primary`}
                     >
                       {wordmark.subtitle}
@@ -127,7 +140,7 @@ export function Navbar() {
                     className={`relative text-sm font-medium tracking-wide transition-colors duration-300 group ${
                       pathname === link.href
                         ? 'text-gold'
-                        : scrolled ? 'text-paper/70 hover:text-paper' : 'text-foreground/70 hover:text-foreground'
+                        : (homePage || scrolled) ? 'text-paper/70 hover:text-paper' : 'text-foreground/70 hover:text-foreground'
                     }`}
                   >
                     {link.label}
@@ -181,7 +194,7 @@ export function Navbar() {
 
               {/* Mobile menu button — visible only on mobile */}
               <button
-                className="md:hidden text-foreground p-2 min-w-[44px] min-h-[44px]"
+                className={`md:hidden p-2 ${homePage || scrolled ? 'text-paper' : 'text-foreground'} min-w-[44px] min-h-[44px]`}
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={t('nav.menu')}
                 aria-expanded={mobileOpen}
@@ -221,7 +234,7 @@ export function Navbar() {
                 {homePage && <span />}
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="text-foreground/60 hover:text-foreground min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="text-paper/60 hover:text-paper min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label={t('common.close')}
                 >
                   <X className="w-5 h-5" />
@@ -239,7 +252,7 @@ export function Navbar() {
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className={`block py-3 text-lg font-display ${
-                        pathname === link.href ? 'text-gold' : 'text-foreground/70'
+                        pathname === link.href ? 'text-gold' : 'text-paper/70'
                       }`}
                     >
                       {link.label}

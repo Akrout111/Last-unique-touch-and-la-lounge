@@ -9,11 +9,6 @@
  * WhatsApp/phone element. The Instagram link is always kept (real handle).
  */
 
-/** Return the raw WhatsApp env var (may be undefined). */
-export function getWhatsappNumber(): string | undefined {
-  return process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
-}
-
 /** Return the raw phone env var (may be undefined). */
 export function getPhoneNumber(): string | undefined {
   return process.env.NEXT_PUBLIC_PHONE_NUMBER
@@ -26,24 +21,15 @@ export function isRealNumber(value: string | undefined | null): value is string 
   return value.trim().length > 0
 }
 
-/** True if a real WhatsApp number is configured. */
-export function hasWhatsapp(): boolean {
-  return isRealNumber(getWhatsappNumber())
-}
-
-/** True if a real phone number is configured. */
-export function hasPhone(): boolean {
-  return isRealNumber(getPhoneNumber())
-}
-
 /**
  * Build a `https://wa.me/<number>` URL for the given message.
  * Returns `null` if no real WhatsApp number is configured so callers can
  * branch on "should I render this link at all?".
  */
 export function buildWhatsappUrl(message?: string): string | null {
-  const num = getWhatsappNumber()
+  const num = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
   if (!isRealNumber(num)) return null
   const base = `https://wa.me/${num}`
   return message ? `${base}?text=${encodeURIComponent(message)}` : base
 }
+

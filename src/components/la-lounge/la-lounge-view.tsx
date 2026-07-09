@@ -65,7 +65,7 @@ export default function LaLoungeView() {
   return (
     <div className="relative w-full bg-background">
       {/* === Hero section — title centered, purple 3D background === */}
-      <div className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
+      <div className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center">
         <ErrorBoundary>
           <PurpleWaves3D />
         </ErrorBoundary>
@@ -86,7 +86,7 @@ export default function LaLoungeView() {
             className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/50 backdrop-blur-md border border-primary/10 shadow-sm hover:shadow-md text-primary transition-all font-medium text-xs cursor-pointer"
           >
             <ArrowIcon className="w-4 h-4" />
-            <span className="font-sans font-medium tracking-wide">
+            <span className="font-medium tracking-wide">
               {t('laLounge.back')}
             </span>
           </button>
@@ -109,7 +109,7 @@ export default function LaLoungeView() {
           </h1>
 
           <p
-            className="text-sm sm:text-base text-foreground/70 font-sans tracking-wide max-w-lg mb-8"
+            className="text-sm sm:text-base text-foreground/70 tracking-wide max-w-lg mb-8"
           >
             {t('laLounge.subtitle')}
           </p>
@@ -117,7 +117,7 @@ export default function LaLoungeView() {
           {/* Services button — scrolls to services section */}
           <button
             onClick={scrollToServices}
-            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] hover:shadow-[0_6px_25px_rgba(230, 0, 126,0.4)] transition-all cursor-pointer border border-primary/30"
+            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] hover:shadow-[0_6px_25px_rgba(230, 0, 126,0.4)] transition-all cursor-pointer border border-primary/30"
           >
             {t('laLounge.featuresButton')}
           </button>
@@ -174,7 +174,7 @@ export default function LaLoungeView() {
           <div className="text-center mt-12">
             <button
               onClick={() => router.push('/contact')}
-              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full font-sans tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] transition-all cursor-pointer"
+              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] transition-all cursor-pointer"
             >
               {t('laLounge.contactButton')}
             </button>

@@ -39,12 +39,11 @@ function getWebhookSecret(): string | null {
  * If N8N_WEBHOOK_URL is not set, logs and skips (useful in development).
  *
  * Fix #4: throws in production when N8N_WEBHOOK_SECRET is unset/short
- * (fail-closed). Fix #6: throws when the webhook URL is not https in
- * production.
+ * (fail-closed). Throws when the webhook URL is not https in any mode
+ * (security/data-fix #2 — closes dev-mode SSRF).
  */
 export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<void> {
   const webhookUrl = process.env.N8N_WEBHOOK_URL
-  const isProduction = process.env.NODE_ENV === 'production'
 
   // If n8n is not configured, log and skip (useful in development)
   if (!webhookUrl) {
@@ -52,12 +51,16 @@ export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<v
     return
   }
 
-  // Fix #6: in production the webhook URL MUST be https — otherwise the
-  // signed payload (and effectively the secret-derived signature) would
-  // travel over plaintext. Fail-closed rather than silently leaking.
-  if (isProduction && !webhookUrl.startsWith('https://')) {
+  // SSRF / transport security (security/data-fix #2): the webhook URL MUST
+  // be https in ALL modes — not just production. The previous production-
+  // only check left dev mode wide open to SSRF: a misconfigured
+  // `N8N_WEBHOOK_URL=http://localhost/...` (or any private/loopback IP)
+  // would let the server fetch internal-only endpoints and leak the
+  // signed payload + secret-derived signature over plaintext. Enforcing
+  // https in every environment closes both the SSRF and the leak.
+  if (!webhookUrl.startsWith('https://')) {
     throw new Error(
-      '[n8n] refusing to send webhook over non-https URL in production: ' +
+      '[n8n] refusing to send webhook over non-https URL: ' +
         webhookUrl.replace(/\/\/[^@]+@/, '//***@')
     )
   }

@@ -75,10 +75,20 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
   // Track page scroll to apply glass effect to navbar
   useEffect(() => {
+    // PERF (V14): throttle the scroll handler with requestAnimationFrame so
+    // we never run more than one `setScrolled` per frame. The listener is
+    // marked `{ passive: true }` so the browser doesn't block the scroll
+    // thread on the state update. (Same pattern as experience-card.tsx.)
+    let ticking = false
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40)
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 40)
+        ticking = false
+      })
     }
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -222,7 +232,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
   return (
     <>
       <div
-        className="min-h-screen bg-[#020204] text-white overflow-x-hidden"
+        className="min-h-[100dvh] bg-[var(--c-birthday-bg)] text-white overflow-x-hidden"
         style={{
           fontFamily: isRTL
             ? 'var(--font-birthday-arabic), Cairo, sans-serif'
@@ -233,8 +243,8 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         {/* === NAVBAR === */}
         <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${
           scrolled
-            ? 'backdrop-blur-lg bg-[#020204]/80 py-3 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)]'
-            : 'backdrop-blur-md bg-[#020204]/40 py-5 border-white/5'
+            ? 'backdrop-blur-lg bg-[var(--c-birthday-bg)]/80 py-3 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)]'
+            : 'backdrop-blur-md bg-[var(--c-birthday-bg)]/40 py-5 border-white/5'
         }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
 
@@ -261,7 +271,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               className="text-lg md:text-2xl font-black tracking-wider cursor-pointer"
               style={{
                 fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
-                background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink), var(--c-birthday-cyan))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -273,15 +283,15 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleLocale}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-semibold tracking-wider transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-semibold tracking-wider transition-all cursor-pointer"
               >
-                <Languages className="w-3.5 h-3.5 text-[#00F3FF]" />
+                <Languages className="w-3.5 h-3.5 text-[var(--c-birthday-cyan)]" />
                 <span>{t('nav.langToggle')}</span>
               </button>
 
               <button
                 onClick={scrollToTop}
-                className="size-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-[#EC4899] transition-colors cursor-pointer"
+                className="size-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-[var(--c-birthday-pink)] transition-colors cursor-pointer"
                 aria-label={t('nav.top')}
               >
                 <ArrowUp className="w-4 h-4" />
@@ -291,24 +301,24 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         </nav>
 
         {/* === HERO SECTION === */}
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
           {/* 3D Background */}
           <ErrorBoundary>
             <BirthdayVisualizer />
           </ErrorBoundary>
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 z-1 bg-gradient-to-t from-[#020204] via-transparent to-[#020204]/50 pointer-events-none" />
+          <div className="absolute inset-0 z-1 bg-gradient-to-t from-[var(--c-birthday-bg)] via-transparent to-[var(--c-birthday-bg)]/50 pointer-events-none" />
 
           {/* Content */}
           <div className="relative z-10 max-w-4xl mx-auto px-4 text-center pointer-events-none">
             <div className="pointer-events-auto mt-16 md:mt-0">
 
               {/* Tagline Badge */}
-              <div className="mb-8 inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/5 border border-[#00F3FF]/30 backdrop-blur-md shadow-[0_0_15px_rgba(0,243,255,0.15)]">
-                <span className="w-2.5 h-2.5 bg-[#00F3FF] rounded-full animate-ping" />
+              <div className="mb-8 inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/5 border border-[var(--c-birthday-cyan)]/30 backdrop-blur-md shadow-[0_0_15px_rgba(0,243,255,0.15)]">
+                <span className="w-2.5 h-2.5 bg-[var(--c-birthday-cyan)] rounded-full animate-ping" />
                 <span
-                  className="text-xs font-bold tracking-[0.25em] text-[#00F3FF] uppercase font-mono"
+                  className="text-xs font-bold tracking-[0.25em] text-[var(--c-birthday-cyan)] uppercase font-mono"
                   style={{ fontFamily: 'var(--font-birthday-sub), Rajdhani, sans-serif' }}
                 >
                   {t('hero.tagline')}
@@ -347,7 +357,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   onClick={() => router.push('/your-birthday/features')}
                   className="w-full sm:w-auto px-10 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(139,92,246,0.4)]"
                   style={{
-                    background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                    background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink))',
                     fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
                   }}
                 >
@@ -359,7 +369,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         </section>
 
         {/* === SERVICES SECTION === */}
-        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent via-[#05050a]/90 to-[#020204]">
+        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent via-[#05050a]/90 to-[var(--c-birthday-bg)]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-16 space-y-4">
@@ -367,41 +377,41 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 className="text-3xl md:text-5xl font-black uppercase tracking-wider"
                 style={{
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
-                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                  background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink), var(--c-birthday-cyan))',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
               >
                 {t('services.title')}
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#00F3FF] mx-auto rounded-full" />
+              <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-purple)] via-[var(--c-birthday-pink)] to-[var(--c-birthday-cyan)] mx-auto rounded-full" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.15)', examples: [t('services.item1.ex1'), t('services.item1.ex2'), t('services.item1.ex3'), t('services.item1.ex4')] },
-                { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: '#EC4899', glow: 'rgba(236, 72, 153, 0.15)', examples: [t('services.item2.ex1'), t('services.item2.ex2'), t('services.item2.ex3'), t('services.item2.ex4')] },
-                { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: '#00F3FF', glow: 'rgba(0, 243, 255, 0.15)', examples: [t('services.item3.ex1'), t('services.item3.ex2'), t('services.item3.ex3'), t('services.item3.ex4')] },
+                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: 'var(--c-birthday-purple)', glow: 'rgba(139, 92, 246, 0.15)', examples: [t('services.item1.ex1'), t('services.item1.ex2'), t('services.item1.ex3'), t('services.item1.ex4')] },
+                { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: 'var(--c-birthday-pink)', glow: 'rgba(236, 72, 153, 0.15)', examples: [t('services.item2.ex1'), t('services.item2.ex2'), t('services.item2.ex3'), t('services.item2.ex4')] },
+                { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: 'var(--c-birthday-cyan)', glow: 'rgba(0, 243, 255, 0.15)', examples: [t('services.item3.ex1'), t('services.item3.ex2'), t('services.item3.ex3'), t('services.item3.ex4')] },
               ].map((service, i) => (
                 <div
                   key={i}
-                  className="group relative p-8 rounded-lg bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
+                  className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
                   style={{
                     boxShadow: `0 10px 30px -10px rgba(0, 0, 0, 0.7)`,
                   }}
                 >
                   {/* Hover ambient spotlight glow */}
                   <div
-                    className="absolute -right-20 -top-20 w-40 h-40 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    className="absolute -end-20 -top-20 w-40 h-40 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{ background: service.color }}
                   />
 
                   <div
                     className="w-16 h-16 rounded-lg flex items-center justify-center text-3xl mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300"
                     style={{
-                      background: `${service.color}15`,
-                      border: `1px solid ${service.color}40`,
-                      boxShadow: `0 0 15px ${service.color}20`
+                      background: `color-mix(in srgb, ${service.color} 15%, transparent)`,
+                      border: `1px solid color-mix(in srgb, ${service.color} 40%, transparent)`,
+                      boxShadow: `0 0 15px color-mix(in srgb, ${service.color} 20%, transparent)`
                     }}
                   >
                     {service.icon}
@@ -429,7 +439,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         </section>
 
         {/* === GALLERY SECTION === */}
-        <section className="relative z-10 py-24 bg-gradient-to-b from-[#020204] via-[#05050a]/90 to-[#020204]">
+        <section className="relative z-10 py-24 bg-gradient-to-b from-[var(--c-birthday-bg)] via-[#05050a]/90 to-[var(--c-birthday-bg)]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-16 space-y-4">
@@ -437,26 +447,26 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 className="text-3xl md:text-5xl font-black uppercase tracking-wider"
                 style={{
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
-                  background: 'linear-gradient(135deg, #00F3FF, #8B5CF6)',
+                  background: 'linear-gradient(135deg, var(--c-birthday-cyan), var(--c-birthday-purple))',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
               >
                 {t('gallery.title')}
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[#00F3FF] to-[#8B5CF6] mx-auto rounded-full" />
+              <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-cyan)] to-[var(--c-birthday-purple)] mx-auto rounded-full" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { n: 1, label: galleryItems[0] ?? '', grad: 'from-[#8B5CF6] to-[#EC4899]' },
-                { n: 2, label: galleryItems[1] ?? '', grad: 'from-[#EC4899] to-[#F97316]' },
-                { n: 3, label: galleryItems[2] ?? '', grad: 'from-[#F97316] to-[#00F3FF]' },
-                { n: 4, label: galleryItems[3] ?? '', grad: 'from-[#00F3FF] to-[#8B5CF6]' },
-                { n: 5, label: galleryItems[4] ?? '', grad: 'from-[#8B5CF6] to-[#00F3FF]' },
-                { n: 6, label: galleryItems[5] ?? '', grad: 'from-[#00F3FF] to-[#EC4899]' },
-                { n: 7, label: galleryItems[6] ?? '', grad: 'from-[#EC4899] to-[#F97316]' },
-                { n: 8, label: galleryItems[7] ?? '', grad: 'from-[#F97316] to-[#8B5CF6]' }
+                { n: 1, label: galleryItems[0] ?? '', grad: 'from-[var(--c-birthday-purple)] to-[var(--c-birthday-pink)]' },
+                { n: 2, label: galleryItems[1] ?? '', grad: 'from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)]' },
+                { n: 3, label: galleryItems[2] ?? '', grad: 'from-[var(--c-birthday-orange)] to-[var(--c-birthday-cyan)]' },
+                { n: 4, label: galleryItems[3] ?? '', grad: 'from-[var(--c-birthday-cyan)] to-[var(--c-birthday-purple)]' },
+                { n: 5, label: galleryItems[4] ?? '', grad: 'from-[var(--c-birthday-purple)] to-[var(--c-birthday-cyan)]' },
+                { n: 6, label: galleryItems[5] ?? '', grad: 'from-[var(--c-birthday-cyan)] to-[var(--c-birthday-pink)]' },
+                { n: 7, label: galleryItems[6] ?? '', grad: 'from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)]' },
+                { n: 8, label: galleryItems[7] ?? '', grad: 'from-[var(--c-birthday-orange)] to-[var(--c-birthday-purple)]' }
               ].map((item) => (
                 <div
                   key={item.n}
@@ -481,7 +491,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         </section>
 
         {/* === TESTIMONIALS SECTION === */}
-        <section className="relative z-10 py-24 bg-[#020204]">
+        <section className="relative z-10 py-24 bg-[var(--c-birthday-bg)]">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-16 space-y-4">
@@ -489,25 +499,25 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 className="text-3xl md:text-5xl font-black uppercase tracking-wider"
                 style={{
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
-                  background: 'linear-gradient(135deg, #EC4899, #F97316)',
+                  background: 'linear-gradient(135deg, var(--c-birthday-pink), var(--c-birthday-orange))',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
               >
                 {t('testimonials.title')}
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[#EC4899] to-[#F97316] mx-auto rounded-full" />
+              <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)] mx-auto rounded-full" />
             </div>
 
             <div className="space-y-8">
               {[
-                { num: 1, name: t('testimonials.item1.name'), role: t('testimonials.item1.role'), text: t('testimonials.item1.text'), grad: 'from-[#8B5CF6] to-[#EC4899]' },
-                { num: 2, name: t('testimonials.item2.name'), role: t('testimonials.item2.role'), text: t('testimonials.item2.text'), grad: 'from-[#EC4899] to-[#F97316]' },
-                { num: 3, name: t('testimonials.item3.name'), role: t('testimonials.item3.role'), text: t('testimonials.item3.text'), grad: 'from-[#00F3FF] to-[#8B5CF6]' },
+                { num: 1, name: t('testimonials.item1.name'), role: t('testimonials.item1.role'), text: t('testimonials.item1.text'), grad: 'from-[var(--c-birthday-purple)] to-[var(--c-birthday-pink)]' },
+                { num: 2, name: t('testimonials.item2.name'), role: t('testimonials.item2.role'), text: t('testimonials.item2.text'), grad: 'from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)]' },
+                { num: 3, name: t('testimonials.item3.name'), role: t('testimonials.item3.role'), text: t('testimonials.item3.text'), grad: 'from-[var(--c-birthday-cyan)] to-[var(--c-birthday-purple)]' },
               ].map((item) => (
                 <div
                   key={item.num}
-                  className="p-8 rounded-lg bg-[#09090f]/80 border border-white/5 backdrop-blur-md shadow-lg"
+                  className="p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 backdrop-blur-md shadow-lg"
                 >
                   <p className="text-white/80 text-base md:text-lg mb-6 leading-relaxed italic">
                     &ldquo;{item.text}&rdquo;
@@ -539,14 +549,14 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               }}
             >
               {/* Pulsing neon circles in background */}
-              <div className="absolute -left-20 -bottom-20 w-60 h-60 rounded-full bg-[#8B5CF6] opacity-10 blur-[80px]" />
-              <div className="absolute -right-20 -top-20 w-60 h-60 rounded-full bg-[#EC4899] opacity-10 blur-[80px]" />
+              <div className="absolute -start-20 -bottom-20 w-60 h-60 rounded-full bg-[var(--c-birthday-purple)] opacity-10 blur-[80px]" />
+              <div className="absolute -end-20 -top-20 w-60 h-60 rounded-full bg-[var(--c-birthday-pink)] opacity-10 blur-[80px]" />
 
               <h2
                 className="text-3xl md:text-5xl font-black mb-4 uppercase tracking-wider"
                 style={{
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
-                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                  background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink), var(--c-birthday-cyan))',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -558,7 +568,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                 onClick={() => handleBookingClick(t('booking.bookEvent'))}
                 className="px-10 py-4.5 rounded-full font-bold text-white text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(236,72,153,0.3)]"
                 style={{
-                  background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                  background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink))',
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
                 }}
               >
@@ -569,13 +579,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         </section>
 
         {/* === FOOTER === */}
-        <footer className="relative z-10 py-16 px-4 border-t border-white/5 bg-[#020204]">
+        <footer className="relative z-10 py-16 px-4 border-t border-white/5 bg-[var(--c-birthday-bg)]">
           <div className="max-w-6xl mx-auto text-center space-y-6">
             <h3
               className="text-2xl md:text-3xl font-black tracking-widest uppercase"
               style={{
                 fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
-                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -617,18 +627,17 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[#09090f] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-x-hidden text-white z-10"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[var(--c-birthday-card)] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-x-hidden text-white z-10"
               style={{ direction: isRTL ? 'rtl' : 'ltr' }}
             >
               {/* Decorative glows */}
-              <div className="absolute -left-16 -top-16 w-36 h-36 rounded-full bg-[#8B5CF6] opacity-10 blur-3xl pointer-events-none" />
-              <div className="absolute -right-16 -bottom-16 w-36 h-36 rounded-full bg-[#EC4899] opacity-10 blur-3xl pointer-events-none" />
+              <div className="absolute -start-16 -top-16 w-36 h-36 rounded-full bg-[var(--c-birthday-purple)] opacity-10 blur-3xl pointer-events-none" />
+              <div className="absolute -end-16 -bottom-16 w-36 h-36 rounded-full bg-[var(--c-birthday-pink)] opacity-10 blur-3xl pointer-events-none" />
 
               <button
                 onClick={() => setBookingOpen(false)}
                 aria-label={t('booking.close')}
-                className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
-                style={isRTL ? { left: '16px', right: 'auto' } : {}}
+                className="absolute top-4 end-4 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/50 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -648,7 +657,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
               ) : (
                 <form onSubmit={handleFormSubmit} className="space-y-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <PartyPopper className="w-6 h-6 text-[#EC4899]" />
+                    <PartyPopper className="w-6 h-6 text-[var(--c-birthday-pink)]" />
                     <div>
                       <h3 id="booking-modal-title" className="text-xl font-bold">
                         {t('booking.modalTitle')}
@@ -677,7 +686,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   <div className="space-y-3.5 text-black">
                     <div className="relative">
                       <label htmlFor="booking-name" className="sr-only">{t('booking.form.name')}</label>
-                      <User className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <User className="absolute top-3 w-4 h-4 text-white/40 start-3" />
                       <input
                         id="booking-name"
                         type="text"
@@ -686,13 +695,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                         placeholder={t('booking.form.name')}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
                       />
                     </div>
 
                     <div className="relative">
                       <label htmlFor="booking-phone" className="sr-only">{t('booking.form.phone')}</label>
-                      <Phone className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <Phone className="absolute top-3 w-4 h-4 text-white/40 start-3" />
                       <input
                         id="booking-phone"
                         type="tel"
@@ -701,26 +710,26 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                         placeholder={t('booking.form.phone')}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className={`w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
                       />
                     </div>
 
                     <div className="relative">
                       <label htmlFor="booking-email" className="sr-only">{t('booking.form.email')}</label>
-                      <Mail className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <Mail className="absolute top-3 w-4 h-4 text-white/40 start-3" />
                       <input
                         id="booking-email"
                         type="email"
                         placeholder={t('booking.form.email')}
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={`w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
                       />
                     </div>
 
                     <div className="relative">
                       <label htmlFor="booking-date" className="sr-only">{t('booking.form.eventDate')}</label>
-                      <CalendarDays className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <CalendarDays className="absolute top-3 w-4 h-4 text-white/40 start-3" />
                       <input
                         id="booking-date"
                         type="date"
@@ -728,13 +737,13 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                         aria-required="true"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className={`w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
                       />
                     </div>
 
                     <div className="relative">
                       <label htmlFor="booking-location" className="sr-only">{t('booking.form.location')}</label>
-                      <MapPin className={`absolute top-3 w-4 h-4 text-white/40 ${isRTL ? 'right-3' : 'left-3'}`} />
+                      <MapPin className="absolute top-3 w-4 h-4 text-white/40 start-3" />
                       <input
                         id="booking-location"
                         type="text"
@@ -743,7 +752,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                         placeholder={t('booking.form.location')}
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className={`w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -755,7 +764,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                         placeholder={t('booking.form.notes')}
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full p-3.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[#EC4899] text-sm"
+                        className="w-full p-3.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm"
                       />
                     </div>
                   </div>
@@ -765,7 +774,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                     disabled={formSubmitting}
                     className="w-full py-3 rounded-md font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                     style={{
-                      background: 'linear-gradient(135deg, #EC4899, #8B5CF6)',
+                      background: 'linear-gradient(135deg, var(--c-birthday-pink), var(--c-birthday-purple))',
                     }}
                   >
                     {formSubmitting ? (

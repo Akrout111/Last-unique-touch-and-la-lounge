@@ -1,17 +1,34 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DayPicker, type DateRange } from 'react-day-picker'
+import type { DateRange, DayPickerProps } from 'react-day-picker'
 import { Minus, Plus, ShoppingCart, Check, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { localizedName, calculateRentalTotal } from '@/lib/products'
 import type { ProductWithImages } from '@/lib/products'
 import { useCart } from '@/components/providers/cart-provider'
 
+// PERF (V14): lazy-load react-day-picker so its ~30 KB JS only ships to the
+// product detail page (the only place the DayPicker renders). SSR is off
+// because the picker only matters after hydration — the loading skeleton
+// covers the brief client-only fetch.
+//
+// CSS imports can't be made dynamic in Next.js, so the stylesheet is still
+// imported statically below. (The CSS is tiny — ~2 KB — and only lands in
+// the PDP bundle because this component is the sole importer.)
 import 'react-day-picker/src/style.css'
+
+const DayPicker = dynamic<DayPickerProps>(
+  () => import('react-day-picker').then((m) => m.DayPicker),
+  {
+    ssr: false,
+    loading: () => <div className="h-[300px] animate-pulse bg-muted rounded-md" />,
+  }
+)
 
 interface ProductInfoProps {
   product: ProductWithImages

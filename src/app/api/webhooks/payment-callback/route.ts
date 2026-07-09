@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createHmac, timingSafeEqual } from 'crypto'
+import { Prisma } from '@prisma/client'
+import { createHmac } from 'crypto'
 import { db } from '@/lib/db'
 import { triggerOrderConfirmedWebhook } from '@/lib/n8n'
+import { safeEqualStrings } from '@/lib/crypto-utils'
 
 // ===== V9 Fix #3: Webhook replay protection =====
 //
@@ -57,16 +59,15 @@ function getWebhookSecret(): string {
 
 /**
  * Constant-time hex string comparison.
+ *
+ * security/data-fix #7: the implementation now delegates to the shared
+ * `@/lib/crypto-utils` module so all routes use the same constant-time
+ * comparison. The Edge-runtime variant (used by `src/proxy.ts`)
+ * reimplements this with a manual XOR loop because `Buffer` is not
+ * available on Edge.
  */
 function safeEqualHex(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a, 'utf8')
-  const bBuf = Buffer.from(b, 'utf8')
-  if (aBuf.length !== bBuf.length) {
-    // Run a comparison to keep timing roughly constant.
-    timingSafeEqual(aBuf, aBuf)
-    return false
-  }
-  return timingSafeEqual(aBuf, bBuf)
+  return safeEqualStrings(a, b)
 }
 
 /**
@@ -252,89 +253,135 @@ export async function POST(req: NextRequest) {
     //     created the log entry (TOCTOU race). Now the check, the booking
     //     update, and the idempotency log are all inside a single
     //     Serializable transaction so concurrent duplicates are serialized.
+    //
+    // --- Idempotency refactor (security/data-fix #1): the previous
+    //     implementation used `SecurityLog.details { contains: webhookId }`
+    //     which is a substring match on a free-form JSON text column. That
+    //     is incorrect: a webhookId of "abc:1" would match the log entry
+    //     for "abc:12" (and vice versa), and any unrelated log row whose
+    //     details string happened to contain the webhookId substring would
+    //     short-circuit the webhook as "already processed" — silently
+    //     dropping legitimate payment updates. Now we use the dedicated
+    //     `IdempotencyKey` table (which has a real UNIQUE constraint on
+    //     `key`) and mirror the exact pattern from /api/orders/route.ts:
+    //     `tx.idempotencyKey.create()` inside the transaction, and on P2002
+    //     (unique violation) treat the webhook as already processed.
     const webhookId = `${orderId}:${nonce}`
 
-    const result = await db.$transaction(
-      async (tx) => {
-        // 1. Idempotency check INSIDE the transaction.
-        const alreadyProcessed = await tx.securityLog.findFirst({
-          where: {
-            event: 'webhook_processed',
-            details: { contains: webhookId },
-          },
-        })
+    let result:
+      | { type: 'not_found' }
+      | { type: 'invalid_input'; message: string }
+      | { type: 'already_in_target' }
+      | { type: 'invalid_transition'; current: string; attempted: string }
+      | { type: 'updated'; booking: NonNullable<Awaited<ReturnType<typeof db.booking.findUnique>>>; newStatus: string }
+    try {
+      result = await db.$transaction(
+        async (tx) => {
+          // 1. Idempotency: create the key FIRST inside the Serializable
+          //    transaction. If two concurrent webhooks for the same
+          //    (orderId, nonce) arrive, the second create throws P2002 —
+          //    caught below — which we map to `already_processed`. This
+          //    closes the TOCTOU race that the old `findFirst` check had.
+          const idempotencyRecord = await tx.idempotencyKey.create({
+            data: {
+              key: webhookId,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
+            },
+          })
 
-        if (alreadyProcessed) {
-          return { type: 'already_processed' as const }
-        }
+          // 2. Load the booking inside the transaction.
+          const booking = await tx.booking.findUnique({
+            where: { id: orderId },
+          })
 
-        // 2. Load the booking inside the transaction.
-        const booking = await tx.booking.findUnique({
-          where: { id: orderId },
-        })
+          if (!booking) {
+            return { type: 'not_found' as const }
+          }
 
-        if (!booking) {
-          return { type: 'not_found' as const }
-        }
+          // 3. State guard — map gateway status to BookingStatus.
+          const newStatus = gatewayStatusToBookingStatus(status)
+          if (!newStatus) {
+            return { type: 'invalid_input' as const, message: `Unknown gateway status: ${status}` }
+          }
 
-        // 3. State guard — map gateway status to BookingStatus.
-        const newStatus = gatewayStatusToBookingStatus(status)
-        if (!newStatus) {
-          return { type: 'invalid_input' as const, message: `Unknown gateway status: ${status}` }
-        }
+          // 4. No-op if already in target status. Link the idempotency key
+          //    to the order so future replays can be traced.
+          if (booking.status === newStatus) {
+            await tx.idempotencyKey.update({
+              where: { id: idempotencyRecord.id },
+              data: { orderId },
+            })
+            await tx.securityLog.create({
+              data: {
+                event: 'webhook_processed',
+                details: JSON.stringify({ webhookId, orderId, status, noop: true }),
+              },
+            })
+            return { type: 'already_in_target' as const }
+          }
 
-        // 4. No-op if already in target status.
-        if (booking.status === newStatus) {
+          // 5. Validate the transition against the state machine.
+          if (!VALID_BOOKING_TRANSITIONS[booking.status]?.includes(newStatus)) {
+            return {
+              type: 'invalid_transition' as const,
+              current: booking.status,
+              attempted: newStatus,
+            }
+          }
+
+          // 6. Apply the update + link the idempotency key + audit log atomically.
+          await tx.booking.update({
+            where: { id: orderId },
+            data: { status: newStatus },
+          })
+
+          // Link the idempotency key to the resulting order so future
+          // replays can be traced back to this order.
+          await tx.idempotencyKey.update({
+            where: { id: idempotencyRecord.id },
+            data: { orderId },
+          })
+
           await tx.securityLog.create({
             data: {
               event: 'webhook_processed',
-              details: JSON.stringify({ webhookId, orderId, status, noop: true }),
+              details: JSON.stringify({
+                webhookId,
+                orderId,
+                gatewayStatus: status,
+                fromStatus: booking.status,
+                toStatus: newStatus,
+              }),
             },
           })
-          return { type: 'already_in_target' as const }
+
+          return { type: 'updated' as const, booking, newStatus }
+        },
+        { isolationLevel: 'Serializable' }
+      )
+    } catch (error: unknown) {
+      // P2002 on IdempotencyKey.key = the same (orderId, nonce) webhook
+      // has already been processed. Return 200 already_processed so the
+      // payment gateway treats it as a success (idempotent).
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = (error.meta?.target as string[] | undefined)?.join(',') ?? ''
+        if (target.includes('key')) {
+          return NextResponse.json(
+            { success: true, message: 'already_processed' },
+            { status: 200 }
+          )
         }
-
-        // 5. Validate the transition against the state machine.
-        if (!VALID_BOOKING_TRANSITIONS[booking.status]?.includes(newStatus)) {
-          return {
-            type: 'invalid_transition' as const,
-            current: booking.status,
-            attempted: newStatus,
-          }
-        }
-
-        // 6. Apply the update + log idempotency atomically.
-        await tx.booking.update({
-          where: { id: orderId },
-          data: { status: newStatus },
-        })
-
-        await tx.securityLog.create({
-          data: {
-            event: 'webhook_processed',
-            details: JSON.stringify({
-              webhookId,
-              orderId,
-              gatewayStatus: status,
-              fromStatus: booking.status,
-              toStatus: newStatus,
-            }),
-          },
-        })
-
-        return { type: 'updated' as const, booking, newStatus }
-      },
-      { isolationLevel: 'Serializable' }
-    )
+      }
+      throw error
+    }
 
     // Handle the transaction result outside (HTTP responses can't be
     // returned from inside the transaction callback).
-    if (result.type === 'already_processed') {
-      return NextResponse.json(
-        { success: true, message: 'already_processed' },
-        { status: 200 }
-      )
-    }
+    // (Note: the `already_processed` case is handled in the P2002 catch
+    // above — it never reaches here.)
     if (result.type === 'not_found') {
       return NextResponse.json(
         { error: 'order_not_found' },

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createHmac } from 'crypto'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/get-client-ip'
 
 /**
  * Contact form schema. Mirrors the client-side schema in
@@ -18,20 +19,6 @@ const contactSchema = z.object({
   message: z.string().min(20).max(2000),
   brand: z.enum(['LUT', 'LA_LOUNGE', 'YOUR_BIRTHDAY']).default('LUT'),
 })
-
-function getClientIp(req: NextRequest): string {
-  // Take the LAST entry of x-forwarded-for — that is the IP set by the
-  // trusted reverse proxy. Earlier entries are client-controllable and
-  // must not be used for rate-limit keying (XFF spoofing fix).
-  const xff = req.headers.get('x-forwarded-for')
-  if (xff) {
-    const parts = xff.split(',').map((p) => p.trim()).filter(Boolean)
-    if (parts.length > 0) {
-      return parts[parts.length - 1] || 'unknown'
-    }
-  }
-  return req.headers.get('x-real-ip') ?? 'unknown'
-}
 
 /**
  * Best-effort n8n webhook fan-out (V9 Fix #7).
@@ -57,13 +44,17 @@ function fanOutToN8n(payload: unknown): void {
     return
   }
 
-  // Fix #6: in production the webhook URL MUST be https — otherwise a
-  // misconfigured http URL would leak the (signed) payload + secret-derived
-  // signature over the wire. Skip silently here (rather than throwing) so
-  // the contact form still returns 201 — the message is already persisted.
-  if (process.env.NODE_ENV === 'production' && !webhookUrl.startsWith('https://')) {
+  // SSRF / transport security (security/data-fix #2): the webhook URL MUST
+  // be https in ALL modes — not just production. The previous production-
+  // only check left dev mode wide open to SSRF: a misconfigured
+  // `N8N_WEBHOOK_URL=http://localhost/...` (or any private/loopback IP)
+  // would let the server fetch internal-only endpoints and leak the
+  // signed payload + secret-derived signature over plaintext. Skip
+  // silently (rather than throwing) so the contact form still returns
+  // 201 — the message is already persisted in the DB.
+  if (!webhookUrl.startsWith('https://')) {
     console.error(
-      '[contact] refusing to send n8n webhook over non-https URL in production'
+      '[contact] refusing to send n8n webhook over non-https URL'
     )
     return
   }

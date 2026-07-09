@@ -59,7 +59,7 @@ export default async function ProductsPage({ searchParams, params }: PageProps) 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[100dvh] bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
           {/* Page header */}
           <div className="mb-8">

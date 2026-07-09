@@ -145,7 +145,7 @@ export function CartView() {
                     </Link>
                     <button
                       onClick={() => handleRemove(index)}
-                      className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      className="text-muted-foreground hover:text-primary transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                       aria-label={t('cart.item.remove')}
                       disabled={isExiting}
                     >

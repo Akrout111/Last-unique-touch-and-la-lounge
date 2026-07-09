@@ -312,7 +312,7 @@ export function ContactView() {
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                    className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
                     aria-label="WhatsApp"
                   >
                     <MessageCircle className="w-5 h-5" />
@@ -322,7 +322,7 @@ export function ContactView() {
                   href="https://instagram.com/last.unique.touch"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                  className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
                   aria-label="Instagram"
                 >
                   <Instagram className="w-5 h-5" />

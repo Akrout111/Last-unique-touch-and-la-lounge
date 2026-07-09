@@ -17,7 +17,7 @@ export default function ProductNotFound() {
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
-      <h2 className="text-5xl font-bold mb-4" style={{ color: 'var(--c-lut)' }}>404</h2>
+      <h2 className="text-5xl font-bold mb-4" style={{ color: 'var(--primary)' }}>404</h2>
       <p className="text-muted-foreground mb-4">{t('common.notFound')}</p>
       <Link
         href="/products"

@@ -1,4 +1,4 @@
-import { type Prisma, type Brand, type Category, type Product } from '@prisma/client'
+import { type Prisma, type Brand, type Category } from '@prisma/client'
 import { unstable_cache } from 'next/cache'
 import { db } from './db'
 
@@ -235,35 +235,41 @@ export async function getProducts(params: ProductListParams = {}): Promise<Produ
  * The lookup still accepts either a slug OR an id (the `OR` clause) so
  * the booking detail page can resolve a stored `productId` even if the
  * admin later changes the slug — but ONLY within the requested brand.
+ *
+ * PERF (V14): wrapped in `unstable_cache` (5-min TTL, tagged `products`)
+ * so repeated PDP hits (e.g. a user navigating back to the product) skip
+ * the SQLite round-trip. Admin mutations call `revalidateTag('products')`
+ * to bust the cache immediately after a product is updated/deleted.
  */
-export async function getProductBySlug(
-  slug: string,
-  brand?: Brand
-): Promise<ProductWithImages | null> {
-  const product = await db.product.findFirst({
-    where: {
-      OR: [{ slug }, { id: slug }],
-      isActive: true,
-      // Brand filter — only applied when an explicit brand is provided.
-      // Storefront callers MUST pass brand='LUT' (or their tenant) to
-      // prevent cross-tenant access (V9 Fix #2). Admin callers can omit
-      // it to look up across tenants.
-      ...(brand ? { brand } : {}),
-    },
-    include: {
-      category: {
-        select: { id: true, nameAr: true, nameEn: true, slug: true },
+export const getProductBySlug = unstable_cache(
+  async (slug: string, brand?: Brand): Promise<ProductWithImages | null> => {
+    const product = await db.product.findFirst({
+      where: {
+        OR: [{ slug }, { id: slug }],
+        isActive: true,
+        // Brand filter — only applied when an explicit brand is provided.
+        // Storefront callers MUST pass brand='LUT' (or their tenant) to
+        // prevent cross-tenant access (V9 Fix #2). Admin callers can omit
+        // it to look up across tenants.
+        ...(brand ? { brand } : {}),
       },
-    },
-  })
+      include: {
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
+      },
+    })
 
-  if (!product) return null
+    if (!product) return null
 
-  return {
-    ...product,
-    images: parseImages(product.images),
-  }
-}
+    return {
+      ...product,
+      images: parseImages(product.images),
+    }
+  },
+  ['product-by-slug'],
+  { revalidate: 300, tags: ['products'] }
+)
 
 /**
  * Check if a product is available for booking in a given date range.
@@ -276,19 +282,27 @@ export async function getProductBySlug(
  *
  * `requestedQuantity` defaults to 1 for backward compatibility with
  * callers that don't pass it (e.g. the PDP availability check).
+ *
+ * PERF (V14): the function used to do its own `db.product.findUnique` to
+ * read `stock`, which meant the availability endpoint issued TWO product
+ * queries (one to verify brand + one to read stock). Callers that have
+ * already fetched stock (e.g. the availability route does it inside the
+ * brand-scoped findFirst) can now pass `productStock` to skip the second
+ * query.
  */
 export async function checkProductAvailability(
   productId: string,
   startDate: Date,
   endDate: Date,
-  requestedQuantity: number = 1
+  requestedQuantity: number = 1,
+  productStock?: number
 ): Promise<{ available: boolean; conflictingBookings: number; availableStock: number }> {
-  // Load the product's stock (needed to compute available stock).
-  const product = await db.product.findUnique({
+  // Load the product's stock (needed to compute available stock). Callers
+  // that already have it can pass it via `productStock` to skip this query.
+  const stock = productStock ?? (await db.product.findUnique({
     where: { id: productId },
     select: { stock: true },
-  })
-  const stock = product?.stock ?? 0
+  }))?.stock ?? 0
 
   // Fetch all overlapping CONFIRMED/PENDING bookings and sum their quantities.
   const overlappingBookings = await db.booking.findMany({
@@ -380,8 +394,3 @@ export function calculateRentalTotal(
     total: subtotal + deposit,
   }
 }
-
-/**
- * Type for raw Product from Prisma (before image parsing).
- */
-export type RawProduct = Product

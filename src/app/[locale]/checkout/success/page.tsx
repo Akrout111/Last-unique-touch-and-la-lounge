@@ -11,7 +11,7 @@ export default async function SuccessPage({ searchParams }: PageProps) {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[100dvh] bg-background">
         <SuccessView orderId={order} />
       </div>
       <Footer />

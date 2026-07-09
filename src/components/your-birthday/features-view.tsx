@@ -20,10 +20,10 @@ const BirthdayVisualizer = dynamic(
  * icons and colors are decorative, not translated, so they stay here.
  */
 const SERVICE_DECOR: Array<{ icon: string; color: string }> = [
-  { icon: '🎂', color: '#8B5CF6' },
-  { icon: '🎭', color: '#EC4899' },
-  { icon: '🎈', color: '#00F3FF' },
-  { icon: '🎵', color: '#F97316' },
+  { icon: '🎂', color: 'var(--c-birthday-purple)' },
+  { icon: '🎭', color: 'var(--c-birthday-pink)' },
+  { icon: '🎈', color: 'var(--c-birthday-cyan)' },
+  { icon: '🎵', color: 'var(--c-birthday-orange)' },
   { icon: '💡', color: '#10B981' },
   { icon: '📸', color: '#EF4444' },
 ]
@@ -40,16 +40,16 @@ export default function BirthdayFeaturesView() {
   const services = rawServices.map((s, i) => ({
     ...s,
     icon: SERVICE_DECOR[i]?.icon ?? '✨',
-    color: SERVICE_DECOR[i]?.color ?? '#8B5CF6',
+    color: SERVICE_DECOR[i]?.color ?? 'var(--c-birthday-purple)',
   }))
 
   return (
-    <div className="relative w-full min-h-screen bg-[#020204] overflow-hidden">
+    <div className="relative w-full min-h-[100dvh] bg-[var(--c-birthday-bg)] overflow-hidden">
       {/* 3D Background */}
       <BirthdayVisualizer />
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 z-1 bg-gradient-to-t from-[#020204] via-[#020204]/80 to-[#020204]/50 pointer-events-none" />
+      <div className="absolute inset-0 z-1 bg-gradient-to-t from-[var(--c-birthday-bg)] via-[var(--c-birthday-bg)]/80 to-[var(--c-birthday-bg)]/50 pointer-events-none" />
 
       {/* Back button */}
       <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
@@ -76,7 +76,7 @@ export default function BirthdayFeaturesView() {
               className="text-3xl md:text-5xl font-black uppercase tracking-wider mb-4"
               style={{
                 fontFamily: locale === 'ar' ? 'var(--font-birthday-arabic), Cairo, sans-serif' : 'var(--font-birthday-headline), Orbitron, sans-serif',
-                background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+                background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink), var(--c-birthday-cyan))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -86,7 +86,7 @@ export default function BirthdayFeaturesView() {
             <p className="text-sm text-white/50 max-w-xl mx-auto">
               {t('subtitle')}
             </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#00F3FF] mx-auto rounded-full mt-6" />
+            <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-purple)] via-[var(--c-birthday-pink)] to-[var(--c-birthday-cyan)] mx-auto rounded-full mt-6" />
           </motion.div>
 
           {/* Services grid */}
@@ -97,7 +97,7 @@ export default function BirthdayFeaturesView() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="group relative p-8 rounded-lg bg-[#09090f]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
+                className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
               >
                 <div
                   className="absolute -top-12 -end-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
@@ -107,7 +107,7 @@ export default function BirthdayFeaturesView() {
                   {/* Birthday circular frame — signature ornament around each service icon */}
                   <div
                     className="relative size-20 rounded-full border-4 border-deep-purple bg-gold/10 flex items-center justify-center mx-auto mb-5 shadow-luxury transition-transform duration-500 group-hover:scale-110"
-                    style={{ boxShadow: `0 0 0 1px ${service.color}22, 0 4px 16px rgba(75, 24, 88, 0.25)` }}
+                    style={{ boxShadow: `0 0 0 1px color-mix(in srgb, ${service.color} 22%, transparent), 0 4px 16px rgba(75, 24, 88, 0.25)` }}
                   >
                     {/* Inner gold ring — matches BirthdayCircularFrame aesthetic */}
                     <span
@@ -142,7 +142,7 @@ export default function BirthdayFeaturesView() {
               onClick={() => router.push('/contact')}
               className="px-10 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(139,92,246,0.4)]"
               style={{
-                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink))',
                 fontFamily: locale === 'ar' ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
               }}
             >

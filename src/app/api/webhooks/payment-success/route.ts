@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { timingSafeEqual } from 'crypto'
+import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db'
 import { triggerOrderConfirmedWebhook } from '@/lib/n8n'
+import { safeEqualStrings } from '@/lib/crypto-utils'
 
 const schema = z.object({
   orderId: z.string().min(1),
@@ -29,19 +30,6 @@ function getInternalSecret(): string {
       'Using dev-only insecure secret. Do NOT use in production.'
   )
   return 'dev-insecure-internal-api-secret'
-}
-
-/**
- * Constant-time string comparison for header secrets.
- */
-function safeEqualStrings(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a, 'utf8')
-  const bBuf = Buffer.from(b, 'utf8')
-  if (aBuf.length !== bBuf.length) {
-    timingSafeEqual(aBuf, aBuf)
-    return false
-  }
-  return timingSafeEqual(aBuf, bBuf)
 }
 
 /**
@@ -103,65 +91,113 @@ export async function POST(req: NextRequest) {
     // inside a single Serializable transaction (mirroring the pattern in
     // /api/webhooks/payment-callback/route.ts). The n8n webhook trigger
     // is moved OUTSIDE the transaction so a slow n8n doesn't hold locks.
-    const txResult = await db.$transaction(
-      async (tx) => {
-        // 1. Idempotency: have we already processed this orderId via
-        //    payment-success? Look for the SecurityLog entry we write
-        //    below on every successful transition.
-        const alreadyProcessed = await tx.securityLog.findFirst({
-          where: {
-            event: 'payment_success_processed',
-            details: { contains: orderId },
-          },
-        })
+    //
+    // --- Idempotency refactor (security/data-fix #1): the previous
+    //     implementation used `SecurityLog.details { contains: orderId }`
+    //     which is a substring match on a free-form JSON text column.
+    //     This is incorrect for two reasons: (1) an orderId of "abc1"
+    //     would match the log entry for "abc12" (false positive →
+    //     silently dropping a legitimate payment confirmation); (2) any
+    //     unrelated SecurityLog row whose details string happened to
+    //     contain the orderId substring would short-circuit the webhook.
+    //     Now we use the dedicated `IdempotencyKey` table (which has a
+    //     real UNIQUE constraint on `key`) and mirror the exact pattern
+    //     from /api/orders/route.ts: `tx.idempotencyKey.create()` inside
+    //     the transaction, and on P2002 treat the webhook as already
+    //     processed. There is no nonce in this route (it's an internal
+    //     mock), so we use `orderId` as the idempotency key directly.
+    let txResult:
+      | { type: 'already_confirmed' }
+      | { type: 'not_found' }
+      | { type: 'invalid_status'; current: string }
+      | { type: 'updated'; orderId: string }
+    try {
+      txResult = await db.$transaction(
+        async (tx) => {
+          // 1. Idempotency: create the key FIRST inside the Serializable
+          //    transaction. If two concurrent payment-success webhooks
+          //    for the same orderId arrive, the second create throws
+          //    P2002 — caught below — which we map to `already_confirmed`.
+          const idempotencyRecord = await tx.idempotencyKey.create({
+            data: {
+              key: orderId,
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
+            },
+          })
 
-        if (alreadyProcessed) {
-          return { type: 'already_confirmed' as const }
+          // 2. Find the booking inside the transaction.
+          const booking = await tx.booking.findUnique({
+            where: { id: orderId },
+            include: { product: true },
+          })
+
+          if (!booking) {
+            return { type: 'not_found' as const }
+          }
+
+          // Idempotency: already confirmed — no-op. Still link the
+          // idempotency key to the order so future replays can be traced.
+          if (booking.status === 'CONFIRMED') {
+            await tx.idempotencyKey.update({
+              where: { id: idempotencyRecord.id },
+              data: { orderId },
+            })
+            return { type: 'already_confirmed' as const }
+          }
+
+          if (booking.status !== 'PENDING') {
+            return { type: 'invalid_status' as const, current: booking.status }
+          }
+
+          // 3. Update booking to CONFIRMED inside the same tx.
+          await tx.booking.update({
+            where: { id: orderId },
+            data: { status: 'CONFIRMED' },
+          })
+
+          // 4. Link the idempotency key to the resulting order so a
+          //    future replay can be traced back to this order.
+          await tx.idempotencyKey.update({
+            where: { id: idempotencyRecord.id },
+            data: { orderId },
+          })
+
+          // 5. Audit log (kept for backwards compat with tooling that
+          //    reads the old SecurityLog format).
+          await tx.securityLog.create({
+            data: {
+              event: 'payment_success_processed',
+              details: JSON.stringify({
+                orderId,
+                fromStatus: booking.status,
+                toStatus: 'CONFIRMED',
+              }),
+            },
+          })
+
+          return { type: 'updated' as const, orderId }
+        },
+        { isolationLevel: 'Serializable' }
+      )
+    } catch (error: unknown) {
+      // P2002 on IdempotencyKey.key = the same orderId has already been
+      // processed by a prior payment-success webhook. Return success so
+      // the (internal) caller treats it as idempotent.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = (error.meta?.target as string[] | undefined)?.join(',') ?? ''
+        if (target.includes('key')) {
+          return NextResponse.json({
+            success: true,
+            alreadyConfirmed: true,
+            orderId,
+          })
         }
-
-        // 2. Find the booking inside the transaction.
-        const booking = await tx.booking.findUnique({
-          where: { id: orderId },
-          include: { product: true },
-        })
-
-        if (!booking) {
-          return { type: 'not_found' as const }
-        }
-
-        // Idempotency: already confirmed — no-op.
-        if (booking.status === 'CONFIRMED') {
-          return { type: 'already_confirmed' as const }
-        }
-
-        if (booking.status !== 'PENDING') {
-          return { type: 'invalid_status' as const, current: booking.status }
-        }
-
-        // 3. Update booking to CONFIRMED inside the same tx.
-        await tx.booking.update({
-          where: { id: orderId },
-          data: { status: 'CONFIRMED' },
-        })
-
-        // 4. Write the idempotency log INSIDE the tx so a concurrent
-        //    duplicate payment-success webhook (or a retry) sees it on
-        //    the next transaction's findFirst.
-        await tx.securityLog.create({
-          data: {
-            event: 'payment_success_processed',
-            details: JSON.stringify({
-              orderId,
-              fromStatus: booking.status,
-              toStatus: 'CONFIRMED',
-            }),
-          },
-        })
-
-        return { type: 'updated' as const, orderId }
-      },
-      { isolationLevel: 'Serializable' }
-    )
+      }
+      throw error
+    }
 
     if (txResult.type === 'already_confirmed') {
       return NextResponse.json({
