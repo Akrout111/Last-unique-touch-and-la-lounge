@@ -5,6 +5,7 @@ import { useScroll, useTransform, motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ExperienceCard } from './experience-card'
+import { Hero3DBackground } from './hero-3d-background'
 
 export function Hero() {
   const t = useTranslations()
@@ -24,26 +25,19 @@ export function Hero() {
       ref={ref}
       className="relative min-h-[100dvh] w-full overflow-hidden bg-ink flex flex-col"
     >
-      {/* CSS-based luxury background (different from LUT's 3D tunnel) */}
-      {/* Animated gradient mesh */}
+      {/* CSS fallback background (always rendered — visible when 3D is disabled
+          or before WebGL initializes). Kept behind the 3D canvas. */}
       <div className="absolute inset-0 z-0 pointer-events-none hero-bg-gradient" />
-      {/* Grid overlay */}
       <div className="absolute inset-0 z-0 pointer-events-none hero-bg-grid" />
-      {/* Floating orbs */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="hero-orb hero-orb-1" />
         <div className="hero-orb hero-orb-2" />
         <div className="hero-orb hero-orb-3" />
       </div>
 
-      {/* Subtle red brand glow */}
-      <div
-        className="absolute inset-0 z-[1] pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 50% at 30% 20%, rgba(230, 33, 41, 0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 70% 80%, rgba(230, 33, 41, 0.08) 0%, transparent 50%)',
-        }}
-      />
+      {/* 3D tri-section background — renders null when WebGL is unavailable,
+          in which case the CSS fallback above remains visible. */}
+      <Hero3DBackground />
 
       {/* Top: Brand logo + tagline */}
       <motion.div
