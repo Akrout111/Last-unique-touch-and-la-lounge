@@ -5,12 +5,33 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslations } from 'next-intl'
+import { usePathname } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, CheckCircle2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram, AlertCircle } from 'lucide-react'
 import { buildWhatsappUrl, getPhoneNumber, isRealNumber } from '@/lib/contact-info'
+import { resolveBrandFromPath, type BrandKey } from '@/lib/brand'
+
+/**
+ * R2-B-8: derive the tenant brand from the current pathname so contact
+ * submissions are routed to the correct tenant's admin inbox.
+ *
+ * The storefront exposes 3 brand landing pages — `/last-unique-touch` (LUT,
+ * the SSR default), `/la-lounge` (LA_LOUNGE), and `/your-birthday`
+ * (YOUR_BIRTHDAY). The home page (`/`) and all other routes resolve to LUT.
+ * Path → BrandKey resolution lives in `src/lib/brand.ts` (shared with the
+ * navbar / footer / brand-theme-setter); we only need to map the lowercase
+ * BrandKey to the uppercase API-facing literal set here.
+ */
+type ContactBrand = 'LUT' | 'LA_LOUNGE' | 'YOUR_BIRTHDAY'
+
+const BRAND_TO_CONTACT_BRAND: Record<BrandKey, ContactBrand> = {
+  lut: 'LUT',
+  lalounge: 'LA_LOUNGE',
+  birthday: 'YOUR_BIRTHDAY',
+}
 
 const contactSchema = z.object({
   name: z.string().min(3).max(100),
@@ -18,15 +39,26 @@ const contactSchema = z.object({
   phone: z.string().regex(/^\+?[0-9\s-]{8,20}$/).optional().or(z.literal('')),
   subject: z.string().min(5).max(200),
   message: z.string().min(20).max(2000),
+  // R2-B-8: include `brand` so the server (/api/contact) can persist the
+  // tenant the message was submitted from. The server schema defaults to
+  // 'LUT' if absent, but sending it explicitly closes the multi-tenant
+  // routing gap (La Lounge / Your Birthday messages were filed under LUT).
+  brand: z.enum(['LUT', 'LA_LOUNGE', 'YOUR_BIRTHDAY']),
 })
 
 type ContactFormData = z.infer<typeof contactSchema>
 
 export function ContactView() {
   const t = useTranslations()
+  const pathname = usePathname()
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // R2-B-8: resolve the brand from the current pathname so the contact form
+  // can route the submission to the correct tenant. Memoised via useState so
+  // it stays stable across re-renders but updates on navigation.
+  const brand = BRAND_TO_CONTACT_BRAND[resolveBrandFromPath(pathname)]
 
   const {
     register,
@@ -35,6 +67,7 @@ export function ContactView() {
     formState: { errors },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
+    defaultValues: { brand },
   })
 
   const onSubmit = async (data: ContactFormData) => {
@@ -42,10 +75,12 @@ export function ContactView() {
     setSubmitError(null)
 
     try {
+      // R2-B-8: send the resolved brand along with the form payload so the
+      // server persists the message against the correct tenant.
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, brand }),
       })
 
       const result = (await response.json().catch(() => ({}))) as {
@@ -115,8 +150,8 @@ export function ContactView() {
         <div className="lg:col-span-2">
           {submitted ? (
             <div className="p-8 rounded-md bg-card border border-border shadow-luxury text-center">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600" />
               </div>
               <h2 className="font-display text-2xl font-bold text-foreground mb-3">
                 {t('contact.form.success')}
@@ -153,10 +188,12 @@ export function ContactView() {
                   <Input
                     id="name"
                     {...register('name')}
+                    aria-invalid={!!errors.name}
+                    aria-describedby={errors.name ? 'name-error' : undefined}
                     className="bg-background luxury-input"
                   />
                   {errors.name && (
-                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                    <p id="name-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.name?.type === 'required'
@@ -175,10 +212,12 @@ export function ContactView() {
                     type="email"
                     dir="ltr"
                     {...register('email')}
+                    aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
                     className="bg-background luxury-input"
                   />
                   {errors.email && (
-                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                    <p id="email-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.email?.type === 'required'
@@ -201,10 +240,12 @@ export function ContactView() {
                     type="tel"
                     dir="ltr"
                     {...register('phone')}
+                    aria-invalid={!!errors.phone}
+                    aria-describedby={errors.phone ? 'phone-error' : undefined}
                     className="bg-background luxury-input"
                   />
                   {errors.phone && (
-                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                    <p id="phone-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>{t('contact.form.errors.phoneInvalid')}</span>
                     </p>
@@ -217,10 +258,12 @@ export function ContactView() {
                   <Input
                     id="subject"
                     {...register('subject')}
+                    aria-invalid={!!errors.subject}
+                    aria-describedby={errors.subject ? 'subject-error' : undefined}
                     className="bg-background luxury-input"
                   />
                   {errors.subject && (
-                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                    <p id="subject-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.subject?.type === 'required'
@@ -241,10 +284,12 @@ export function ContactView() {
                   id="message"
                   rows={6}
                   {...register('message')}
+                  aria-invalid={!!errors.message}
+                  aria-describedby={errors.message ? 'message-error' : undefined}
                   className="bg-background luxury-input"
                 />
                 {errors.message && (
-                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                  <p id="message-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {errors.message?.type === 'required'

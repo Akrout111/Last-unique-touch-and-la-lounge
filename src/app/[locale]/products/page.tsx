@@ -1,8 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { Navbar } from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/footer'
 import { ProductsFilters } from '@/components/products/products-filters'
 import { ProductsPageContent } from '@/components/products/products-page-content'
 import { ProductsGridSkeleton } from '@/components/products/products-grid-skeleton'
@@ -57,43 +55,40 @@ export default async function ProductsPage({ searchParams, params }: PageProps) 
   ])
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-[100dvh] bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-          {/* Page header */}
-          <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
-              {t('products.title')}
-            </h1>
-            <p className="text-muted-foreground">
-              {t('products.subtitle')}
-            </p>
-          </div>
+    // FIX-1A: <Navbar /> and <Footer /> are now rendered by the layout.
+    <div className="min-h-[100dvh] bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+            {t('products.title')}
+          </h1>
+          <p className="text-muted-foreground">
+            {t('products.subtitle')}
+          </p>
+        </div>
 
-          {/* Filters */}
-          <ProductsFilters
-            categories={categories}
-            activeCategory={categorySlug}
+        {/* Filters */}
+        <ProductsFilters
+          categories={categories}
+          activeCategory={categorySlug}
+          search={searchQuery}
+          sort={sort}
+        />
+
+        {/* Content with suspense */}
+        <Suspense fallback={<ProductsGridSkeleton />}>
+          <ProductsPageContent
+            products={result.products}
+            total={result.total}
+            page={result.page}
+            totalPages={result.totalPages}
+            categorySlug={categorySlug}
             search={searchQuery}
             sort={sort}
           />
-
-          {/* Content with suspense */}
-          <Suspense fallback={<ProductsGridSkeleton />}>
-            <ProductsPageContent
-              products={result.products}
-              total={result.total}
-              page={result.page}
-              totalPages={result.totalPages}
-              categorySlug={categorySlug}
-              search={searchQuery}
-              sort={sort}
-            />
-          </Suspense>
-        </div>
+        </Suspense>
       </div>
-      <Footer />
-    </>
+    </div>
   )
 }

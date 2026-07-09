@@ -1,9 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
-import { ArrowLeft, ArrowRight, Check, ArrowDown } from 'lucide-react'
+import { Check, ArrowDown } from 'lucide-react'
 import { LutArabesque } from '@/components/brand/lut-arabesque'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
@@ -18,9 +18,7 @@ const Background3D = dynamic(
 
 export default function LastUniqueTouchView() {
   const t = useTranslations()
-  const locale = useLocale() as 'ar' | 'en'
   const router = useRouter()
-  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   // V10 Fix #3: services array now uses i18n keys instead of inline ternaries.
   const services = [
@@ -51,16 +49,11 @@ export default function LastUniqueTouchView() {
           className="pointer-events-none absolute inset-0 z-[2] h-full w-full opacity-60"
         />
 
-        {/* Back button */}
-        <div className="absolute top-20 start-4 sm:start-6 z-40">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-paper/70 hover:text-paper hover:border-white/30 transition-all text-xs"
-          >
-            <ArrowIcon className="w-4 h-4" />
-            <span className="font-medium tracking-wide">{t('lut.back')}</span>
-          </button>
-        </div>
+        {/* FIX-1A / C2: the per-brand "Back" button was removed because the
+            shared <Navbar /> rendered by the [locale]/layout.tsx now appears
+            on this page too — its wordmark links home and its nav row
+            exposes Home / Products / About / Contact, so the user is no
+            longer trapped on the brand landing page. */}
 
         {/* Centered title */}
         <div className="relative z-10 flex flex-col items-center text-center px-4">

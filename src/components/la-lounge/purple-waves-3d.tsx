@@ -8,6 +8,20 @@ import { shouldEnable3D } from '@/lib/device-capabilities';
 // V11 Fix #12: use BRAND_COLORS constant instead of hardcoded hexes.
 import { BRAND_COLORS } from '@/lib/brand-colors';
 
+/*
+ * FIX-1B / R1-D M7: consolidated all hardcoded pink hex literals into
+ * named tint constants derived from the La Lounge brand pink
+ * (#E6007E = BRAND_COLORS.LA_LOUNGE). The very light tints below are
+ * the closest Tailwind-equivalent shades (pink-50/100/200/300) needed
+ * for the subtle blueprint-grid aesthetic — they can't be expressed
+ * with the bare brand hex alone without blowing out the grid lines,
+ * so they live here as named constants instead of scattered literals.
+ */
+const PINK_LIGHT = '#FFD1E8'   // ≈ pink-200  — base grid cross-lines
+const PINK_LIGHTER = '#FFEFF6' // ≈ pink-50   — base grid lines (lightest)
+const PINK_SOFT = '#FFE0EF'    // ≈ pink-100  — secondary grid lines
+const PINK_MID = '#FFB3D9'     // ≈ pink-300  — radial grid rings
+
 function BlueprintGrid() {
   const gridGroup = useRef<THREE.Group>(null);
   const radarRef = useRef<THREE.Mesh>(null);
@@ -24,14 +38,14 @@ function BlueprintGrid() {
   return (
     <group ref={gridGroup}>
       {/* Base Grids */}
-      <gridHelper args={[200, 200, '#FFD1E8', '#FFEFF6']} position={[0, -0.01, 0]} />
-      <gridHelper args={[200, 20, '#FF6B9D', '#FFE0EF']} position={[0, -0.02, 0]} />
+      <gridHelper args={[200, 200, PINK_LIGHT, PINK_LIGHTER]} position={[0, -0.01, 0]} />
+      <gridHelper args={[200, 20, BRAND_COLORS.LA_LOUNGE_LIGHT, PINK_SOFT]} position={[0, -0.02, 0]} />
       
       {/* Radial Grid (Architectural Focus) */}
       {Array.from({ length: 16 }).map((_, i) => (
         <mesh key={`radial_${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]}>
           <ringGeometry args={[5 + i * 5, 5.05 + i * 5, 128]} />
-          <meshBasicMaterial color="#FFB3D9" transparent opacity={0.25} side={THREE.DoubleSide} />
+          <meshBasicMaterial color={PINK_MID} transparent opacity={0.25} side={THREE.DoubleSide} />
         </mesh>
       ))}
       
@@ -45,7 +59,7 @@ function BlueprintGrid() {
       {Array.from({ length: 24 }).map((_, i) => (
         <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 24, 0]} position={[0, -0.015, 0]}>
           <boxGeometry args={[200, 0.01, 0.04]} />
-          <meshBasicMaterial color="#FFD1E8" transparent opacity={0.3} />
+          <meshBasicMaterial color={PINK_LIGHT} transparent opacity={0.3} />
         </mesh>
       ))}
     </group>
@@ -114,7 +128,7 @@ function EventArchitecture() {
     };
     
     // Materials that look like blueprint ink
-    const matBold = new THREE.LineBasicMaterial({ color: '#8B0A50', transparent: true, opacity: 0.95 });
+    const matBold = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE, transparent: true, opacity: 0.95 });
     const matMain = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE, transparent: true, opacity: 0.8 });
     const matSub = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE, transparent: true, opacity: 0.5 });
     const matAccent = new THREE.LineBasicMaterial({ color: BRAND_COLORS.LA_LOUNGE_LIGHT, transparent: true, opacity: 0.9 });

@@ -56,13 +56,24 @@ export async function POST(req: NextRequest) {
 
   const parsed = birthdaySchema.safeParse(body)
   if (!parsed.success) {
+    // R2-A-2: do NOT disclose Zod issue details to the client (schema
+    // disclosure — leaks field names, regex patterns, min/max lengths).
+    // Log them server-side for debugging instead.
+    console.warn('[api/bookings/birthday] Validation failed:', parsed.error.issues)
     return NextResponse.json(
-      { error: 'invalid_input', details: parsed.error.issues },
+      { error: 'invalid_input' },
       { status: 400 }
     )
   }
 
   const { name, phone, email, eventDate, notes, idempotencyKey } = parsed.data
+
+  // R2-A-4: namespace the idempotency key with a route prefix so a
+  // birthday booking key can never collide with keys from /api/orders
+  // or the payment webhooks (which share the same UNIQUE IdempotencyKey.key
+  // column). Without this prefix, an attacker could pre-seed a key that
+  // later suppresses a legitimate payment-success webhook.
+  const namespacedKey = `birthday:${idempotencyKey}`
 
   // Normalise the event date: the user supplies a calendar date (e.g.
   // "2026-08-14"); we store it as a Date, using the start of that day
@@ -115,7 +126,7 @@ export async function POST(req: NextRequest) {
           // --- Idempotency: create the key FIRST (Fix #3) ---
           const idempotencyRecord = await tx.idempotencyKey.create({
             data: {
-              key: idempotencyKey,
+              key: namespacedKey,
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
             },
           })
@@ -163,13 +174,18 @@ export async function POST(req: NextRequest) {
         const target = (error.meta?.target as string[] | undefined)?.join(',') ?? ''
         if (target.includes('key')) {
           const existing = await db.idempotencyKey.findUnique({
-            where: { key: idempotencyKey },
+            where: { key: namespacedKey },
             select: { orderId: true, expiresAt: true },
           })
           if (existing) {
             if (existing.expiresAt < new Date()) {
               // Expired key — delete so the client can retry.
-              await db.idempotencyKey.delete({ where: { key: idempotencyKey } })
+              //
+              // R2-B-3: use `deleteMany` (not `delete`) so a concurrent
+              // request that already deleted the key between our
+              // `findUnique` above and this call does NOT throw P2025
+              // (record not found). `deleteMany` is idempotent.
+              await db.idempotencyKey.deleteMany({ where: { key: namespacedKey } })
               return NextResponse.json(
                 { error: 'duplicate_request' },
                 { status: 409 }

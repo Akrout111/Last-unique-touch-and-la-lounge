@@ -3,8 +3,6 @@ import type { Metadata } from 'next'
 import type { Brand } from '@prisma/client'
 import { db } from '@/lib/db'
 import { getProductBySlug, getRelatedProducts } from '@/lib/products'
-import { Navbar } from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/footer'
 import { Breadcrumbs } from '@/components/product/breadcrumbs'
 import { ProductGallery } from '@/components/product/product-gallery'
 import { Product3DViewer } from '@/components/product/product-3d-viewer'
@@ -118,10 +116,45 @@ export default async function ProductPage({ params }: PageProps) {
     },
   }
 
+  // R2E-10: BreadcrumbList JSON-LD mirroring the visible Breadcrumbs
+  // component so search engines can render breadcrumb rich results.
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: `${baseUrl}/${locale}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Products',
+        item: `${baseUrl}/${locale}/products`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: product.category.nameEn,
+        item: `${baseUrl}/${locale}/products?category=${product.category.slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: product.nameEn,
+        item: `${baseUrl}/${locale}/products/${slug}`,
+      },
+    ],
+  }
+
   return (
+    // FIX-1A: <Navbar /> and <Footer /> are now rendered by the layout.
     <>
       <JsonLd data={productLd} />
-      <Navbar />
+      <JsonLd data={breadcrumbLd} />
       <div className="min-h-[100dvh] bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
           <Breadcrumbs
@@ -157,7 +190,6 @@ export default async function ProductPage({ params }: PageProps) {
           )}
         </div>
       </div>
-      <Footer />
     </>
   )
 }

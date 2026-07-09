@@ -1,9 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { ArrowLeft, ArrowRight, ArrowDown, ClipboardList, Armchair, Sparkles, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ClipboardList, Armchair, Sparkles, type LucideIcon } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { LaLoungeSunburst } from '@/components/brand/lalounge-sunburst'
 import { LaLoungeLightSweep } from '@/components/brand/lalounge-light-sweep'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
@@ -15,9 +15,7 @@ const PurpleWaves3D = dynamic(() => import('./purple-waves-3d'), { ssr: false, l
 
 export default function LaLoungeView() {
   const router = useRouter()
-  const locale = useLocale()
   const t = useTranslations()
-  const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
 
   // V11 Fix #1: migrated inline locale ternaries to i18n keys.
   // V10 user request: added examples for each service to show concrete
@@ -79,18 +77,11 @@ export default function LaLoungeView() {
         {/* La Lounge light sweep — subtle diagonal beam above hero content */}
         <LaLoungeLightSweep />
 
-        {/* Back button */}
-        <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/50 backdrop-blur-md border border-primary/10 shadow-sm hover:shadow-md text-primary transition-all font-medium text-xs cursor-pointer"
-          >
-            <ArrowIcon className="w-4 h-4" />
-            <span className="font-medium tracking-wide">
-              {t('laLounge.back')}
-            </span>
-          </button>
-        </div>
+        {/* FIX-1A / C2: the per-brand "Back" button was removed because the
+            shared <Navbar /> rendered by the [locale]/layout.tsx now appears
+            on this page too — its wordmark links home and its nav row
+            exposes Home / Products / About / Contact, so the user is no
+            longer trapped on the brand landing page. */}
 
         {/* Centered title */}
         <div className="relative z-10 flex flex-col items-center text-center px-4">

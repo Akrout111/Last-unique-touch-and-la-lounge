@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { checkProductAvailability } from '@/lib/products'
+import { rateLimit } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/get-client-ip'
 
 const schema = z.object({
   startDate: z.string().datetime(),
@@ -12,6 +14,20 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // --- Rate limit (30/min/IP) — R1-A M5 ---
+  // Without a limit this endpoint can be hammered to DoS the DB (each call
+  // runs `db.booking.findMany` over a date range). 30/min matches the
+  // check-slug limit and is generous for legitimate PDP availability
+  // checks (one call per date-range selection).
+  const ip = getClientIp(req)
+  const rl = rateLimit(`availability:${ip}`, 30, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: 60 },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   try {
     const { id } = await params
     const url = new URL(req.url)
@@ -24,8 +40,11 @@ export async function GET(
     })
 
     if (!parsed.success) {
+      // R1-A M9: do NOT disclose Zod issue details to the client (schema
+      // disclosure). Log them server-side for debugging instead.
+      console.warn('[api/availability] Validation failed:', parsed.error.issues)
       return NextResponse.json(
-        { error: 'invalid_dates', details: parsed.error.issues },
+        { error: 'invalid_dates' },
         { status: 400 }
       )
     }

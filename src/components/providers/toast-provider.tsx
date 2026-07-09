@@ -55,11 +55,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role={toast.type === 'error' ? 'alert' : 'status'}
             aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
             className={`flex items-center gap-3 px-4 py-3 rounded-md shadow-lg text-white max-w-sm ${
+              // FIX-4A: palette sweep — green/red/yellow → emerald/rose/amber
+              // for consistency with the rest of the admin dashboard.
               toast.type === 'success'
-                ? 'bg-green-600'
+                ? 'bg-emerald-600'
                 : toast.type === 'error'
-                ? 'bg-red-600'
-                : 'bg-yellow-600'
+                ? 'bg-rose-600'
+                : 'bg-amber-600'
             }`}
           >
             {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 shrink-0" />}

@@ -71,7 +71,11 @@ export function LoginPageView() {
           </h1>
 
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+            <div
+              id="login-error"
+              role="alert"
+              className="flex items-center gap-2 p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-sm"
+            >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -86,6 +90,8 @@ export function LoginPageView() {
               autoComplete="current-password"
               autoFocus
               required
+              aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
               className="bg-background"
             />
           </div>

@@ -2,6 +2,74 @@ import { db } from './db'
 import { createHmac } from 'crypto'
 
 /**
+ * Validate an outbound webhook URL to prevent SSRF (R1-A M11).
+ *
+ * Rejects URLs that target private/internal IP ranges or non-https
+ * schemes (in production). In dev we allow localhost / private IPs /
+ * http so a developer can point `N8N_WEBHOOK_URL` at a local n8n
+ * instance — but in production we strictly require https + a public
+ * hostname.
+ *
+ * Covered private ranges (RFC 1918 + link-local + loopback + unique local
+ * IPv6):
+ *   - 10.0.0.0/8
+ *   - 172.16.0.0/12  (172.16.x – 172.31.x)
+ *   - 192.168.0.0/16
+ *   - 169.254.0.0/16 (link-local — includes AWS metadata 169.254.169.254)
+ *   - 127.0.0.0/8    (loopback)
+ *   - ::1, fc00::/7  (IPv6 loopback + unique local)
+ *   - "localhost" hostname
+ *
+ * NOTE: this is a best-effort string/hostname check. It does NOT resolve
+ * the hostname via DNS (so an attacker could in theory register a public
+ * DNS name that resolves to a private IP — a DNS-rebinding attack).
+ * A full defence would resolve the hostname and verify the resolved IP
+ * is public BEFORE connecting, and pin the connection to that IP. That
+ * is out of scope for this fix; the current check closes the most common
+ * SSRF vectors (literal private IPs + non-https).
+ */
+export function validateWebhookUrl(url: string): boolean {
+  const isProduction = process.env.NODE_ENV === 'production'
+  try {
+    const parsed = new URL(url)
+    // In production, require https. In dev, allow http for local n8n.
+    if (isProduction && parsed.protocol !== 'https:') return false
+    // Disallow non-http(s) protocols (file:, ftp:, data:, etc.) in all envs.
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
+
+    const host = parsed.hostname.toLowerCase()
+
+    // IPv6 loopback + unique local.
+    if (host === '::1' || host.startsWith('fc') || host.startsWith('fd')) {
+      return !isProduction
+    }
+    // Bracketed IPv6 form `[::1]`.
+    const bareHost = host.startsWith('[') && host.endsWith(']')
+      ? host.slice(1, -1)
+      : host
+
+    if (bareHost === '::1' || bareHost.startsWith('fc') || bareHost.startsWith('fd')) {
+      return !isProduction
+    }
+
+    // Loopback / localhost.
+    if (bareHost === 'localhost' || bareHost === '127.0.0.1' || /^127\./.test(bareHost)) {
+      return !isProduction
+    }
+
+    // Private IPv4 ranges.
+    if (/^10\./.test(bareHost)) return !isProduction
+    if (/^192\.168\./.test(bareHost)) return !isProduction
+    if (/^169\.254\./.test(bareHost)) return !isProduction // link-local (AWS metadata)
+    if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(bareHost)) return !isProduction
+
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Resolve the n8n webhook signing secret.
  *
  * Fix #4: fail-closed in production — if N8N_WEBHOOK_SECRET is unset or
@@ -39,8 +107,10 @@ function getWebhookSecret(): string | null {
  * If N8N_WEBHOOK_URL is not set, logs and skips (useful in development).
  *
  * Fix #4: throws in production when N8N_WEBHOOK_SECRET is unset/short
- * (fail-closed). Throws when the webhook URL is not https in any mode
- * (security/data-fix #2 — closes dev-mode SSRF).
+ * (fail-closed). Throws when the webhook URL fails the SSRF allowlist
+ * (R1-A M11 — non-https in production, or any private/internal IP range
+ * in production). In dev, the SSRF check is permissive (localhost /
+ * private IPs / http are allowed for local n8n instances).
  */
 export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<void> {
   const webhookUrl = process.env.N8N_WEBHOOK_URL
@@ -51,16 +121,18 @@ export async function triggerOrderConfirmedWebhook(bookingId: string): Promise<v
     return
   }
 
-  // SSRF / transport security (security/data-fix #2): the webhook URL MUST
-  // be https in ALL modes — not just production. The previous production-
-  // only check left dev mode wide open to SSRF: a misconfigured
-  // `N8N_WEBHOOK_URL=http://localhost/...` (or any private/loopback IP)
-  // would let the server fetch internal-only endpoints and leak the
-  // signed payload + secret-derived signature over plaintext. Enforcing
-  // https in every environment closes both the SSRF and the leak.
-  if (!webhookUrl.startsWith('https://')) {
+  // SSRF / transport security (R1-A M11): validate the webhook URL BEFORE
+  // fetching. The previous check only enforced the https scheme — a
+  // misconfigured `N8N_WEBHOOK_URL=https://169.254.169.254/...` would
+  // still let the server fetch internal-only HTTPS endpoints and leak
+  // the signed payload. The shared `validateWebhookUrl` helper covers
+  // scheme + private IP ranges (10.x, 172.16-31.x, 192.168.x, 169.254.x,
+  // 127.x, ::1, fc00::/7). In production we reject; in dev we allow
+  // localhost / private IPs so a local n8n instance can be used.
+  if (!validateWebhookUrl(webhookUrl)) {
     throw new Error(
-      '[n8n] refusing to send webhook over non-https URL: ' +
+      '[n8n] refusing to send webhook to disallowed URL (non-https in ' +
+        'production or private/internal IP range): ' +
         webhookUrl.replace(/\/\/[^@]+@/, '//***@')
     )
   }

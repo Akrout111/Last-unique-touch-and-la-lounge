@@ -162,7 +162,7 @@ export function CartView() {
                   </p>
 
                   <p className="text-sm text-primary font-medium mt-1">
-                    {item.rentalPricePerDay} {t('cart.item.perDay')}
+                    {item.rentalPricePerDay.toFixed(3)} {t('cart.item.perDay')}
                   </p>
 
                   <div className="flex items-center justify-between mt-3">

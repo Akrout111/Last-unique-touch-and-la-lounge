@@ -8,28 +8,16 @@ import { CartProvider } from '@/components/providers/cart-provider'
 import { ToastProvider } from '@/components/providers/toast-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { BrandThemeSetter } from '@/components/providers/brand-theme-setter'
+import { Navbar } from '@/components/layout/navbar'
+import { Footer } from '@/components/layout/footer'
 import { FloatingWhatsApp } from '@/components/floating-whatsapp'
 import { lutFonts, laLoungeFonts, birthdayFonts } from '@/app/fonts'
 
-/**
- * Resolve the brand slug from the locale segment.
- *
- * V13 Group C9: Removed `headers()` call that forced every route to be
- * dynamically rendered. The `data-brand` attribute is now set client-side
- * by `BrandThemeSetter` (which runs on every navigation). For SSR, we
- * default to 'lut' — the `BrandThemeSetter` corrects it immediately on
- * hydration. This allows ~10 routes to be statically prerendered.
- */
-function resolveBrandFromPath(pathname: string | null): 'lut' | 'lalounge' | 'birthday' {
-  if (!pathname) return 'lut'
-  if (pathname.includes('/la-lounge')) return 'lalounge'
-  if (pathname.includes('/your-birthday')) return 'birthday'
-  return 'lut'
-}
-
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations()
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   return {
+    metadataBase: new URL(baseUrl),
     title: {
       default: 'Last Unique Touch',
       template: `%s | Last Unique Touch`,
@@ -40,10 +28,30 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/icon-192.png',
       apple: '/icon-192.png',
     },
+    alternates: {
+      canonical: '/',
+      languages: {
+        en: '/en',
+        ar: '/ar',
+      },
+    },
+    openGraph: {
+      type: 'website',
+      siteName: 'Last Unique Touch',
+      images: [{ url: '/og-default.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      images: [{ url: '/og-default.png', width: 1200, height: 630 }],
+    },
   }
 }
 
 export const viewport: Viewport = {
+  // FIX-1A / C6: themeColor is now set DYNAMICALLY per-brand by
+  // `BrandThemeSetter` (it updates <meta name="theme-color"> on every
+  // route change). The default declared here is LUT red so SSR / no-JS
+  // falls back to the most common brand.
   themeColor: '#E3222B',
 }
 
@@ -65,9 +73,13 @@ export default async function LocaleLayout({
 
   const t = await getTranslations()
 
-  // V13 Group C9: No more headers() call — default to 'lut' for SSR.
-  // BrandThemeSetter corrects data-brand on hydration.
-  const brand = resolveBrandFromPath(null)
+  // FIX-4B / R3-B-1: removed the local `resolveBrandFromPath(null)` call
+  // (dead code — always returned 'lut'). The shared `resolveBrandFromPath`
+  // lives in `src/lib/brand.ts` and is used by the client components
+  // (navbar / footer / brand-theme-setter) that can actually read
+  // `usePathname()`. SSR HTML defaults to 'lut'; `BrandThemeSetter`
+  // corrects `data-brand` on hydration and every navigation.
+  const brand = 'lut' as const
 
   return (
     <html
@@ -118,6 +130,22 @@ export default async function LocaleLayout({
                 <ToastProvider>
                   <BrandThemeSetter />
                   {/*
+                    FIX-1A / C1: Navbar + Footer are now rendered as siblings
+                    of <main> at the layout level (not inside individual page
+                    components). This makes the sticky-footer pattern work
+                    correctly: body is `min-h-[100dvh] flex flex-col`, main
+                    has `flex-1`, so on short pages the footer is pushed to
+                    the bottom of the viewport instead of sitting right under
+                    the content. It also guarantees every route (including
+                    the 3 brand landing pages) has the shared navbar/footer
+                    (C2) so users can never get trapped on a brand page.
+
+                    Navbar and Footer are client components that internally
+                    return `null` on `/admin/*` routes so the admin shell
+                    keeps its own chrome (admin-shell.tsx).
+                  */}
+                  <Navbar />
+                  {/*
                     Centralized <main id="main-content"> so the skip-to-content
                     link works on every route (storefront, admin, etc.) without
                     each page having to remember to render one. Individual pages
@@ -127,6 +155,7 @@ export default async function LocaleLayout({
                   <main id="main-content" className="flex-1">
                     {children}
                   </main>
+                  <Footer />
                   <FloatingWhatsApp />
                 </ToastProvider>
               </CartProvider>

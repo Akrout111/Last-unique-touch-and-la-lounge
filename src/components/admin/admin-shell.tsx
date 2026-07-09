@@ -10,10 +10,15 @@ import { getBrandColor } from '@/lib/brand-colors'
 /**
  * Multi-tenant brands the admin can switch between. Keys match the Prisma
  * `Brand` enum; `label` is shown in the switcher UI.
+ *
+ * FIX-1A / R1-D: the La Lounge label was previously "LA Lounge" (all-caps
+ * "LA"), which didn't match the brand name in messages.json (`brand.lalounge`
+ * = "La Lounge"). Aligned here so the admin UI is consistent with the
+ * storefront and messages.
  */
 const ADMIN_BRANDS = [
   { key: 'LUT', label: 'LUT' },
-  { key: 'LA_LOUNGE', label: 'LA Lounge' },
+  { key: 'LA_LOUNGE', label: 'La Lounge' },
   { key: 'YOUR_BIRTHDAY', label: 'Your Birthday' },
 ] as const
 
@@ -96,8 +101,29 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
    */
   const handleBrandChange = (brand: AdminBrandKey) => {
     if (brand === activeBrand) return
-    // `document.cookie = ...` is the canonical client-side cookie setter (it
-    // merges into the cookie jar rather than clobbering it). The
+    // R2-B-10: persist the selected admin brand via `document.cookie`.
+    //
+    // We deliberately do NOT scope this cookie to `path=/admin` because the
+    // admin routes live under locale-prefixed URLs (`/ar/admin/...`,
+    // `/en/admin/...`) and the browser only matches `path=/admin` against
+    // literal `/admin/*` requests. A `path=/admin` cookie would never be
+    // sent on `/ar/admin/products`, breaking the brand switcher. `path=/`
+    // is therefore required for the cookie to be visible to all admin
+    // routes across both locales. The server-side reader (admin-brand.ts →
+    // `cookies().get(...)`) is only invoked inside admin server actions,
+    // so the broader path scope does not leak the brand to storefront code.
+    //
+    // `httpOnly` is intentionally omitted — admin-shell.tsx reads the
+    // cookie client-side via `readBrandCookie()` to highlight the active
+    // pill on mount. `samesite=lax` + `secure` (prod) provide transport
+    // and CSRF defense-in-depth. Not `__Host-` prefixed because that
+    // prefix requires `path=/` AND a single origin, but also forces the
+    // cookie to be re-issued on every attribute change — admin brand
+    // switching is a low-sensitivity, high-frequency action that does
+    // not warrant the strictness.
+    //
+    // `document.cookie = ...` is the canonical client-side cookie setter
+    // (it merges into the cookie jar rather than clobbering it). The
     // react-hooks/immutability rule misflags it as a foreign mutation, so
     // disable the rule for this single statement.
     const secure = process.env.NODE_ENV === 'production' ? '; secure' : ''
@@ -169,18 +195,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }, [sidebarOpen, getFocusable])
 
-  const brandSwitcher = (variant: 'desktop' | 'mobile') => (
+  const brandSwitcher = () => (
     <div
-      className={
-        variant === 'desktop'
-          ? 'px-4 py-3 border-t border-white/10'
-          : 'px-4 py-3 border-t border-white/10'
-      }
+      // R2-B-13: was a dead ternary on a `variant` arg — both branches
+      // returned the same `px-4 py-3 border-t border-white/10` className.
+      // The function is rendered in two places (desktop sidebar bottom +
+      // mobile drawer bottom), but the markup is identical, so the variant
+      // arg was unused. Simplified to no-arg; the parent call sites updated.
+      className="px-4 py-3 border-t border-white/10"
       role="group"
-      aria-label="Brand switcher"
+      aria-label={t('a11y.brandSwitcher')}
     >
       <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2 px-1">
-        Brand
+        {t('a11y.brandSwitcher')}
       </p>
       <div className="grid grid-cols-3 gap-1">
         {ADMIN_BRANDS.map((b) => {
@@ -216,7 +243,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 bg-stone-950 text-white shrink-0">
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-lut">{brandLabel(activeBrand)}</span>
+            {/* R3-D #7 / R2-B-6: was `text-lut` which always resolves to LUT
+                red via the --lut CSS variable — wrong when the admin switches
+                to LA_LOUNGE (magenta) or YOUR_BIRTHDAY (gold). The active
+                nav link already uses `brandColor(activeBrand)` via inline
+                style; the sidebar header label now follows the same pattern. */}
+            <span
+              className="text-lg font-bold"
+              style={{ color: brandColor(activeBrand) }}
+            >
+              {brandLabel(activeBrand)}
+            </span>
             <span className="w-1.5 h-1.5 rounded-full bg-brand" />
           </div>
           <p className="text-xs text-white/50 mt-1">{t('admin.title')}</p>
@@ -226,15 +263,22 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           {navLinks.map((link) => {
             const Icon = link.icon
             const active = isActive(link.href)
+            // R2-B-14: active nav link was hardcoded `bg-lut text-white`
+            // regardless of the active admin brand — so when admin
+            // switched to LA_LOUNGE or YOUR_BIRTHDAY the sidebar highlight
+            // stayed LUT red while the brand-switcher pill changed color.
+            // Now uses the active brand's hex via `brandColor(activeBrand)`
+            // so the highlight matches the selected tenant.
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-lut text-white'
+                    ? 'text-white'
                     : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
+                style={active ? { backgroundColor: brandColor(activeBrand) } : undefined}
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 {link.label}
@@ -243,7 +287,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {brandSwitcher('desktop')}
+        {brandSwitcher()}
 
         <div className="p-4 border-t border-white/10">
           <button
@@ -273,7 +317,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-lut">{brandLabel(activeBrand)}</span>
+                {/* R3-D #7 / R2-B-6: same brand-color fix as the desktop
+                    sidebar — was `text-lut` (always LUT red). */}
+                <span
+                  className="text-lg font-bold"
+                  style={{ color: brandColor(activeBrand) }}
+                >
+                  {brandLabel(activeBrand)}
+                </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-brand" />
               </div>
               <button
@@ -288,6 +339,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               {navLinks.map((link) => {
                 const Icon = link.icon
                 const active = isActive(link.href)
+                // R2-B-14: same active-brand-color fix as the desktop nav.
                 return (
                   <Link
                     key={link.href}
@@ -295,9 +347,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                       active
-                        ? 'bg-lut text-white'
+                        ? 'text-white'
                         : 'text-white/70 hover:bg-white/10 hover:text-white'
                     }`}
+                    style={active ? { backgroundColor: brandColor(activeBrand) } : undefined}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
                     {link.label}
@@ -312,7 +365,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 {t('admin.nav.logout')}
               </button>
             </nav>
-            {brandSwitcher('mobile')}
+            {brandSwitcher()}
           </aside>
         </div>
       )}

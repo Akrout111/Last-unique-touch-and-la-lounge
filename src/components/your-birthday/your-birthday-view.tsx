@@ -3,19 +3,15 @@
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRouter, usePathname } from '@/i18n/routing'
+import { useRouter } from '@/i18n/routing'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
   Phone,
   User,
   MapPin,
   Mail,
   CheckCircle2,
   X,
-  Languages,
   CalendarDays,
   PartyPopper,
   Loader2,
@@ -32,21 +28,18 @@ const BirthdayVisualizer = dynamic(
 )
 
 interface YourBirthdayViewProps {
-  onBack: () => void
+  // FIX-1A: `onBack` is no longer used — the shared <Navbar /> (rendered
+  // by the [locale]/layout.tsx) provides Home / Products / About / Contact
+  // links and the wordmark links home. Kept in the interface (optional) so
+  // existing callers (`page-client.tsx`) don't break — passing it is a no-op.
+  onBack?: () => void
 }
 
-export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
+export default function YourBirthdayView(_props: YourBirthdayViewProps) {
   const locale = useLocale() as 'ar' | 'en'
   const isRTL = locale === 'ar'
   const t = useTranslations('yourBirthday')
   const router = useRouter()
-  const pathname = usePathname()
-
-  const toggleLocale = () => {
-    const next = locale === 'ar' ? 'en' : 'ar'
-    router.replace(pathname, { locale: next })
-  }
-  const [scrolled, setScrolled] = useState(false)
 
   // Custom booking modal state
   const [bookingOpen, setBookingOpen] = useState(false)
@@ -73,24 +66,9 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
   // Ref to the modal container so we can focus its first element on open.
   const bookingModalRef = useRef<HTMLDivElement>(null)
 
-  // Track page scroll to apply glass effect to navbar
-  useEffect(() => {
-    // PERF (V14): throttle the scroll handler with requestAnimationFrame so
-    // we never run more than one `setScrolled` per frame. The listener is
-    // marked `{ passive: true }` so the browser doesn't block the scroll
-    // thread on the state update. (Same pattern as experience-card.tsx.)
-    let ticking = false
-    const handleScroll = () => {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        setScrolled(window.scrollY > 40)
-        ticking = false
-      })
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  // FIX-1A: removed the scroll-tracking state + effect that drove the
+  // custom <nav>'s glass effect — the shared <Navbar /> (rendered by the
+  // [locale]/layout.tsx) has its own scroll handler.
 
   // TextScramble for Title (Arabic & English)
   useEffect(() => {
@@ -121,10 +99,9 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
     }
   }, [isRTL, t])
 
-  // Smooth scroll to top
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  // FIX-1A: removed the `scrollToTop` helper — it was used by the
+  // (now-removed) custom <nav>'s brand-title click + scroll-to-top button.
+  // The shared <Navbar /> doesn't need it.
 
   // F3: Clear any pending success timer if the component unmounts mid-success.
   // Also F7: save the trigger element when the booking modal opens so focus
@@ -161,7 +138,9 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
   }, [bookingOpen])
 
 
-  const BackIcon = isRTL ? ArrowLeft : ArrowRight
+  // FIX-1A: removed `BackIcon = isRTL ? ArrowRight : ArrowLeft` and the
+  // per-brand back button that used it — the shared <Navbar /> now renders
+  // on this page and its wordmark links home.
 
   const handleBookingClick = (pkgName: string) => {
     setSelectedPkgName(pkgName)
@@ -227,7 +206,9 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
   // Pre-fetch gallery items array (raw JSON, not formatted by next-intl).
   const galleryItems = (t.raw('gallery.items') as string[]) ?? []
-  const currentYear = new Date().getFullYear()
+  // FIX-1A: `currentYear` was used by the removed custom <footer>'s
+  // copyright line; the shared <Footer /> (rendered by the layout) handles
+  // the copyright year itself.
 
   return (
     <>
@@ -240,65 +221,12 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
           direction: isRTL ? 'rtl' : 'ltr'
         }}
       >
-        {/* === NAVBAR === */}
-        <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${
-          scrolled
-            ? 'backdrop-blur-lg bg-[var(--c-birthday-bg)]/80 py-3 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)]'
-            : 'backdrop-blur-md bg-[var(--c-birthday-bg)]/40 py-5 border-white/5'
-        }`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-
-            {/* Back Button */}
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors group cursor-pointer"
-            >
-              <BackIcon className={`w-4 h-4 transform transition-transform ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
-              <span className="font-semibold">{t('nav.back')}</span>
-            </button>
-
-            {/* Brand Title */}
-            <h1
-              onClick={scrollToTop}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  scrollToTop()
-                }
-              }}
-              className="text-lg md:text-2xl font-black tracking-wider cursor-pointer"
-              style={{
-                fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
-                background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink), var(--c-birthday-cyan))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              {t('nav.brand')}
-            </h1>
-
-            {/* Language Toggle & Up Arrow */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleLocale}
-                className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs font-semibold tracking-wider transition-all cursor-pointer"
-              >
-                <Languages className="w-3.5 h-3.5 text-[var(--c-birthday-cyan)]" />
-                <span>{t('nav.langToggle')}</span>
-              </button>
-
-              <button
-                onClick={scrollToTop}
-                className="size-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:text-[var(--c-birthday-pink)] transition-colors cursor-pointer"
-                aria-label={t('nav.top')}
-              >
-                <ArrowUp className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </nav>
+        {/* FIX-1A / C2: the per-brand custom <nav> was removed because the
+            shared <Navbar /> rendered by the [locale]/layout.tsx now appears
+            on this page too — its wordmark links home, its nav row exposes
+            Home / Products / About / Contact, and it has its own language
+            switcher + theme toggle. The custom back button, language toggle,
+            and scroll-to-top button are no longer needed. */}
 
         {/* === HERO SECTION === */}
         <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
@@ -337,7 +265,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                       : 'var(--font-birthday-headline), Orbitron, sans-serif'
                   }}
                 >
-                  <span ref={titleRef} className="bg-gradient-to-r from-white via-purple-200 to-pink-300 bg-clip-text text-transparent">
+                  <span ref={titleRef} className="bg-gradient-to-r from-white via-[var(--c-birthday-pink)]/40 to-[var(--c-birthday-purple)]/40 bg-clip-text text-transparent">
                     {t('hero.title1')}
                   </span>
                 </h1>
@@ -579,24 +507,12 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
         </section>
 
         {/* === FOOTER === */}
-        <footer className="relative z-10 py-16 px-4 border-t border-white/5 bg-[var(--c-birthday-bg)]">
-          <div className="max-w-6xl mx-auto text-center space-y-6">
-            <h3
-              className="text-2xl md:text-3xl font-black tracking-widest uppercase"
-              style={{
-                fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
-                background: 'linear-gradient(135deg, var(--c-birthday-purple), var(--c-birthday-pink))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              {t('footer.brand')}
-            </h3>
-            <p className="text-white/50 text-sm max-w-md mx-auto">{t('footer.tagline')}</p>
-            <div className="w-16 h-[1px] bg-white/10 mx-auto" />
-            <p className="text-white/30 text-xs tracking-wider uppercase font-mono">{t('footer.rights', { year: currentYear })}</p>
-          </div>
-        </footer>
+        {/* FIX-1A / C2: the per-brand custom <footer> was removed because
+            the shared <Footer /> rendered by the [locale]/layout.tsx now
+            appears on this page too — it provides quick links, legal links,
+            contact info, and the brand wordmark. The custom footer's
+            "Crafted in Kuwait" + copyright line is duplicated by the shared
+            footer's bottom bar. */}
       </div>
 
       {/* === BOOKING DIALOG === */}
@@ -644,7 +560,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
 
               {formSuccess ? (
                 <div className="text-center py-10 space-y-4">
-                  <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto text-green-400">
+                  <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400">
                     <CheckCircle2 className="w-10 h-10 animate-pulse" />
                   </div>
                   <h3 id="booking-modal-title" className="text-2xl font-bold tracking-wide">
@@ -675,7 +591,7 @@ export default function YourBirthdayView({ onBack }: YourBirthdayViewProps) {
                   {formError && (
                     <div
                       role="alert"
-                      className="flex items-start gap-2 p-3 rounded-md bg-red-500/10 border border-red-500/30 text-red-300 text-sm"
+                      className="flex items-start gap-2 p-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm"
                     >
                       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                       <span>{formError}</span>

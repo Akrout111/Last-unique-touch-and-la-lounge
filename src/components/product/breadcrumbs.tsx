@@ -32,7 +32,7 @@ export function Breadcrumbs({
   return (
     <nav
       className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6 flex-wrap"
-      aria-label="Breadcrumb"
+      aria-label={t('a11y.breadcrumb')}
     >
       {items.map((item, idx) => (
         <span key={idx} className="flex items-center gap-1.5">
@@ -45,7 +45,10 @@ export function Breadcrumbs({
           <Separator className="w-3 h-3 text-muted-foreground/60" />
         </span>
       ))}
-      <span className="text-foreground font-medium truncate max-w-[200px]">
+      <span
+        className="text-foreground font-medium truncate max-w-[200px]"
+        aria-current="page"
+      >
         {productName}
       </span>
     </nav>

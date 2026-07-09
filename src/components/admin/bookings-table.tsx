@@ -26,12 +26,16 @@ interface BookingsTableProps {
   locale: string
 }
 
+// Semantic status colors — no indigo/blue (per project policy).
+// Emerald = success/info (confirmed, completed), amber = pending,
+// rose = cancelled/failed. Matches the dashboard badges and the
+// R1-D C5 fix recommendation.
 const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-700',
-  CONFIRMED: 'bg-green-100 text-green-700',
-  PAYMENT_FAILED: 'bg-red-100 text-red-700',
-  CANCELLED: 'bg-gray-100 text-gray-700',
-  COMPLETED: 'bg-blue-100 text-blue-700',
+  PENDING: 'bg-amber-100 text-amber-700',
+  CONFIRMED: 'bg-emerald-100 text-emerald-700',
+  PAYMENT_FAILED: 'bg-rose-100 text-rose-700',
+  CANCELLED: 'bg-rose-100 text-rose-700',
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
 }
 
 export function BookingsTable({ bookings, currentStatus, currentSearch: _currentSearch, locale: _locale }: BookingsTableProps) {
@@ -137,12 +141,12 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
                     <td className="py-3 px-4 font-medium text-foreground">{booking.customerName}</td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{booking.productName}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[booking.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[booking.status] ?? 'bg-muted text-muted-foreground'}`}>
                         {t(`admin.bookings.filterStatus.${booking.status}` as const)}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-foreground font-medium hidden sm:table-cell">
-                      {booking.totalAmount.toFixed(3)} KWD
+                      {booking.totalAmount.toFixed(3)} {t('common.currency')}
                     </td>
                     <td className="py-3 px-4">
                       <Link

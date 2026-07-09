@@ -17,7 +17,14 @@ const intlMiddleware = createMiddleware(routing)
 // is `timestamp.signature` where signature = HMAC-SHA256(SESSION_SECRET,
 // timestamp).
 
-const SESSION_COOKIE = 'lut_admin_session'
+// R1-A M1: use the `__Host-` cookie prefix in production. Must match
+// `SESSION_COOKIE` in src/lib/auth.ts exactly. In dev we use the plain
+// name because `__Host-` cookies require Secure, which requires HTTPS
+// (browsers will not set them on http://localhost).
+const SESSION_COOKIE =
+  process.env.NODE_ENV === 'production'
+    ? '__Host-lut_admin_session'
+    : 'lut_admin_session'
 const SESSION_MAX_AGE_MS = 60 * 60 * 24 * 7 * 1000 // 7 days (matches auth.ts)
 const DEV_ONLY_SESSION_SECRET = 'dev-insecure-session-secret-do-not-use-in-prod'
 
@@ -133,106 +140,19 @@ async function verifySessionCookie(cookieValue: string | undefined): Promise<boo
   return true
 }
 
-// V13 Group C8: In-memory cache for product slug existence checks.
-// Reduces per-request DB roundtrip to one query per 60s per slug.
-const slugCache = new Map<string, { exists: boolean; expires: number }>()
-const SLUG_CACHE_TTL = 60_000 // 60 seconds
-
 /**
- * Build a branded 404 HTML response for a non-existent product slug.
- */
-function buildNotFoundResponse(locale: string): NextResponse {
-  const html = `<!DOCTYPE html><html lang="${locale}" dir="${locale === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>404 — ${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#FAF6EF;color:#0A0A0A"><div style="text-align:center"><h1 style="font-size:3rem;margin:0;color:#E3222B">404</h1><p style="margin:0.5rem 0 1rem;color:#666">${locale === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}</p><a href="/${locale}/products" style="display:inline-block;padding:0.5rem 1rem;background:#E3222B;color:#fff;text-decoration:none;border-radius:0.375rem">${locale === 'ar' ? 'العودة للمنتجات' : 'Back to Products'}</a></div></body></html>`
-  return new NextResponse(html, {
-    status: 404,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  })
-}
-
-/**
- * V10 Fix #1: Product slug existence check.
+ * Wraps next-intl's middleware so we can additionally enforce admin auth
+ * (V9 Fix #1) — redirect unauthenticated /admin/* requests to /admin/login
+ * BEFORE any SSR rendering.
  *
- * The standalone production build has a quirk where `notFound()` inside the
- * product page renders the 404 body but the HTTP status remains 200 (a
- * soft-404). This function calls a lightweight internal API endpoint
- * (`/api/products/check-slug`) to check if the product exists BEFORE the
- * request reaches the page component. If the product doesn't exist, the
- * middleware returns a 404 response directly — which reliably sets the
- * HTTP 404 status code.
- *
- * V13 Group C8: Results are cached for 60 seconds per slug to avoid a
- * DB roundtrip on every product page request.
- *
- * Returns:
- *   - `null` if the product exists (or the check fails — fail open)
- *   - `NextResponse` with 404 if the product doesn't exist
- */
-async function checkProductExists(
-  request: NextRequest,
-  locale: string,
-  slug: string
-): Promise<NextResponse | null> {
-  // Check cache first
-  const cached = slugCache.get(slug)
-  if (cached && cached.expires > Date.now()) {
-    if (!cached.exists) {
-      return buildNotFoundResponse(locale)
-    }
-    return null
-  }
-
-  try {
-    const checkUrl = new URL('/api/products/check-slug', request.nextUrl.origin)
-    checkUrl.searchParams.set('slug', slug)
-    checkUrl.searchParams.set('brand', 'LUT')
-
-    const res = await fetch(checkUrl, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(3_000),
-    })
-
-    if (!res.ok) {
-      return null
-    }
-
-    const data = (await res.json()) as { exists?: boolean }
-    const exists = data.exists !== false
-
-    // Cache the result
-    // Sweep expired entries when cache gets large
-  if (slugCache.size > 500) {
-    const now = Date.now()
-    for (const [k, v] of slugCache) {
-      if (v.expires < now) slugCache.delete(k)
-    }
-  }
-  slugCache.set(slug, { exists, expires: Date.now() + SLUG_CACHE_TTL })
-
-    if (!exists) {
-      return buildNotFoundResponse(locale)
-    }
-  } catch {
-    // Network error, timeout, or JSON parse error — fail open.
-    // The page's own `getProductBySlug` + `notFound()` will handle it
-    // (with the 200 status, but at least the 404 body renders).
-  }
-  return null
-}
-
-/**
- * Wraps next-intl's middleware so we can additionally:
- * 1. Enforce admin auth (V9 Fix #1) — redirect unauthenticated /admin/*
- *    requests to /admin/login BEFORE any SSR rendering.
- * 2. Expose the matched pathname to the server layer via the `x-pathname`
- *    response header (used by the root layout to set `data-brand` on <html>
- *    for correct first-paint brand theming).
- * 3. V10 Fix #1: Check product slug existence for storefront product pages
- *    and return a real HTTP 404 if the product doesn't exist (closes the
- *    soft-404 gap in the standalone build).
- *
- * The client-side `BrandThemeSetter` still runs and keeps the attribute in
- * sync during SPA navigations (where the layout server component is not
- * re-rendered but the route changes).
+ * FIX-4B / R3-B-2 / R3-B-3: Removed `checkProductExists()` self-fetch (50-200ms
+ * TTFB per product page), `slugCache` Map, `buildNotFoundResponse()`, and the
+ * `x-pathname` response header (dead code — no component reads it). The
+ * product page's `dynamicParams = false` (products/[slug]/page.tsx:33) already
+ * returns a real HTTP 404 at the routing level for unknown slugs, making the
+ * middleware check redundant. The client-side `BrandThemeSetter` sets
+ * `data-brand` on <html> on hydration and every navigation — no SSR header
+ * needed.
  */
 export default async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
@@ -259,24 +179,7 @@ export default async function proxy(request: NextRequest): Promise<NextResponse>
     }
   }
 
-  // --- Product slug existence check (V10 Fix #1) ---
-  // Match /ar/products/<slug> or /en/products/<slug> (but NOT /products
-  // itself, which is the product listing page).
-  const productMatch = pathname.match(/^\/(ar|en)\/products\/([^/]+)$/)
-  if (productMatch) {
-    const [, locale, slug] = productMatch
-    // Skip special non-product slugs (shouldn't match, but defense-in-depth).
-    if (slug !== 'categories' && slug !== 'search' && !slug.startsWith('_')) {
-      const notFoundResponse = await checkProductExists(request, locale, slug)
-      if (notFoundResponse) {
-        return notFoundResponse
-      }
-    }
-  }
-
-  const response = intlMiddleware(request)
-  response.headers.set('x-pathname', pathname)
-  return response
+  return intlMiddleware(request)
 }
 
 export const config = {

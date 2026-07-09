@@ -25,19 +25,19 @@ export default async function AdminDashboardPage() {
       label: t('admin.dashboard.stats.pendingBookings'),
       value: stats.pendingBookings,
       icon: Clock,
-      color: 'text-yellow-600',
-      bg: 'bg-yellow-100',
+      color: 'text-amber-600',
+      bg: 'bg-amber-100',
     },
     {
       label: t('admin.dashboard.stats.confirmedBookings'),
       value: stats.confirmedBookings,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bg: 'bg-green-100',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-100',
     },
     {
       label: t('admin.dashboard.stats.monthlyRevenue'),
-      value: `${stats.monthlyRevenue.toFixed(3)} KWD`,
+      value: `${stats.monthlyRevenue.toFixed(3)} ${t('common.currency')}`,
       icon: DollarSign,
       color: 'text-lut',
       bg: 'bg-lut/10',
@@ -102,16 +102,18 @@ export default async function AdminDashboardPage() {
                     </td>
                     <td className="py-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                        booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                        booking.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-                        'bg-blue-100 text-blue-700'
+                        booking.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
+                        booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                        booking.status === 'CANCELLED' ? 'bg-rose-100 text-rose-700' :
+                        booking.status === 'PAYMENT_FAILED' ? 'bg-rose-100 text-rose-700' :
+                        booking.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {t(`admin.bookings.filterStatus.${booking.status}` as const)}
                       </span>
                     </td>
                     <td className="py-3 text-foreground font-medium">
-                      {booking.totalAmount.toFixed(3)} KWD
+                      {booking.totalAmount.toFixed(3)} {t('common.currency')}
                     </td>
                   </tr>
                 ))}
@@ -123,9 +125,9 @@ export default async function AdminDashboardPage() {
 
       {/* Low stock products */}
       {stats.lowStockProducts.length > 0 && (
-        <div className="p-6 rounded-md bg-yellow-50 border border-yellow-200">
+        <div className="p-6 rounded-md bg-amber-50 border border-amber-200">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-5 h-5 text-yellow-600" />
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
             <h2 className="text-lg font-bold text-foreground">
               {t('admin.dashboard.lowStock')}
             </h2>
@@ -136,7 +138,7 @@ export default async function AdminDashboardPage() {
                 <span className="text-sm text-foreground">
                   {localizedName(product.nameAr, product.nameEn, locale)}
                 </span>
-                <span className="text-sm font-bold text-yellow-700">
+                <span className="text-sm font-bold text-amber-700">
                   {product.stock} {t('admin.products.stock')}
                 </span>
               </div>

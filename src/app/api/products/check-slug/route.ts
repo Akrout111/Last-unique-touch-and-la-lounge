@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { rateLimit } from '@/lib/rate-limiter'
+import { getClientIp } from '@/lib/get-client-ip'
 
 const schema = z.object({
   slug: z.string().min(1).max(200),
@@ -17,12 +19,29 @@ const schema = z.object({
  * closes the soft-404 gap where `notFound()` inside the page rendered
  * the 404 body but the standalone server sent a 200 status.
  *
+ * Rate limited to 30 requests per minute per IP (R1-A M4) — without a
+ * limit this endpoint is an enumeration oracle (attackers can brute-
+ * force slugs to map the catalogue). 30/min is generous enough for the
+ * middleware's own usage (one call per PDP navigation) while blocking
+ * scripted enumeration.
+ *
  * Returns:
  *   200 { exists: true }  — product exists and is active
  *   200 { exists: false } — product does not exist (or is inactive)
- *   400 { error: 'invalid_input' }
+ *   400 { error: 'invalid_input' }  (Zod issues logged server-side, NOT disclosed)
+ *   429 { error: 'rate_limited' }
  */
 export async function GET(req: NextRequest) {
+  // --- Rate limit (30/min/IP) — R1-A M4 ---
+  const ip = getClientIp(req)
+  const rl = rateLimit(`check-slug:${ip}`, 30, 60_000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: 60 },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   const url = new URL(req.url)
   const parsed = schema.safeParse({
     slug: url.searchParams.get('slug'),
@@ -30,8 +49,11 @@ export async function GET(req: NextRequest) {
   })
 
   if (!parsed.success) {
+    // R1-A M9: do NOT disclose Zod issue details to the client (schema
+    // disclosure). Log them server-side for debugging instead.
+    console.warn('[api/check-slug] Validation failed:', parsed.error.issues)
     return NextResponse.json(
-      { error: 'invalid_input', details: parsed.error.issues },
+      { error: 'invalid_input' },
       { status: 400 }
     )
   }

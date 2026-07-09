@@ -40,6 +40,30 @@ const nextConfig: NextConfig = {
     // JSX on the fly. Without it, hydration silently fails and the page
     // is server-rendered-only (no interactivity, no useState updates).
     // We add `'unsafe-eval'` to script-src only when NODE_ENV !== 'production'.
+    //
+    // R1-A M2 / FIX-1D TODO: switch to nonce-based CSP in production so
+    // `'unsafe-inline'` can be removed from script-src. Next.js 16
+    // supports this via the `x-nonce` request header (set in
+    // `src/proxy.ts` middleware) — Next.js auto-applies the nonce to
+    // all inline scripts it generates (hydration data, etc.). The
+    // remaining work to enable this is:
+    //   (1) Generate `const nonce = crypto.randomUUID()` per request in
+    //       `src/proxy.ts`.
+    //   (2) Forward it via `x-nonce` request header so Next.js picks
+    //       it up. This requires wrapping `intlMiddleware(request)`
+    //       with a modified-request `NextResponse.next({ request: {
+    //       headers } })` — non-trivial because next-intl's middleware
+    //       returns its own NextResponse.
+    //   (3) Build the CSP dynamically in `src/proxy.ts` with
+    //       `script-src 'self' 'nonce-${nonce}'` and set it on the
+    //       response, replacing this static CSP.
+    //   (4) Remove the static CSP from this file (production only) so
+    //       the proxy-set CSP isn't merged/duplicated.
+    // Until that work lands, `'unsafe-inline'` is retained for
+    // script-src in production — removing it WITHOUT the nonce setup
+    // breaks Next.js hydration (inline scripts blocked → no state,
+    // no event handlers). The current state is documented as a known
+    // CSP weakness; the audit (R1-A M2) flagged it as MEDIUM.
     const isDev = process.env.NODE_ENV !== 'production'
     const scriptSrc = isDev
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"

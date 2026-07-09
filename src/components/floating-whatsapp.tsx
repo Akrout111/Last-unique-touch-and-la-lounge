@@ -1,6 +1,6 @@
 'use client'
 
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { buildWhatsappUrl } from '@/lib/contact-info'
 
 // V10 Fix #4: locale-aware default messages. Previously the Arabic message
@@ -11,6 +11,7 @@ const MESSAGES = {
 } as const
 
 export function FloatingWhatsApp() {
+  const t = useTranslations()
   const locale = useLocale()
   const message = MESSAGES[locale as 'ar' | 'en'] ?? MESSAGES.ar
   const url = buildWhatsappUrl(message)
@@ -22,7 +23,7 @@ export function FloatingWhatsApp() {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="WhatsApp"
+      aria-label={t('a11y.whatsapp')}
       className="fixed bottom-6 end-6 z-50 size-14 rounded-full bg-[#25D366] shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
     >
       <svg viewBox="0 0 24 24" className="size-7 fill-white" aria-hidden="true">

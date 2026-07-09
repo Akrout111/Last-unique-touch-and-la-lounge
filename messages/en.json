@@ -121,7 +121,11 @@
     "currency": "KWD"
   },
   "a11y": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "whatsapp": "Contact us on WhatsApp",
+    "notifications": "Notifications",
+    "breadcrumb": "Breadcrumb",
+    "brandSwitcher": "Switch brand"
   },
   "error": {
     "title": "Something went wrong",

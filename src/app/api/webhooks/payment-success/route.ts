@@ -73,6 +73,9 @@ export async function POST(req: NextRequest) {
     const parsed = schema.safeParse(body)
 
     if (!parsed.success) {
+      // R1-A M9: do NOT disclose Zod issue details to the client (schema
+      // disclosure). Log them server-side for debugging instead.
+      console.warn('[api/payment-success] Validation failed:', parsed.error.issues)
       return NextResponse.json(
         { error: 'invalid_input' },
         { status: 400 }
@@ -80,6 +83,16 @@ export async function POST(req: NextRequest) {
     }
 
     const { orderId } = parsed.data
+
+    // R2-A-4: namespace the idempotency key with a route prefix so a
+    // payment-success key (raw orderId) can never collide with keys from
+    // /api/orders or /api/bookings/birthday (which share the same UNIQUE
+    // IdempotencyKey.key column). Without this prefix, an attacker who
+    // submits /api/orders with `idempotencyKey = <booking cuid>` would
+    // pre-seed the key — when payment-success later tries to create
+    // `key: orderId` for that same booking, the create throws P2002 and
+    // we silently swallow the legitimate payment confirmation.
+    const namespacedKey = `payment-success:${orderId}`
 
     // Fix #2: race-condition hardening. Previously the flow was
     //   findUnique → status check → update → triggerOrderConfirmedWebhook
@@ -120,7 +133,7 @@ export async function POST(req: NextRequest) {
           //    P2002 — caught below — which we map to `already_confirmed`.
           const idempotencyRecord = await tx.idempotencyKey.create({
             data: {
-              key: orderId,
+              key: namespacedKey,
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
             },
           })

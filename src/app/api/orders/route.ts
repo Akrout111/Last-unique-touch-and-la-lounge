@@ -14,18 +14,34 @@ import { getClientIp } from '@/lib/get-client-ip'
 const KWD_TOLERANCE = 0.001 // 1 fil precision for KWD (3 decimal places)
 
 const itemSchema = z.object({
-  productId: z.string().min(1),
-  slug: z.string().min(1),
-  nameAr: z.string(),
-  nameEn: z.string(),
-  image: z.string(),
-  rentalPricePerDay: z.number().positive(),
-  securityDeposit: z.number().nonnegative(),
+  // R3-C-2: defense-in-depth upper bounds on every string/number field.
+  // The server re-validates prices/days/total inside the Serializable tx
+  // (KWD_TOLERANCE check below), but bounding the schema rejects absurd
+  // payloads early and prevents DoS amplification from megabyte-long
+  // strings (admin schemas cap the same fields at the same values).
+  productId: z.string().min(1).max(100),
+  slug: z.string().min(1).max(200),
+  nameAr: z.string().max(200),
+  nameEn: z.string().max(200),
+  image: z.string().max(500),
+  rentalPricePerDay: z.number().positive().max(100000),
+  securityDeposit: z.number().nonnegative().max(100000),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
-  quantity: z.number().int().positive().max(10000),
-  days: z.number().int().positive(),
-  total: z.number().positive(),
+  // R2-A-14: cap quantity at 100 (was 10000 — absurdly permissive). A
+  // single rental order with >100 units of one product is unreasonable,
+  // and the higher the cap, the larger the DoS amplifier: each request
+  // loops through stock checks inside a Serializable transaction, and
+  // 10000-item requests would sum every overlapping booking 10000 times.
+  quantity: z.number().int().positive().max(100),
+  // R3-C-2: max 1-year rental (365 days) — defense-in-depth; the server
+  // recomputes `days` from startDate/endDate and rejects mismatches, but
+  // bounding the client-supplied value rejects absurd payloads early.
+  days: z.number().int().positive().max(365),
+  // R3-C-2: max 10M KWD total — well above any realistic rental order
+  // (50 items × 100 qty × 100000/day × 365 days ≈ 183M, but the server
+  // recompute enforces the real ceiling). Bounds the client payload only.
+  total: z.number().positive().max(10000000),
 })
 
 const customerSchema = z.object({
@@ -38,7 +54,14 @@ const customerSchema = z.object({
 })
 
 const orderSchema = z.object({
-  items: z.array(itemSchema).min(1),
+  // FIX-1C Fix 6: cap the items array at 50 to prevent DoS via huge
+  // payloads (R1-A M3). Inside the Serializable transaction the route
+  // issues ~4 queries per item (findMany + findFirst + stock check +
+  // booking.create), so 10k items = ~40k queries inside one tx,
+  // blocking SQLite writes globally. 50 is well above any realistic
+  // rental cart (cart UI shows a single checkout with maybe 5-10
+  // distinct products) while keeping a sane upper bound.
+  items: z.array(itemSchema).min(1).max(50),
   customer: customerSchema,
   idempotencyKey: z.string().min(10).max(255),
 })
@@ -128,13 +151,24 @@ export async function POST(req: NextRequest) {
     const parsed = orderSchema.safeParse(body)
 
     if (!parsed.success) {
+      // R1-A M9: do NOT disclose Zod issue details to the client (schema
+      // disclosure). Log them server-side for debugging instead.
+      console.warn('[api/orders] Validation failed:', parsed.error.issues)
       return NextResponse.json(
-        { error: 'invalid_input', details: parsed.error.issues },
+        { error: 'invalid_input' },
         { status: 400 }
       )
     }
 
     const { items, customer, idempotencyKey } = parsed.data
+
+    // R2-A-4: namespace the idempotency key with a route prefix so an
+    // /api/orders key can never collide with keys from /api/bookings/birthday
+    // or the payment webhooks (which share the same UNIQUE IdempotencyKey.key
+    // column). Without this prefix, an attacker could submit /api/orders
+    // with a chosen idempotencyKey that later collides with a booking cuid
+    // used by payment-success, silently suppressing the payment confirmation.
+    const namespacedKey = `orders:${idempotencyKey}`
 
     // 1. Cheap pre-check: do all products exist + belong to LUT?
     //    (V9 Fix #2: brand='LUT' filter). The authoritative idempotency +
@@ -174,7 +208,7 @@ export async function POST(req: NextRequest) {
           // duplicate request won the race. We catch that outside the tx.
           const idempotencyRecord = await tx.idempotencyKey.create({
             data: {
-              key: idempotencyKey,
+              key: namespacedKey,
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
             },
           })
@@ -330,7 +364,7 @@ export async function POST(req: NextRequest) {
           // V10 Fix #11: enforce expiresAt — if the key has expired, allow
           // re-use by deleting the old key and retrying the transaction.
           const existing = await db.idempotencyKey.findUnique({
-            where: { key: idempotencyKey },
+            where: { key: namespacedKey },
             select: { orderId: true, expiresAt: true },
           })
           if (existing) {
@@ -339,7 +373,13 @@ export async function POST(req: NextRequest) {
               // Key expired — delete it so the client can retry with the
               // same key. This is an unusual path (24h retention) but we
               // handle it correctly rather than returning a stale 409.
-              await db.idempotencyKey.delete({ where: { key: idempotencyKey } })
+              //
+              // R2-B-3: use `deleteMany` (not `delete`) so a concurrent
+              // request that already deleted the key between our
+              // `findUnique` above and this call does NOT throw P2025
+              // (record not found). `deleteMany` is idempotent — it
+              // returns { count: 0|1 } instead of throwing on miss.
+              await db.idempotencyKey.deleteMany({ where: { key: namespacedKey } })
               // Fall through to the generic P2002 handler — the client
               // should retry the request.
             } else if (existing.orderId) {

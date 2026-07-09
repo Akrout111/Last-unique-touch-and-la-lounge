@@ -18,14 +18,20 @@ const BirthdayVisualizer = dynamic(
  * The strings themselves (title + desc) live in
  * messages/{ar,en}.json under `yourBirthday.features.services.*` —
  * icons and colors are decorative, not translated, so they stay here.
+ *
+ * FIX-1B / R1-D M6: previously slots 5 & 6 used hardcoded `#10B981`
+ * (emerald) and `#EF4444` (red) — not birthday brand colors. Replaced
+ * with the gold brand token (`--c-birthday`, #F5B914) and its lighter
+ * variant `#FFD147` (matches BRAND_COLORS.YOUR_BIRTHDAY_LIGHT) so the
+ * whole tile palette stays on-brand.
  */
 const SERVICE_DECOR: Array<{ icon: string; color: string }> = [
   { icon: '🎂', color: 'var(--c-birthday-purple)' },
   { icon: '🎭', color: 'var(--c-birthday-pink)' },
   { icon: '🎈', color: 'var(--c-birthday-cyan)' },
   { icon: '🎵', color: 'var(--c-birthday-orange)' },
-  { icon: '💡', color: '#10B981' },
-  { icon: '📸', color: '#EF4444' },
+  { icon: '💡', color: 'var(--c-birthday)' },
+  { icon: '📸', color: '#FFD147' },
 ]
 
 export default function BirthdayFeaturesView() {

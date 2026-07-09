@@ -177,10 +177,10 @@ export function ProductInfo({ product }: ProductInfoProps) {
       {/* Price */}
       <div className="space-y-1">
         <p className="font-display text-3xl font-bold text-primary">
-          {product.rentalPricePerDay} {t('product.perDay')}
+          {product.rentalPricePerDay.toFixed(3)} {t('product.perDay')}
         </p>
         <p className="text-sm text-muted-foreground">
-          {t('product.securityDeposit', { amount: product.securityDeposit })}
+          {t('product.securityDeposit', { amount: product.securityDeposit.toFixed(3) })}
         </p>
       </div>
 
@@ -231,41 +231,51 @@ export function ProductInfo({ product }: ProductInfoProps) {
               }}
             />
 
-            {/* Availability status */}
-            {availability === 'checking' && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {t('product.rental.checking')}
-              </div>
-            )}
-            {availability === 'available' && (
-              <div className="flex items-center gap-2 text-sm text-green-600 mt-3">
-                <CheckCircle2 className="w-4 h-4" />
-                {t('product.rental.available')}
-              </div>
-            )}
-            {availability === 'unavailable' && (
-              <div className="flex items-center gap-2 text-sm text-primary mt-3">
-                <AlertCircle className="w-4 h-4" />
-                {t('product.rental.unavailable')}
-              </div>
-            )}
-            {availability === 'error' && (
-              <p className="flex items-center gap-2 text-sm text-primary mt-3" role="alert">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{t('product.rental.checkError')}</span>
-              </p>
-            )}
-            {availability === 'idle' && startDate && endDate && (
-              <p className="text-sm text-muted-foreground mt-3">
-                {t('product.rental.checking')}
-              </p>
-            )}
-            {availability === 'idle' && (!startDate || !endDate) && (
-              <p className="text-sm text-muted-foreground mt-3">
-                {t('product.rental.selectDates')}
-              </p>
-            )}
+            {/* Availability status — wrapped in an aria-live region so
+                screen readers announce state changes (idle → checking →
+                available / unavailable / error) without moving focus.
+                R1-D H2 / FIX-1B Fix 5. `aria-busy` flips on while the
+                fetch is in-flight so AT can surface the loading state. */}
+            <div
+              aria-live="polite"
+              role="status"
+              aria-busy={availability === 'checking'}
+            >
+              {availability === 'checking' && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-3">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('product.rental.checking')}
+                </div>
+              )}
+              {availability === 'available' && (
+                <div className="flex items-center gap-2 text-sm text-emerald-600 mt-3">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {t('product.rental.available')}
+                </div>
+              )}
+              {availability === 'unavailable' && (
+                <div className="flex items-center gap-2 text-sm text-primary mt-3">
+                  <AlertCircle className="w-4 h-4" />
+                  {t('product.rental.unavailable')}
+                </div>
+              )}
+              {availability === 'error' && (
+                <p className="flex items-center gap-2 text-sm text-primary mt-3" role="alert">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{t('product.rental.checkError')}</span>
+                </p>
+              )}
+              {availability === 'idle' && startDate && endDate && (
+                <p className="text-sm text-muted-foreground mt-3">
+                  {t('product.rental.checking')}
+                </p>
+              )}
+              {availability === 'idle' && (!startDate || !endDate) && (
+                <p className="text-sm text-muted-foreground mt-3">
+                  {t('product.rental.selectDates')}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Sticky Price Summary card (desktop) */}

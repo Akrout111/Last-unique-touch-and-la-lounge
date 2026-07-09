@@ -20,6 +20,15 @@ interface BookingDetailData {
   customerName: string
   customerPhone: string
   customerEmail: string
+  // FIX-1C Fix 2: quantity is the number of units booked for this product
+  // in this date range (V9 Fix #4). The page query in
+  // src/app/[locale]/admin/(dashboard)/bookings/[id]/page.tsx should pass
+  // this through from `booking.quantity`. It's optional here so the
+  // component degrades gracefully if a caller forgets to forward it
+  // (defaults to 1). The financial breakdown below multiplies rental &
+  // deposit by quantity — without this the displayed breakdown is wrong
+  // for any multi-unit booking (e.g. 5 chairs × 3 days).
+  quantity?: number
   product: {
     nameAr: string
     nameEn: string
@@ -36,15 +45,18 @@ interface BookingDetailProps {
   locale: string
 }
 
-// V9 Fix #6: status → badge color map. Includes PAYMENT_FAILED so the
-// detail page renders a distinct red badge instead of falling through to
-// the default blue.
+// V9 Fix #6 / FIX-2B: status → badge color map using the project's
+// semantic palette (amber=pending, emerald=confirmed/completed,
+// rose=failed, muted=cancelled). Includes PAYMENT_FAILED so the detail
+// page renders a distinct rose badge instead of falling through to the
+// default. Previously COMPLETED used forbidden `bg-blue-100 text-blue-700`
+// (R2-D S-C5) — switched to emerald to match the rest of the palette.
 const statusBadgeColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-700',
-  CONFIRMED: 'bg-green-100 text-green-700',
-  PAYMENT_FAILED: 'bg-red-100 text-red-700',
-  CANCELLED: 'bg-gray-100 text-gray-700',
-  COMPLETED: 'bg-blue-100 text-blue-700',
+  PENDING: 'bg-amber-100 text-amber-700',
+  CONFIRMED: 'bg-emerald-100 text-emerald-700',
+  PAYMENT_FAILED: 'bg-rose-100 text-rose-700',
+  CANCELLED: 'bg-muted text-muted-foreground',
+  COMPLETED: 'bg-emerald-100 text-emerald-700',
 }
 
 export function BookingDetail({ booking, locale }: BookingDetailProps) {
@@ -61,8 +73,17 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
     )
   )
 
-  const rentalAmount = booking.product ? booking.product.rentalPricePerDay * days : booking.totalAmount
-  const depositAmount = booking.product ? booking.product.securityDeposit : 0
+  // FIX-1C Fix 2: multiply by quantity so multi-unit bookings (e.g. 5
+  // chairs × 3 days) show the correct breakdown. Defaults to 1 for
+  // backward compatibility with callers that don't forward `quantity`.
+  const quantity = booking.quantity && booking.quantity > 0 ? booking.quantity : 1
+
+  const rentalAmount = booking.product
+    ? booking.product.rentalPricePerDay * days * quantity
+    : booking.totalAmount
+  const depositAmount = booking.product
+    ? booking.product.securityDeposit * quantity
+    : 0
 
   const handleStatusChange = async (
     newStatus: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
@@ -100,7 +121,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
           <p className="text-sm text-muted-foreground mt-1 font-mono" dir="ltr">#{booking.id}</p>
         </div>
         <span className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-          statusBadgeColors[booking.status] ?? 'bg-gray-100 text-gray-700'
+          statusBadgeColors[booking.status] ?? 'bg-muted text-muted-foreground'
         }`}>
           {t(`admin.bookings.filterStatus.${booking.status}` as const)}
         </span>
@@ -150,6 +171,14 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.days')}</dt>
               <dd className="text-sm font-medium text-foreground">{days}</dd>
             </div>
+            {/* FIX-1C Fix 2: show the booked quantity so multi-unit bookings
+                (e.g. 5 chairs) are visually distinct from single-unit ones.
+                Reuses the existing cart.item.quantity label so no new i18n
+                key is needed. */}
+            <div>
+              <dt className="text-xs text-muted-foreground">{t('cart.item.quantity')}</dt>
+              <dd className="text-sm font-medium text-foreground">{quantity}</dd>
+            </div>
           </dl>
         </div>
       </div>
@@ -160,15 +189,19 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
         <div className="space-y-2 max-w-md">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t('admin.bookings.detail.rental')}</span>
-            <span className="font-medium text-foreground">{rentalAmount.toFixed(3)} {booking.currency}</span>
+            {/* FIX-4A (R3-C-1): use the locale-aware currency label
+                (t('common.currency') → "KWD" / "د.ك") instead of the raw
+                DB string `booking.currency` which always prints "KWD", even
+                in Arabic admin. */}
+            <span className="font-medium text-foreground">{rentalAmount.toFixed(3)} {t('common.currency')}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t('admin.bookings.detail.deposit')}</span>
-            <span className="font-medium text-foreground">{depositAmount.toFixed(3)} {booking.currency}</span>
+            <span className="font-medium text-foreground">{depositAmount.toFixed(3)} {t('common.currency')}</span>
           </div>
           <div className="flex justify-between pt-2 border-t border-border">
             <span className="font-bold text-foreground">{t('admin.bookings.detail.total')}</span>
-            <span className="text-lg font-bold text-lut">{booking.totalAmount.toFixed(3)} {booking.currency}</span>
+            <span className="text-lg font-bold text-lut">{booking.totalAmount.toFixed(3)} {t('common.currency')}</span>
           </div>
         </div>
       </div>
@@ -182,7 +215,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
               <Button
                 onClick={() => handleStatusChange('CONFIRMED')}
                 disabled={updating}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 me-2" />}
                 {t('admin.bookings.detail.confirm')}
@@ -191,7 +224,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
                 onClick={() => handleStatusChange('CANCELLED')}
                 disabled={updating}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
+                className="border-rose-300 text-rose-600 hover:bg-rose-50"
               >
                 <X className="w-4 h-4 me-2" />
                 {t('admin.bookings.detail.cancel')}
@@ -203,7 +236,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
               <Button
                 onClick={() => handleStatusChange('COMPLETED')}
                 disabled={updating}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4 me-2" />}
                 {t('admin.bookings.detail.complete')}
@@ -212,7 +245,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
                 onClick={() => handleStatusChange('CANCELLED')}
                 disabled={updating}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
+                className="border-rose-300 text-rose-600 hover:bg-rose-50"
               >
                 <X className="w-4 h-4 me-2" />
                 {t('admin.bookings.detail.cancel')}
@@ -226,7 +259,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
               <Button
                 onClick={() => handleStatusChange('PENDING')}
                 disabled={updating}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 me-2" />}
                 {t('admin.bookings.detail.retryPayment')}
@@ -235,7 +268,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
                 onClick={() => handleStatusChange('CANCELLED')}
                 disabled={updating}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
+                className="border-rose-300 text-rose-600 hover:bg-rose-50"
               >
                 <X className="w-4 h-4 me-2" />
                 {t('admin.bookings.detail.cancel')}

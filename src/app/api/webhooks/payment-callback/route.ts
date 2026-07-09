@@ -205,8 +205,11 @@ export async function POST(req: NextRequest) {
 
     const parsed = bodySchema.safeParse(body)
     if (!parsed.success) {
+      // R1-A M9: do NOT disclose Zod issue details to the client (schema
+      // disclosure). Log them server-side for debugging instead.
+      console.warn('[api/payment-callback] Validation failed:', parsed.error.issues)
       return NextResponse.json(
-        { error: 'invalid_input', details: parsed.error.issues },
+        { error: 'invalid_input' },
         { status: 400 }
       )
     }
@@ -266,7 +269,15 @@ export async function POST(req: NextRequest) {
     //     `key`) and mirror the exact pattern from /api/orders/route.ts:
     //     `tx.idempotencyKey.create()` inside the transaction, and on P2002
     //     (unique violation) treat the webhook as already processed.
-    const webhookId = `${orderId}:${nonce}`
+    // R2-A-4: namespace the idempotency key with a route prefix so a
+    // payment-callback webhook key can never collide with keys from
+    // /api/orders, /api/bookings/birthday, or /api/webhooks/payment-success
+    // (all of which share the same UNIQUE IdempotencyKey.key column).
+    // payment-callback already included `orderId:nonce` in the key (so two
+    // webhooks for the same order with different nonces don't collide), but
+    // without the route prefix an attacker could still pre-seed a collision
+    // from any of the other routes that write to the same column.
+    const webhookId = `payment-callback:${orderId}:${nonce}`
 
     let result:
       | { type: 'not_found' }

@@ -125,8 +125,8 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-rose-600" />
               </div>
               <button
                 type="button"
@@ -153,7 +153,7 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
                 {t('cancel')}
               </Button>
               <Button
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
                 onClick={handleConfirm}
                 disabled={deleting}
               >

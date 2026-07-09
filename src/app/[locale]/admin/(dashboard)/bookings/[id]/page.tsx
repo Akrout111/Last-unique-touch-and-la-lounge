@@ -35,6 +35,7 @@ export default async function AdminBookingDetailPage({ params }: PageProps) {
     endDate: booking.endDate.toISOString(),
     totalAmount: booking.totalAmount,
     currency: booking.currency,
+    quantity: booking.quantity,
     createdAt: booking.createdAt.toISOString(),
     customerName: booking.customerName,
     customerPhone: booking.customerPhone,

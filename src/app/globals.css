@@ -151,6 +151,11 @@
   --c-birthday-cyan: #00F3FF;
   --c-birthday-orange: #F97316;
   --primary: #F5B914; /* gold — Your Birthday's primary IS gold */
+  /* FIX-4A: Dark text on gold buttons — gold (#F5B914) + white = 1.76:1
+     which FAILS WCAG AA (needs 4.5:1). Dark ink (#1a1a2e) on gold gives
+     ~12:1, passing AA. Kept the deep purple `--accent` (#4B1858) as a
+     brand color but the primary-foreground needs maximum contrast. */
+  --primary-foreground: #1a1a2e;
   --accent: #4B1858; /* deep purple */
   --ring: #F5B914;
   /* Brand aliases — every "lut"/"gold" reference becomes birthday gold. */

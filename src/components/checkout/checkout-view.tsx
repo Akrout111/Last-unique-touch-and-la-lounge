@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -35,11 +35,37 @@ export function CheckoutView() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
 
-  // Generate idempotency key once on mount
-  const idempotencyKey = useMemo(
-    () => `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
-    []
-  )
+  // FIX-1C Fix 3: regenerate the idempotency key on every retry. The
+  // previous implementation memoised the key with `[]` deps — generated
+  // once per mount — so if the server returned `duplicate_request` (409)
+  // the SAME key was resent on retry, which the server treats as a
+  // permanent duplicate (returning 409 forever). The only recovery was
+  // to unmount/remount the component (navigate away and back).
+  //
+  // Now the key depends on `retryCount`. Each failed submission bumps
+  // `retryCount`, which makes `useMemo` produce a fresh key. The server
+  // sees a new key on retry and processes the request normally.
+  //
+  // Also switched to `crypto.randomUUID()` (R1-A L9) — non-cryptographic
+  // `Math.random()` was predictable in theory; `crypto.randomUUID` is
+  // the Web Crypto standard for collision-resistant unique IDs.
+  const [retryCount, setRetryCount] = useState(0)
+  const idempotencyKey = useMemo(() => {
+    // crypto.randomUUID is available in all modern browsers (Chrome 92+,
+    // Firefox 95+, Safari 15.4+) and Node 19+. Fall back to the legacy
+    // Math.random-based key for any older runtime.
+    const uuid =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+    return `${uuid}-${retryCount}`
+  }, [retryCount])
+
+  // Helper to reset the key for the next attempt. Called after any
+  // failed submission so the user's retry sends a fresh key.
+  const regenerateIdempotencyKey = useCallback(() => {
+    setRetryCount((c) => c + 1)
+  }, [])
 
   const {
     register,
@@ -115,6 +141,12 @@ export function CheckoutView() {
           : result.error === 'invalid_json' ? 'checkout.errors.invalidInput'
           : 'checkout.errors.internalError'
         setErrorMessage(t(errorKey))
+        // FIX-1C Fix 3: regenerate the idempotency key so the user's next
+        // submit is treated as a fresh request by the server. Without
+        // this, ANY failure (not just `duplicate_request`) would pin the
+        // user to the same key forever — e.g. a transient 500 followed by
+        // a real retry would 409 on the original key.
+        regenerateIdempotencyKey()
         setSubmitting(false)
         return
       }
@@ -131,6 +163,10 @@ export function CheckoutView() {
       router.push(`/checkout/payment?order=${result.orderId}`)
     } catch {
       setErrorMessage(t('checkout.errors.internalError'))
+      // FIX-1C Fix 3: regenerate the key after a client-side throw too
+      // (network failure / fetch rejected) so the next attempt isn't
+      // pinned to the same key.
+      regenerateIdempotencyKey()
       setSubmitting(false)
     }
   }
@@ -181,11 +217,13 @@ export function CheckoutView() {
                 <Input
                   id="customerName"
                   autoComplete="name"
+                  aria-invalid={!!errors.customerName}
+                  aria-describedby={errors.customerName ? 'customerName-error' : undefined}
                   {...register('customerName')}
                   className="bg-background luxury-input"
                 />
                 {errors.customerName && (
-                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                  <p id="customerName-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {errors.customerName?.type === 'required'
@@ -207,11 +245,13 @@ export function CheckoutView() {
                     type="tel"
                     dir="ltr"
                     autoComplete="tel"
+                    aria-invalid={!!errors.customerPhone}
+                    aria-describedby={errors.customerPhone ? 'customerPhone-error' : undefined}
                     {...register('customerPhone')}
                     className="bg-background luxury-input"
                   />
                   {errors.customerPhone && (
-                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                    <p id="customerPhone-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.customerPhone?.type === 'required'
@@ -230,11 +270,13 @@ export function CheckoutView() {
                     type="email"
                     dir="ltr"
                     autoComplete="email"
+                    aria-invalid={!!errors.customerEmail}
+                    aria-describedby={errors.customerEmail ? 'customerEmail-error' : undefined}
                     {...register('customerEmail')}
                     className="bg-background luxury-input"
                   />
                   {errors.customerEmail && (
-                    <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                    <p id="customerEmail-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {errors.customerEmail?.type === 'required'
@@ -255,11 +297,13 @@ export function CheckoutView() {
                   id="address"
                   rows={2}
                   autoComplete="street-address"
+                  aria-invalid={!!errors.address}
+                  aria-describedby={errors.address ? 'address-error' : undefined}
                   {...register('address')}
                   className="bg-background luxury-input"
                 />
                 {errors.address && (
-                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                  <p id="address-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>
                       {errors.address?.type === 'required'
@@ -278,11 +322,13 @@ export function CheckoutView() {
                 <Input
                   id="city"
                   autoComplete="address-level2"
+                  aria-invalid={!!errors.city}
+                  aria-describedby={errors.city ? 'city-error' : undefined}
                   {...register('city')}
                   className="bg-background luxury-input"
                 />
                 {errors.city && (
-                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
+                  <p id="city-error" className="flex items-center gap-1.5 text-xs text-primary mt-1" role="alert">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>{t('checkout.form.errors.cityRequired')}</span>
                   </p>

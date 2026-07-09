@@ -2,7 +2,23 @@ import { cookies } from 'next/headers'
 import { createHmac } from 'crypto'
 import { safeEqualStrings } from '@/lib/crypto-utils'
 
-const SESSION_COOKIE = 'lut_admin_session'
+// R1-A M1: use the `__Host-` cookie prefix in production for additional
+// security. `__Host-` cookies MUST be:
+//   - Secure (only sent over HTTPS)
+//   - Path=/
+//   - No Domain attribute
+//   - SameSite (we use 'lax')
+// Browsers reject any `__Host-` cookie that doesn't meet these requirements,
+// so an XSS that tries to set a session cookie via document.cookie with a
+// different path/domain cannot impersonate the admin session.
+//
+// In development (HTTP localhost), browsers will NOT set `__Host-` cookies
+// (they require Secure, which requires HTTPS). So we only use the prefix in
+// production and fall back to the plain name in dev.
+const SESSION_COOKIE =
+  process.env.NODE_ENV === 'production'
+    ? '__Host-lut_admin_session'
+    : 'lut_admin_session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 
 // Dev-only secret. Used ONLY when SESSION_SECRET is not set and NODE_ENV !== 'production'.
@@ -153,7 +169,20 @@ export async function login(password: string): Promise<boolean> {
 export async function logout(): Promise<void> {
   try {
     const cookieStore = await cookies()
-    cookieStore.delete(SESSION_COOKIE)
+    // R2-A-1: cookieStore.delete() with a plain name omits the Secure flag
+    // on the resulting Set-Cookie header. For `__Host-` prefixed cookies
+    // (production), browsers REJECT any Set-Cookie without Secure — including
+    // deletions — so the cookie would never be cleared. Use an explicit
+    // set() with maxAge: 0 and the full attribute set so the deletion
+    // satisfies the __Host- requirements.
+    const isProduction = process.env.NODE_ENV === 'production'
+    cookieStore.set(SESSION_COOKIE, '', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    })
   } catch (error) {
     console.error('[auth] Failed to delete session cookie:', error)
   }
@@ -169,11 +198,18 @@ export async function isAuthenticated(): Promise<boolean> {
 /**
  * Redirects to login if not authenticated.
  * Use in Server Components.
+ *
+ * R2-B-1: uses `@/i18n/routing`'s `redirect` (not `next/navigation`) so the
+ * locale prefix is preserved. With `routing.localeDetection: false`, a bare
+ * `/admin/login` may 404 or trigger a proxy re-resolve. next-intl v4's
+ * redirect requires the `{ href, locale }` object format.
  */
 export async function requireAuth(): Promise<void> {
   const authed = await isAuthenticated()
   if (!authed) {
-    const { redirect } = await import('next/navigation')
-    redirect('/admin/login')
+    const { redirect } = await import('@/i18n/routing')
+    const { getLocale } = await import('next-intl/server')
+    const locale = await getLocale()
+    redirect({ href: '/admin/login', locale })
   }
 }

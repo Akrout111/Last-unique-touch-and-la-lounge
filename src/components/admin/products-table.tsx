@@ -156,10 +156,17 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
                       {localizedName(product.category.nameAr, product.category.nameEn, locale)}
                     </td>
                     <td className="py-3 px-4 text-foreground font-medium">
-                      {product.rentalPricePerDay} {t('common.currency')}
+                      {/* FIX-1C Fix 4: KWD uses 3 decimal places (1 fil = 0.001).
+                          Previously rendered `{product.rentalPricePerDay}`
+                          raw, which prints `5` for 5 KWD instead of `5.000`.
+                          This made the admin product list inconsistent with
+                          the cart / checkout / booking detail, all of which
+                          use `.toFixed(3)`. */}
+                      {product.rentalPricePerDay.toFixed(3)} {t('common.currency')}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={product.stock === 0 ? 'text-red-600 font-bold' : product.stock <= 2 ? 'text-yellow-600 font-bold' : 'text-foreground'}>
+                      {/* FIX-4A: palette sweep — red/yellow → rose/amber */}
+                      <span className={product.stock === 0 ? 'text-rose-600 font-bold' : product.stock <= 2 ? 'text-amber-600 font-bold' : 'text-foreground'}>
                         {product.stock}
                       </span>
                     </td>
@@ -176,7 +183,7 @@ export function ProductsTable({ products, categories, locale }: ProductsTablePro
                           trigger={
                             <span
                               aria-label={t('admin.products.delete')}
-                              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block"
+                              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-rose-50 text-muted-foreground hover:text-rose-600 transition-colors block"
                             >
                               <Trash2 className="w-4 h-4" />
                             </span>

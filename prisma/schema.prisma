@@ -59,6 +59,32 @@ model Category {
 }
 
 // ===== Products (Rental only — no sales) =====
+//
+// MONEY FIELDS — Float (SQLite limitation):
+// ---------------------------------------------------------------
+// `rentalPricePerDay` and `securityDeposit` are KWD (Kuwaiti Dinar),
+// which uses 3 decimal places (1 fil = 0.001 KWD). Prisma's `Float`
+// maps to SQLite REAL (IEEE 754 double), which can accumulate
+// rounding error on monetary arithmetic.
+//
+// We CANNOT use `Decimal` here because SQLite's Prisma adapter does
+// not support `@db.Decimal(p, s)` (it errors at migration time).
+// The proper fix is to migrate to PostgreSQL and switch to
+// `Decimal @db.Decimal(10, 3)` — see the @map hints below.
+//
+// In the meantime, the APPLICATION LAYER enforces precision:
+//   1. All display uses `.toFixed(3)` (KWD = 3 dp).
+//   2. All equality comparisons use `Math.abs(a - b) > KWD_TOLERANCE`
+//      where `KWD_TOLERANCE = 0.001` (see src/app/api/orders/route.ts:14).
+//   3. Server-side price re-computation inside a Serializable tx
+//      rejects client-supplied totals that drift by more than 1 fil
+//      (see /api/orders/route.ts:200-230).
+//
+// PostgreSQL migration TODO (Phase 10):
+//   rentalPricePerDay Decimal @db.Decimal(10, 3)
+//   securityDeposit   Decimal @db.Decimal(10, 3)
+// and remove the KWD_TOLERANCE float-tolerance workaround in
+// /api/orders/route.ts in favour of exact Decimal equality.
 model Product {
   id                String    @id @default(cuid())
   brand             Brand     @default(LUT)
@@ -67,7 +93,12 @@ model Product {
   nameEn            String
   descriptionAr     String
   descriptionEn     String
+  // Float for now (see MONEY FIELDS comment above). KWD uses 3 dp;
+  // app layer enforces precision via toFixed(3) + KWD_TOLERANCE.
+  // TODO(postgres): Decimal @db.Decimal(10, 3)
   rentalPricePerDay Float
+  // Float for now (see MONEY FIELDS comment above).
+  // TODO(postgres): Decimal @db.Decimal(10, 3)
   securityDeposit   Float
   images            String    // JSON array of URLs — SQLite doesn't support String[]
   model3dUrl        String?
@@ -114,6 +145,10 @@ model Booking {
   // overlapping dates (e.g. 5 chairs for a 3-day event when stock=10).
   // Defaults to 1 for backward compatibility with pre-existing bookings.
   quantity      Int           @default(1)
+  // Float for now (see Product model MONEY FIELDS comment above).
+  // KWD totalAmount uses 3 dp; app layer enforces precision via
+  // toFixed(3) + KWD_TOLERANCE in /api/orders/route.ts.
+  // TODO(postgres): Decimal @db.Decimal(10, 3)
   totalAmount   Float
   currency      String        @default("KWD")
   address       String?
@@ -146,6 +181,11 @@ model Booking {
 // key to the resulting Booking once the transaction commits.
 model IdempotencyKey {
   id        String    @id @default(cuid())
+  // Application-enforced max 255 chars — see Zod schema in
+  // src/app/api/orders/route.ts:43 and src/app/api/bookings/birthday/route.ts:25.
+  // SQLite does NOT enforce VARCHAR length, so a longer string would
+  // silently succeed at the DB layer. The Zod schema rejects oversize
+  // keys before they reach the DB. TODO(postgres): add @db.VarChar(255).
   key       String    @unique
   orderId   String?
   // V13 Group D3: FK relation to Booking — prevents orphaned idempotency keys

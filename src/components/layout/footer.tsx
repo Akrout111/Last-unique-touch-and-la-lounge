@@ -4,26 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
 import { Instagram, Phone } from 'lucide-react'
 import { buildWhatsappUrl, getPhoneNumber, isRealNumber } from '@/lib/contact-info'
-
-type BrandKey = 'lut' | 'lalounge' | 'birthday'
-
-function resolveBrandFromPath(pathname: string | null): BrandKey {
-  if (!pathname) return 'lut'
-  if (pathname.includes('/la-lounge')) return 'lalounge'
-  if (pathname.includes('/your-birthday')) return 'birthday'
-  return 'lut'
-}
-
-/**
- * Detect if the current route is the home page (`/` or `/ar` or `/en`).
- * On the home page the footer brand name + copyright are neutral — the
- * home page is the umbrella landing for all 3 brands and should not
- * show any single brand's name (V10 user request).
- */
-function isHomePage(pathname: string | null): boolean {
-  if (!pathname) return false
-  return pathname === '/' || pathname === '/ar' || pathname === '/en'
-}
+import { resolveBrandFromPath, isHomePage } from '@/lib/brand'
 
 export function Footer() {
   const t = useTranslations()
@@ -32,6 +13,12 @@ export function Footer() {
   // V11 Fix #7: use `usePathname()` directly (no `mounted` flag) to avoid
   // SSR hydration flash.
   const homePage = isHomePage(pathname)
+
+  // FIX-1A: hide the storefront footer inside /admin/* routes. The admin
+  // area renders its own AdminShell chrome and doesn't need the storefront
+  // footer (legal links, social, etc.). next-intl strips the locale prefix
+  // from usePathname() so /en/admin/* and /ar/admin/* both match.
+  const isAdmin = pathname?.startsWith('/admin') ?? false
 
   // On the home page, don't show any single brand's name — the home page
   // is the umbrella landing for all 3 brands.
@@ -47,6 +34,8 @@ export function Footer() {
   const whatsappUrl = buildWhatsappUrl()
   const phoneNumber = getPhoneNumber()
   const showPhoneLine = isRealNumber(phoneNumber)
+
+  if (isAdmin) return null
 
   return (
     <footer className="bg-ink text-paper/60 relative overflow-hidden">

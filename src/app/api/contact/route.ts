@@ -4,6 +4,7 @@ import { createHmac } from 'crypto'
 import { db } from '@/lib/db'
 import { rateLimit } from '@/lib/rate-limiter'
 import { getClientIp } from '@/lib/get-client-ip'
+import { validateWebhookUrl } from '@/lib/n8n'
 
 /**
  * Contact form schema. Mirrors the client-side schema in
@@ -44,17 +45,18 @@ function fanOutToN8n(payload: unknown): void {
     return
   }
 
-  // SSRF / transport security (security/data-fix #2): the webhook URL MUST
-  // be https in ALL modes — not just production. The previous production-
-  // only check left dev mode wide open to SSRF: a misconfigured
-  // `N8N_WEBHOOK_URL=http://localhost/...` (or any private/loopback IP)
-  // would let the server fetch internal-only endpoints and leak the
-  // signed payload + secret-derived signature over plaintext. Skip
-  // silently (rather than throwing) so the contact form still returns
-  // 201 — the message is already persisted in the DB.
-  if (!webhookUrl.startsWith('https://')) {
+  // SSRF / transport security (security/data-fix #2 + R1-A M11): the
+  // webhook URL MUST be https in production AND must not target a
+  // private/internal IP range. The previous check only enforced the
+  // https scheme, which still allowed SSRF to internal HTTPS endpoints
+  // (e.g. https://169.254.169.254/ for AWS metadata). Use the shared
+  // `validateWebhookUrl` helper (which covers scheme + private IP
+  // ranges) before issuing the fetch. Skip silently (rather than
+  // throwing) so the contact form still returns 201 — the message is
+  // already persisted in the DB.
+  if (!validateWebhookUrl(webhookUrl)) {
     console.error(
-      '[contact] refusing to send n8n webhook over non-https URL'
+      '[contact] refusing to send n8n webhook to disallowed URL (non-https or private/internal IP)'
     )
     return
   }
@@ -145,8 +147,11 @@ export async function POST(req: NextRequest) {
 
   const parsed = contactSchema.safeParse(body)
   if (!parsed.success) {
+    // R1-A M9: do NOT disclose Zod issue details to the client (schema
+    // disclosure). Log them server-side for debugging instead.
+    console.warn('[api/contact] Validation failed:', parsed.error.issues)
     return NextResponse.json(
-      { error: 'invalid_input', details: parsed.error.issues },
+      { error: 'invalid_input' },
       { status: 400 }
     )
   }

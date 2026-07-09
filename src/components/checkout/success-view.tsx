@@ -23,8 +23,8 @@ export function SuccessView({ orderId }: SuccessViewProps) {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16 text-center">
       {/* Success icon */}
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-        <CheckCircle2 className="w-12 h-12 text-green-600" />
+      <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+        <CheckCircle2 className="w-12 h-12 text-emerald-600" />
       </div>
 
       {/* Title */}

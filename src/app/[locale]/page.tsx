@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
-import { Navbar } from '@/components/layout/navbar'
 import { Hero } from '@/components/landing/hero'
-import { Footer } from '@/components/layout/footer'
 import { JsonLd } from '@/components/seo/json-ld'
 import { buildMetadata } from '@/lib/seo'
 import { getPhoneNumber, isRealNumber } from '@/lib/contact-info'
@@ -23,15 +21,21 @@ export async function generateMetadata({
  * real phone number is configured via `NEXT_PUBLIC_PHONE_NUMBER` — otherwise
  * omitted entirely so we never publish the `965XXXXXXXX` placeholder to
  * search engines.
+ *
+ * FIX-4B / R3-E #7: use `NEXT_PUBLIC_SITE_URL` (with the production hostname
+ * as the fallback) so preview / staging deployments don't publish
+ * lastuniquetouch.com canonical URLs in their JSON-LD. Matches the pattern
+ * in `src/lib/seo.ts:3`.
  */
 function buildOrganizationLd(): Record<string, unknown> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lastuniquetouch.com'
   const base: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Last Unique Touch',
     description: 'Luxury furniture and event equipment rental in Kuwait',
-    url: 'https://lastuniquetouch.com',
-    logo: 'https://lastuniquetouch.com/icon-192.png',
+    url: siteUrl,
+    logo: `${siteUrl}/icon-192.png`,
     sameAs: ['https://instagram.com/last.unique.touch'],
     contactPoint: {
       '@type': 'ContactPoint',
@@ -54,20 +58,43 @@ function buildOrganizationLd(): Record<string, unknown> {
 
 const organizationLd = buildOrganizationLd()
 
+// R2E-10: WebSite schema helps Google render a sitelinks search box and
+// explicitly declares the site's canonical homepage URL + search action.
+// FIX-4B / R3-E #7: uses NEXT_PUBLIC_SITE_URL so preview deployments don't
+// leak lastuniquetouch.com URLs into their JSON-LD.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lastuniquetouch.com'
+const websiteLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Last Unique Touch',
+  url: siteUrl,
+  inLanguage: ['ar', 'en'],
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${siteUrl}/en/products?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+}
+
 export default function HomePage() {
   return (
     <div className="grain-overlay">
       <JsonLd data={organizationLd} />
+      <JsonLd data={websiteLd} />
       {/* Phase 5 motion cleanup: <CustomCursor /> removed from home — it was
           visually competing with the holo-chamber card entrance animation.
           The component file is kept for future use on non-home routes. */}
-      <Navbar />
+      {/* FIX-1A: <Navbar /> and <Footer /> are now rendered by the
+          [locale]/layout.tsx so they appear on every storefront route as
+          flex siblings of <main> (sticky footer). */}
       <div>
         {/* Landing page — 3 brand selector cards over the 3D furniture tunnel.
             Each card navigates to its own dedicated page. */}
         <Hero />
       </div>
-      <Footer />
     </div>
   )
 }

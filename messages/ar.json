@@ -121,7 +121,11 @@
     "currency": "د.ك"
   },
   "a11y": {
-    "skipToContent": "تخطّي إلى المحتوى الرئيسي"
+    "skipToContent": "تخطّي إلى المحتوى الرئيسي",
+    "whatsapp": "تواصل معنا عبر واتساب",
+    "notifications": "الإشعارات",
+    "breadcrumb": "مسار التنقل",
+    "brandSwitcher": "تبديل العلامة التجارية"
   },
   "error": {
     "title": "حدث خطأ ما",

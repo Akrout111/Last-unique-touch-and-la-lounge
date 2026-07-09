@@ -4,12 +4,12 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/auth'
 import { getAdminBrand } from '@/lib/admin-brand'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 const categorySchema = z.object({
-  nameAr: z.string().min(1).max(100),
-  nameEn: z.string().min(1).max(100),
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+  nameAr: z.string().min(1).max(200),
+  nameEn: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
 })
 
 export async function createCategoryAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
@@ -46,7 +46,16 @@ export async function createCategoryAction(formData: FormData): Promise<{ succes
       },
     })
 
+    // R2-B-2: bust storefront caches after category create. Categories drive
+    // the filter sidebar on the products list page and the category filters in
+    // unstable_cache (getCategoriesByBrand, tagged 'categories').
+    revalidateTag('categories', 'default')
     revalidatePath('/admin/categories')
+    revalidatePath('/[locale]/products', 'page')
+    revalidatePath('/[locale]', 'page')
+    revalidatePath('/[locale]/last-unique-touch', 'page')
+    revalidatePath('/[locale]/la-lounge', 'page')
+    revalidatePath('/[locale]/your-birthday', 'page')
     return { success: true }
   } catch (error: unknown) {
     console.error('Create category error:', error)
@@ -91,7 +100,14 @@ export async function updateCategoryAction(id: string, formData: FormData): Prom
       data: parsed.data,
     })
 
+    // R2-B-2: bust storefront caches after category update (same set as create).
+    revalidateTag('categories', 'default')
     revalidatePath('/admin/categories')
+    revalidatePath('/[locale]/products', 'page')
+    revalidatePath('/[locale]', 'page')
+    revalidatePath('/[locale]/last-unique-touch', 'page')
+    revalidatePath('/[locale]/la-lounge', 'page')
+    revalidatePath('/[locale]/your-birthday', 'page')
     return { success: true }
   } catch (error: unknown) {
     console.error('Update category error:', error)
@@ -122,7 +138,14 @@ export async function deleteCategoryAction(id: string): Promise<{ success: boole
 
     await db.category.delete({ where: { id } })
 
+    // R2-B-2: bust storefront caches after category delete (same set as create).
+    revalidateTag('categories', 'default')
     revalidatePath('/admin/categories')
+    revalidatePath('/[locale]/products', 'page')
+    revalidatePath('/[locale]', 'page')
+    revalidatePath('/[locale]/last-unique-touch', 'page')
+    revalidatePath('/[locale]/la-lounge', 'page')
+    revalidatePath('/[locale]/your-birthday', 'page')
     return { success: true }
   } catch (error: unknown) {
     console.error('Delete category error:', error)

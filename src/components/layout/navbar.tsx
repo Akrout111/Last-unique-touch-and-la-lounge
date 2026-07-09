@@ -1,32 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { Menu, X, Globe, Moon, Sun } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MagneticButton } from '@/components/ui-premium/magnetic-button'
-
-type BrandKey = 'lut' | 'lalounge' | 'birthday'
-
-function resolveBrandFromPath(pathname: string | null): BrandKey {
-  if (!pathname) return 'lut'
-  if (pathname.includes('/la-lounge')) return 'lalounge'
-  if (pathname.includes('/your-birthday')) return 'birthday'
-  return 'lut'
-}
-
-/**
- * Detect if the current route is the home page (`/` or `/ar` or `/en`).
- * On the home page the navbar wordmark is hidden — the home page is the
- * umbrella landing for all 3 brands and should not show any single
- * brand's name (V10 user request).
- */
-function isHomePage(pathname: string | null): boolean {
-  if (!pathname) return false
-  return pathname === '/' || pathname === '/ar' || pathname === '/en'
-}
+import { resolveBrandFromPath, isHomePage } from '@/lib/brand'
 
 export function Navbar() {
   const t = useTranslations()
@@ -37,6 +18,22 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  // FIX-2B (R2-D S-H3): refs for mobile-drawer focus management.
+  // drawerRef wraps the whole dialog so we can query focusable descendants
+  // for the Tab trap. firstLinkRef is the first nav link — focused when the
+  // drawer opens so screen-reader / keyboard users land on real content
+  // (not the close button). hamburgerRef receives focus back when the
+  // drawer closes (restore-focus on dismiss).
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const firstLinkRef = useRef<HTMLAnchorElement>(null)
+  const hamburgerRef = useRef<HTMLButtonElement>(null)
+
+  // FIX-1A: hide the storefront navbar inside /admin/* routes. The admin
+  // area renders its own AdminShell (sidebar + topbar); showing the
+  // storefront navbar on top would create two overlapping fixed headers.
+  // Both /en/admin/* and /ar/admin/* are covered because next-intl strips
+  // the locale prefix before exposing the path through usePathname().
+  const isAdmin = pathname?.startsWith('/admin') ?? false
 
   const brand = resolveBrandFromPath(pathname)
   // V11 Fix #7: use `usePathname()` directly (no `mounted` flag) to avoid
@@ -68,6 +65,62 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // FIX-2B (R2-D S-H3): mobile-drawer accessibility — Escape to close,
+  // basic Tab focus trap (wrap first↔last focusable inside the drawer),
+  // focus the first nav link on open, restore focus to the hamburger on
+  // close. Implemented as a single effect keyed on `mobileOpen` so the
+  // cleanup (listener removal + focus restore) runs exactly when the
+  // drawer closes.
+  useEffect(() => {
+    if (!mobileOpen) return
+
+    // Capture the element that had focus BEFORE the drawer opened (the
+    // hamburger button) so we can restore it on close.
+    const previouslyFocused = document.activeElement as HTMLElement | null
+
+    // Focus the first nav link — wait one rAF so the motion.div has been
+    // committed to the DOM (AnimatePresence mounts it synchronously, but
+    // the rAF also lets the spring animation kick off without a focus
+    // jump mid-paint).
+    const rafId = requestAnimationFrame(() => {
+      firstLinkRef.current?.focus()
+    })
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setMobileOpen(false)
+        return
+      }
+      if (e.key !== 'Tab' || !drawerRef.current) return
+      // Query focusable descendants in DOM order: close button (header)
+      // followed by the 4 nav links. This gives us first/last for wrap.
+      const focusables = drawerRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled])'
+      )
+      if (focusables.length === 0) return
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      cancelAnimationFrame(rafId)
+      // Restore focus to the hamburger (or whatever had focus before the
+      // drawer opened) — prevents keyboard users from being dropped back
+      // onto the page background.
+      previouslyFocused?.focus?.()
+    }
+  }, [mobileOpen])
+
   const switchLocale = () => {
     const next = locale === 'ar' ? 'en' : 'ar'
     router.replace(pathname, { locale: next })
@@ -82,7 +135,7 @@ export function Navbar() {
 
   // Wordmark content per brand:
   // - LUT          → "LUT"          + subtitle "Last Unique Touch" (hidden on mobile)
-  // - LA_LOUNGE    → "LA LOUNGE"    (no subtitle)
+  // - LA_LOUNGE    → "La Lounge"    (no subtitle)
   // - YOUR_BIRTHDAY→ "Your Birthday"+ subtitle "Kuwait" (hidden on mobile for visual rhythm)
   const wordmark =
     brand === 'lalounge'
@@ -90,6 +143,10 @@ export function Navbar() {
       : brand === 'birthday'
         ? { main: t('brand.birthday'), subtitle: t('brand.kuwait') }
         : { main: t('brand.lutShort'), subtitle: t('brand.lut') }
+
+  // FIX-1A: admin routes render their own chrome (AdminShell) — bail out
+  // before rendering anything so we don't double-up fixed headers.
+  if (isAdmin) return null
 
   return (
     <>
@@ -163,8 +220,15 @@ export function Navbar() {
                   onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                   aria-label={t('nav.toggleTheme')}
                   className={`flex items-center justify-center w-9 h-9 min-h-[44px] min-w-[44px] rounded-full transition-colors ${
-                    scrolled
-                      ? 'text-foreground/70 hover:text-gold hover:bg-foreground/10'
+                    // FIX-1A / C3: dead ternary replaced. The navbar is
+                    // dark in BOTH states when on the home page (transparent
+                    // over the bg-ink hero, or glass-dark when scrolled) and
+                    // dark when scrolled on any page (glass-dark). Only the
+                    // "inner page, not scrolled" case has a light background
+                    // (transparent navbar over the page's light bg) — there
+                    // we need text-foreground so the button stays visible.
+                    (homePage || scrolled)
+                      ? 'text-paper/70 hover:text-gold hover:bg-paper/10'
                       : 'text-foreground/70 hover:text-gold hover:bg-foreground/10'
                   }`}
                 >
@@ -182,8 +246,11 @@ export function Navbar() {
                 <button
                   onClick={switchLocale}
                   className={`flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-xs font-medium transition-colors ${
-                    scrolled
-                      ? 'text-foreground/70 hover:text-gold'
+                    // FIX-1A / C3: same adaptive color logic as the theme
+                    // toggle above — light text over the dark hero / glass,
+                    // dark text over a light page background.
+                    (homePage || scrolled)
+                      ? 'text-paper/70 hover:text-gold'
                       : 'text-foreground/70 hover:text-gold'
                   }`}
                 >
@@ -194,10 +261,12 @@ export function Navbar() {
 
               {/* Mobile menu button — visible only on mobile */}
               <button
+                ref={hamburgerRef}
                 className={`md:hidden p-2 ${homePage || scrolled ? 'text-paper' : 'text-foreground'} min-w-[44px] min-h-[44px]`}
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={t('nav.menu')}
                 aria-expanded={mobileOpen}
+                aria-controls="mobile-nav-drawer"
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -218,6 +287,11 @@ export function Navbar() {
               onClick={() => setMobileOpen(false)}
             />
             <motion.div
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('nav.menu')}
+              id="mobile-nav-drawer"
               initial={{ x: locale === 'ar' ? '-100%' : '100%' }}
               animate={{ x: 0 }}
               exit={{ x: locale === 'ar' ? '-100%' : '100%' }}
@@ -249,6 +323,7 @@ export function Navbar() {
                     transition={{ delay: idx * 0.08 }}
                   >
                     <Link
+                      ref={idx === 0 ? firstLinkRef : undefined}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className={`block py-3 text-lg font-display ${

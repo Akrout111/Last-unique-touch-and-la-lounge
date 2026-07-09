@@ -152,7 +152,7 @@ export function CategoriesTable({ categories, locale }: CategoriesTableProps) {
                             </button>
                             <ConfirmDelete
                               trigger={
-                                <span aria-label={t('admin.products.delete')} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors block">
+                                <span aria-label={t('admin.products.delete')} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-rose-50 text-muted-foreground hover:text-rose-600 transition-colors block">
                                   <Trash2 className="w-4 h-4" />
                                 </span>
                               }

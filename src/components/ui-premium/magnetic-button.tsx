@@ -62,13 +62,15 @@ export function MagneticButton({
     )
   }
 
+  // Render a <span> wrapper (NOT a <button>) so that callers can pass
+  // their own <button> child (e.g. the navbar language switcher) without
+  // producing invalid nested <button> HTML. The wrapper ONLY provides the
+  // magnetic mouse effect — clicks are handled by the child element.
+  // No type/onClick/cursor-pointer on the wrapper: those are button
+  // concerns that belong on the child.
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-block bg-transparent border-0 p-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
-    >
+    <span className="inline-block" style={{ display: 'inline-block' }}>
       {content}
-    </button>
+    </span>
   )
 }
