@@ -18,13 +18,19 @@
  *     drifting upward for atmosphere; glossy mylar balloons (metalness 0.2, roughness
  *     0.2); denser confetti (count 40→80, size 0.4→0.35); 4 pink triangular La Lounge
  *     zone markers at central-platform corners.
- *   - 3D content is overlaid ON TOP of the continuous blueprint at each card's vertical
- *     position:
+ *   - (v22 Phase A) Top-down pitched camera (~60° from horizontal): camera elevated at
+ *     y=camDist*sin(60°) (desktop 45 / mobile 28), depth=camDist*cos(60°) (desktop 26 /
+ *     mobile 16), looking DOWN at centerZ on the floor (y=0). Sections migrated Y→Z
+ *     (LUT=-Z top, Birthday=+Z bottom). Gold spine rotated [π/2,0,0] to lie flat along
+ *     Z (was vertical — invisible from top-down). Lighting rewritten: overhead warm key
+ *     + cool side fill + ambient base + 2 section-accent pointLights at sectionZs.
+ *     Old rim light at [0,-5,-10] (below floor) REMOVED — invisible from top-down.
+ *   - 3D content is overlaid ON TOP of the continuous blueprint at each card's Z position:
  *       • Top    (card 1 — LUT):       real 3D furniture meshes (chairs, tables, sofa)
  *       • Middle (card 2 — La Lounge): PURE blueprint (master architecture shows through —
  *                                      no separate La Lounge overlay; the master IS the base)
  *       • Bottom (card 3 — Birthday):  3D party objects (balloons, multi-tier cake, confetti)
- *   - Section Y positions are computed DYNAMICALLY from the actual card centers
+ *   - Section Z positions are computed DYNAMICALLY from the actual card centers
  *     measured via getBoundingClientRect() — guarantees alignment on both
  *     mobile (390px) and desktop (1280px) viewports. Re-measured on resize,
  *     after window load, and via ResizeObserver.
@@ -79,15 +85,17 @@ function MasterBlueprintGrid() {
 
   return (
     <group ref={gridRef}>
-      {/* Fine grid (80 divisions — luxury = restraint, per A.3) */}
-      <gridHelper args={[300, 80, GRID_MAIN, GRID_LIGHT]} position={[0, 0, 0]} />
-      {/* Major grid (20 divisions — gold accent lines) */}
-      <gridHelper args={[300, 20, GRID_ACCENT, GRID_LIGHT]} position={[0, -0.01, 0]} />
+      {/* Fine grid (B7 — 200 divisions = La Lounge parity; dense 1.5-unit cells).
+          gridHelper is a single draw call regardless of division count, so this
+          is free perf while delivering the dense La Lounge look. */}
+      <gridHelper args={[300, 200, GRID_MAIN, GRID_LIGHT]} position={[0, 0, 0]} />
+      {/* Major grid (B7 — 30 gold accent divisions) */}
+      <gridHelper args={[300, 30, GRID_ACCENT, GRID_LIGHT]} position={[0, -0.01, 0]} />
 
-      {/* Radial rings — 3 key rings (radii 8, 20, 32) per A.3 */}
-      {Array.from({ length: 3 }).map((_, i) => (
-        <mesh key={`radial_${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-          <ringGeometry args={[8 + i * 12, 8.06 + i * 12, 96]} />
+      {/* Radial rings (B7 — 12 rings, r=8+i*6, La Lounge parity) */}
+      {Array.from({ length: 12 }).map((_, i) => (
+        <mesh key={`radial_${i}`} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[8 + i * 6, 8.06 + i * 6, 96]} />
           <meshBasicMaterial color={RING_COLOR} transparent opacity={0.2} side={THREE.DoubleSide} />
         </mesh>
       ))}
@@ -98,11 +106,11 @@ function MasterBlueprintGrid() {
         <meshBasicMaterial color={RADAR_COLOR} transparent opacity={0.04} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* Crosshairs — 4 cardinal directions (0°, 90°, 180°, 270°) per A.3 */}
-      {Array.from({ length: 4 }).map((_, i) => (
-        <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 2, 0]}>
+      {/* Crosshairs (B7 — 16 lines, every 11.25°, La Lounge parity) */}
+      {Array.from({ length: 16 }).map((_, i) => (
+        <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 16, 0]}>
           <boxGeometry args={[300, 0.005, 0.03]} />
-          <meshBasicMaterial color={GRID_MAIN} transparent opacity={0.2} />
+          <meshBasicMaterial color={GRID_MAIN} transparent opacity={0.15} />
         </mesh>
       ))}
 
@@ -400,16 +408,19 @@ function FurnitureSofa({ position, color }: { position: Vec3; color: string }) {
   )
 }
 
-function LutFurniture({ y, scale }: { y: number; scale: number }) {
+function LutFurniture({ z, scale }: { z: number; scale: number }) {
   // B.5 — Conversation vignette: sofa center-back, 2 flanking chairs angled
   // ±25° toward center, 1 coffee table front-center, 2 front chairs rotated
   // 180° to face the sofa. Removed the 2 pedestal tables (replaced by the
   // single coffee table). Group scale handles object size + horizontal
   // spread; on mobile we pass a smaller scale (0.6) so the vignette does
   // not bleed into adjacent sections.
+  // v22 Phase A — Y=0.5 lift: chair-leg bottoms sit at local Y=-0.5; lifting the
+  // outer group to world Y=0.5 puts the leg bottoms at world Y=0 so they rest
+  // ON the blueprint floor (no longer buried beneath).
   const deg = Math.PI / 180
   return (
-    <group position={[0, y, 0]} scale={scale}>
+    <group position={[0, 0.5, z]} scale={scale}>
       {/* Sofa — center-back */}
       <FurnitureSofa position={[0, 0, -3]} color={BRAND_COLORS.LUT} />
       {/* Flanking chairs — angled ±25° toward center */}
@@ -548,7 +559,9 @@ function Confetti({ count }: { count: number }) {
     for (let i = 0; i < count; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 30
       pos[i * 3 + 1] = Math.random() * 5
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 20
+      // B9 — Z-bounds tightened ±10 → ±4 so confetti does not bleed into the
+      // La Lounge card's Z band on mobile (section spacing only ~5.4 units).
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 8
     }
     return pos
   }, [count])
@@ -629,7 +642,7 @@ function DustMotes() {
   )
 }
 
-function BirthdayParty({ y, scale }: { y: number; scale: number }) {
+function BirthdayParty({ z, scale }: { z: number; scale: number }) {
   // The group scale handles both object size AND horizontal spread.
   // On mobile (tighter card spacing) we pass a smaller scale (0.6) so the
   // party objects do not bleed into adjacent sections (the middle La Lounge
@@ -637,8 +650,10 @@ function BirthdayParty({ y, scale }: { y: number; scale: number }) {
   // beams (6 units tall at y=4) were removed so vertical extent stays
   // within the section; balloon X positions were tightened and balloon
   // base Y positions lowered so they don't float as high.
+  // v22 Phase A — no Y lift: cake base already at local Y=0.3, so the group
+  // sits directly on the floor at world Y=0.
   return (
-    <group position={[0, y, 0]} scale={scale}>
+    <group position={[0, 0, z]} scale={scale}>
       <Balloon position={[-4, 0.5, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY} />
       <Balloon position={[-2, 1, 1]} color={BRAND_COLORS.LA_LOUNGE} />
       {/* B.4 — was #A855F7 (off-brand purple); now pink to keep the {red, pink, gold} triad */}
@@ -674,20 +689,42 @@ function SceneGroup({ children }: { children: React.ReactNode }) {
 // ============================================================
 
 function CameraRig({
-  sectionYs,
+  sectionZs,
   isMobile,
 }: {
-  sectionYs: { lut: number; lalounge: number; birthday: number }
+  sectionZs: { lut: number; lalounge: number; birthday: number }
   isMobile: boolean
 }) {
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    const centerY = (sectionYs.lut + sectionYs.birthday) / 2
-    // F.2 / A.1: sync FOV each frame — R3F's `camera` prop is initial-only,
-    // so the mobile 42° value never reaches the actual camera without this.
-    // Guard avoids per-frame matrix updates once converged. The default R3F
-    // camera is a PerspectiveCamera, but state.camera is typed as the union
-    // Camera, so we narrow with isPerspectiveCamera before touching `fov`.
+    const centerZ = (sectionZs.lut + sectionZs.birthday) / 2
+
+    // v22 Phase A — Pitched top-down camera (~60° from horizontal).
+    // Desktop: camDist=52 → height=45 (sin60°*52), depth=26 (cos60°*52).
+    // Mobile:  camDist=32 → height=28, depth=16.
+    // Reads as a flat blueprint floor (per user's core goal) while preserving
+    // furniture front-face legibility (a pure 90° top-down would force a full
+    // furniture redesign per M2/T4). sin(2*60°)=0.866 → 87% Z-to-screen
+    // sensitivity (good — sin peaks at 45°, drops to 0 at 0°/90°).
+    const camDist = isMobile ? 32 : 52
+    const pitch = Math.PI / 3 // 60°
+    const height = camDist * Math.sin(pitch)
+    const depth = camDist * Math.cos(pitch)
+
+    // Subtle horizontal drift (museum turntable feel). Same 0.02 freq as v20;
+    // mobile amplitude 1.5→1.0 to stay inside the narrower 42° FOV.
+    const driftX = Math.sin(t * 0.02) * (isMobile ? 1 : 1.5)
+
+    state.camera.position.x = driftX
+    state.camera.position.y = height
+    state.camera.position.z = centerZ + depth
+
+    // Look at the center of the 3 sections (on the floor, Y=0).
+    state.camera.lookAt(0, 0, centerZ)
+
+    // FOV sync — R3F's `camera` prop is initial-only, so the mobile 42°
+    // value never reaches the actual camera without this per-frame guard.
+    // Avoids per-frame matrix updates once converged.
     const cam = state.camera
     if (cam instanceof THREE.PerspectiveCamera) {
       const targetFov = isMobile ? 42 : 50
@@ -695,22 +732,6 @@ function CameraRig({
         cam.fov = targetFov
         cam.updateProjectionMatrix()
       }
-    }
-    // A.2: half-speed drift (0.04→0.02) + half amplitude (3→1.5) for museum elegance.
-    state.camera.position.x = Math.sin(t * 0.02) * 1.5
-    // A.2: mobile camera closer (z=38 vs 50) so objects appear ~60% larger (T5).
-    state.camera.position.z = isMobile ? 38 : 50
-    if (isMobile) {
-      // Mobile keeps the flat view (A.2) — closer camera already makes objects bigger.
-      state.camera.position.y = centerY
-      state.camera.lookAt(0, centerY, 0)
-    } else {
-      // C.1 — Desktop-only ~12° downward tilt: raise camera 6 above center and
-      // look 4 below center. Reveals the grid as a receding plane (per T2),
-      // creates natural leading lines converging on card centers. Mobile is
-      // exempt per T5 (closer flat camera already makes silhouettes legible).
-      state.camera.position.y = centerY + 6
-      state.camera.lookAt(0, centerY - 4, 0)
     }
   })
   return null
@@ -729,7 +750,7 @@ export function Hero3DBackground() {
   // mobile scroll-pause can avoid resuming the render loop after the user
   // has scrolled past the hero (IO won't re-fire false on every scroll tick).
   const inViewRef = useRef(true)
-  const [sectionYs, setSectionYs] = useState({ lut: 12, lalounge: 0, birthday: -12 })
+  const [sectionZs, setSectionZs] = useState({ lut: -14, lalounge: 0, birthday: 14 })
 
   useEffect(() => {
     setEnabled(shouldEnable3D())
@@ -759,18 +780,25 @@ export function Hero3DBackground() {
         return (r.top + r.bottom) / 2 - sectionRect.top
       })
 
-      // A.2: visibleY must match the actual camera — on mobile the camera is closer
-      // (z=38, fov=42) so the visible Y range is smaller; otherwise overlays misalign.
-      const camFov = isMobile ? 42 : 50
-      const camZ = isMobile ? 38 : 50
-      const visibleY = Math.tan((camFov * Math.PI) / 180 / 2) * camZ
-      const toY = (frac: number) => (0.5 - frac) * 2 * visibleY
+      // v22 Phase A — Z mapping (SIGN-FLIPPED vs old toY so LUT sits at -Z).
+      // Card 1 (top, frac~0.27) → negative Z (far, appears at top via perspective).
+      // Card 3 (bottom, frac~0.81) → positive Z (near, appears at bottom).
+      // visibleZ depends on camera pitch — at 60° pitch, ground-projected
+      // visible Z ≈ camDist / sin(pitch) * tan(fov/2). 0.4 scale factor keeps
+      // all 3 sections within the central ~40% of the visible Z swath (avoids
+      // extreme perspective distortion at the near/far edges of the FOV cone).
+      const camDist = isMobile ? 32 : 52
+      const pitch = Math.PI / 3
+      const visibleZ =
+        (camDist / Math.sin(pitch)) *
+        Math.tan(((isMobile ? 42 : 50) * Math.PI) / 180 / 2)
+      const toZ = (frac: number) => (frac - 0.5) * 2 * visibleZ * 0.4 // 0.4 = scale factor to fit
 
       if (cardCenters.length >= 3) {
-        setSectionYs({
-          lut: toY(cardCenters[0] / sectionH),
-          lalounge: toY(cardCenters[1] / sectionH),
-          birthday: toY(cardCenters[2] / sectionH),
+        setSectionZs({
+          lut: toZ(cardCenters[0] / sectionH),
+          lalounge: toZ(cardCenters[1] / sectionH),
+          birthday: toZ(cardCenters[2] / sectionH),
         })
       }
     }
@@ -839,7 +867,7 @@ export function Hero3DBackground() {
     >
       <Canvas
         frameloop={inView ? 'always' : 'never'}
-        camera={{ position: [0, 0, isMobile ? 38 : 50], fov: isMobile ? 42 : 50 }}
+        camera={{ position: [0, isMobile ? 28 : 45, isMobile ? 16 : 26], fov: isMobile ? 42 : 50 }}
         dpr={[1, 1.5]}
         gl={{
           antialias: true,
@@ -852,24 +880,29 @@ export function Hero3DBackground() {
           gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
         }}
       >
-        <fog attach="fog" args={['#1a1410', 35, 95]} />
+        {/* B6 — Fog pushed outward (35,95 → 60,180) so the elevated camera
+            (B1 Phase A: y≈45 desktop / 28 mobile) does not fog the foreground
+            sections. Keeps all 3 sections crisp; fades only the distant grid. */}
+        <fog attach="fog" args={['#1a1410', 60, 180]} />
 
-        {/* B.1 — Midnight Luxury palette: 3-point cinematic lighting + warm focal accents.
-            Lights stay in world space (outside SceneGroup) so the key/fill/rim setup
-            is consistent as the scene drifts. */}
+        {/* v22 Phase A — Top-down-friendly lighting: overhead warm key + cool fill +
+            ambient base + 2 section-accent pointLights. Old rim light at [0,-5,-10]
+            (below floor) REMOVED — invisible from top-down. Old accent pointLights
+            at fixed Z=+5/+2 are repositioned to follow sectionZs.lut / .birthday.
+            Lights stay in world space (outside SceneGroup) for consistent framing
+            as the scene drifts. */}
+        {/* Overhead key light (sun from above) */}
+        <directionalLight position={[0, 30, 5]} intensity={1.2} color="#FFE4B5" />
+        {/* Cool fill from the side */}
+        <directionalLight position={[-15, 20, 10]} intensity={0.4} color="#B0C4DE" />
+        {/* Ambient base */}
         <ambientLight intensity={0.3} />
-        {/* Warm key light (Moleskin noon sun) */}
-        <directionalLight position={[8, 15, 8]} intensity={0.9} color="#FFE4B5" />
-        {/* Cool fill light (open shade) */}
-        <directionalLight position={[-8, 5, -5]} intensity={0.3} color="#B0C4DE" />
-        {/* Rim light (back separation) */}
-        <directionalLight position={[0, -5, -10]} intensity={0.2} color="#FFD1E8" />
-        {/* Warm focal accent — behind LUT sofa (F.5: 0.6→0.8 for unambiguous candlelit tone) */}
-        <pointLight position={[0, 3, 5]} intensity={0.8} color="#D4A574" distance={15} />
-        {/* Warm focal accent — on birthday cake (F.5: 0.4→0.6) */}
-        <pointLight position={[0, 2, 2]} intensity={0.6} color={BRAND_COLORS.YOUR_BIRTHDAY} distance={8} />
+        {/* Warm focal accent over LUT section */}
+        <pointLight position={[0, 5, sectionZs.lut]} intensity={0.8} color="#D4A574" distance={20} />
+        {/* Warm focal accent over Birthday section */}
+        <pointLight position={[0, 5, sectionZs.birthday]} intensity={0.6} color={BRAND_COLORS.YOUR_BIRTHDAY} distance={15} />
 
-        <CameraRig sectionYs={sectionYs} isMobile={isMobile} />
+        <CameraRig sectionZs={sectionZs} isMobile={isMobile} />
 
         {/* B.6 — Unified parent rotation wraps the whole scene so it drifts
             together as one composition (~0.17°/sec). Lights + camera stay
@@ -879,22 +912,20 @@ export function Hero3DBackground() {
           <MasterBlueprintGrid />
           <MasterArchitecture />
 
-          {/* LUT furniture overlay (top) — smaller on mobile to prevent overlap */}
-          <LutFurniture y={sectionYs.lut} scale={isMobile ? 0.6 : 0.9} />
+          {/* LUT furniture overlay (top, -Z) — smaller on mobile to prevent overlap */}
+          <LutFurniture z={sectionZs.lut} scale={isMobile ? 0.5 : 0.9} />
 
-          {/* Birthday party overlay (bottom) — smaller on mobile to prevent overlap */}
-          <BirthdayParty y={sectionYs.birthday} scale={isMobile ? 0.6 : 0.9} />
+          {/* Birthday party overlay (bottom, +Z) — smaller on mobile to prevent overlap */}
+          <BirthdayParty z={sectionZs.birthday} scale={isMobile ? 0.5 : 0.9} />
 
-          {/* B.5 — Gold spine: thin cylinder spanning all 3 sections for visual
-              continuity. Lives in the main Canvas (inside SceneGroup, not inside
-              any section group) so it spans the full composition.
-              F.1/A.1: rotation prop REMOVED — a cylinderGeometry's default axis
-              is +Y (vertical), which is what we want for a vertical connector.
-              The prior rotation={[π/2, 0, 0]} was laying it along Z (depth),
-              making it invisible as a vertical spine.
-              F.3/A.2: opacity 0.28→0.6 and radius 0.04→0.07 to make the spine
-              actually detectable against the dark warm background. */}
-          <mesh position={[0, 0, 0]}>
+          {/* v22 Phase A — Gold spine rotated to lie flat along Z. rotation=[π/2,0,0]
+              reorients the cylinder's default +Y axis to world Z, so it reads as a
+              horizontal "gold road" connecting the 3 sections (was a vertical
+              cylinder — invisible as a dot under the top-down camera). Y=0.02
+              prevents z-fighting with the grid at Y=0. Span 60 covers the desktop
+              ±11 Z-spread + margin; mobile ±6 spread + margin. Opacity 0.6 keeps
+              it detectable against the dark warm background. */}
+          <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.07, 0.07, 60, 8]} />
             <meshBasicMaterial color={GOLD_TONE} transparent opacity={0.6} />
           </mesh>
