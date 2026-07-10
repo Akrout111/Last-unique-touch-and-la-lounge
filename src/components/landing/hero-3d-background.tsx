@@ -1,19 +1,26 @@
 'use client'
 
 /**
- * Hero3DBackground — ONE unified blueprint with per-section 3D overlays.
+ * Hero3DBackground — La Lounge blueprint base + LUT furniture top + Birthday party bottom.
  *
- * Design (v18-build-H3):
- *   - ONE continuous blueprint grid (gridHelper + radial rings + radar) spans
- *     the ENTIRE hero background, covering all three card areas.
- *   - 3D content is overlaid at each card's vertical position:
- *       • Top    (card 1 — LUT):       real 3D furniture meshes (solid materials)
- *       • Middle (card 2 — La Lounge): wireframe event architecture (stage, trusses, booths)
- *       • Bottom (card 3 — Birthday):  3D party objects (balloons, cake, confetti)
+ * Design (v19-build-H4):
+ *   - ONE continuous MASTER blueprint base (La Lounge's `BlueprintGrid` + `EventArchitecture`
+ *     pattern, modified): gridHelper + radial rings + radar sweep + crosshairs +
+ *     scattered wireframe platforms/pillars/trusses/tables spanning the full scene.
+ *     Uses a neutral mauve/gold palette (not pure La Lounge pink) so it reads as a
+ *     "master plan" rather than a La Lounge event plan.
+ *   - Dimension annotations (gold accent lines + end marks) at each card's Y position
+ *     (LUT / LA_LOUNGE / BIRTHDAY) for an architectural measurement aesthetic.
+ *   - 3D content is overlaid ON TOP of the continuous blueprint at each card's vertical
+ *     position:
+ *       • Top    (card 1 — LUT):       real 3D furniture meshes (chairs, tables, sofa)
+ *       • Middle (card 2 — La Lounge): PURE blueprint (master architecture shows through —
+ *                                      no separate La Lounge overlay; the master IS the base)
+ *       • Bottom (card 3 — Birthday):  3D party objects (balloons, multi-tier cake, confetti)
  *   - Section Y positions are computed DYNAMICALLY from the actual card centers
  *     measured via getBoundingClientRect() — guarantees alignment on both
- *     mobile (390px) and desktop (1280px) viewports. Re-measured on resize
- *     and after window load.
+ *     mobile (390px) and desktop (1280px) viewports. Re-measured on resize,
+ *     after window load, and via ResizeObserver.
  *
  * Performance:
  *   - shouldEnable3D() gating (returns null on low-end / reduced-motion / no WebGL)
@@ -25,17 +32,21 @@
 
 import { useRef, useState, useEffect, useMemo, type ReactElement } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { PointMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 import { shouldEnable3D } from '@/lib/device-capabilities'
 import { BRAND_COLORS } from '@/lib/brand-colors'
 
-// === Brand tints (light pinks for the unified blueprint grid) ===
-const PINK_LIGHT = '#FFD1E8' // ≈ pink-200 — base grid cross-lines
-const PINK_LIGHTER = '#FFEFF6' // ≈ pink-50 — base grid lines (lightest)
-const PINK_SOFT = '#FFE0EF' // ≈ pink-100 — secondary grid lines
-const PINK_MID = '#FFB3D9' // ≈ pink-300 — radial grid rings
+// === Tints for the master-plan blueprint (neutral with pink accents) ===
+// Using a softer, more neutral palette than pure La Lounge pink so the
+// background feels like a "master plan" rather than a La Lounge event plan.
+const GRID_MAIN = '#E8D5E0' // soft mauve — main grid lines
+const GRID_LIGHT = '#F5EBF0' // very light pink — fine grid lines
+const GRID_ACCENT = '#D4A574' // gold — major grid lines (ties to LUT/birthday)
+const RING_COLOR = '#C8A0B0' // muted pink — radial rings
+const RADAR_COLOR = '#FFD1E8' // light pink — radar sweep
 
-// Furniture material tones (LUT section).
+// Furniture tones
 const WOOD = '#8B6F47'
 const GOLD_TONE = '#D4A574'
 const IVORY = '#F5F1E8'
@@ -43,10 +54,10 @@ const IVORY = '#F5F1E8'
 type Vec3 = [number, number, number]
 
 // ============================================================
-// UNIFIED BLUEPRINT GRID — one continuous grid covering everything
+// MASTER BLUEPRINT GRID — the continuous base (modified La Lounge style)
 // ============================================================
 
-function UnifiedBlueprintGrid() {
+function MasterBlueprintGrid() {
   const gridRef = useRef<THREE.Group>(null)
   const radarRef = useRef<THREE.Mesh>(null)
 
@@ -61,55 +72,227 @@ function UnifiedBlueprintGrid() {
 
   return (
     <group ref={gridRef}>
-      {/* Main grid — LARGE, covers entire scene (300 units across, 150 divisions) */}
-      <gridHelper args={[300, 150, PINK_LIGHT, PINK_LIGHTER]} position={[0, 0, 0]} />
-      {/* Secondary grid — denser major lines */}
-      <gridHelper
-        args={[300, 30, BRAND_COLORS.LA_LOUNGE_LIGHT, PINK_SOFT]}
-        position={[0, -0.01, 0]}
-      />
+      {/* Fine grid (200 divisions) */}
+      <gridHelper args={[300, 200, GRID_MAIN, GRID_LIGHT]} position={[0, 0, 0]} />
+      {/* Major grid (20 divisions — gold accent lines) */}
+      <gridHelper args={[300, 20, GRID_ACCENT, GRID_LIGHT]} position={[0, -0.01, 0]} />
 
-      {/* Radial rings centered on each card area (visual continuity between sections) */}
-      {([26, 0, -26] as const).map((y) => (
-        <group key={`rings_${y}`} position={[0, y, 0]}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <mesh key={`ring_${y}_${i}`} rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[4 + i * 4, 4.04 + i * 4, 64]} />
-              <meshBasicMaterial
-                color={PINK_MID}
-                transparent
-                opacity={0.2}
-                side={THREE.DoubleSide}
-              />
+      {/* Radial rings — centered at middle, span the whole scene */}
+      {Array.from({ length: 12 }).map((_, i) => (
+        <mesh key={`radial_${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+          <ringGeometry args={[8 + i * 6, 8.06 + i * 6, 96]} />
+          <meshBasicMaterial color={RING_COLOR} transparent opacity={0.2} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Radar sweep */}
+      <mesh ref={radarRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+        <circleGeometry args={[150, 64]} />
+        <meshBasicMaterial color={RADAR_COLOR} transparent opacity={0.04} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Crosshairs */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 20, 0]}>
+          <boxGeometry args={[300, 0.005, 0.03]} />
+          <meshBasicMaterial color={GRID_MAIN} transparent opacity={0.2} />
+        </mesh>
+      ))}
+
+      {/* Dimension annotations (architectural measurement marks) */}
+      {[
+        { y: 25, label: 'LUT' },
+        { y: 0, label: 'LA_LOUNGE' },
+        { y: -25, label: 'BIRTHDAY' },
+      ].map((dim) => (
+        <group key={`dim_${dim.label}`} position={[0, dim.y, 0]}>
+          {/* Dimension line */}
+          <mesh rotation={[0, 0, 0]}>
+            <boxGeometry args={[40, 0.02, 0.02]} />
+            <meshBasicMaterial color={GRID_ACCENT} transparent opacity={0.3} />
+          </mesh>
+          {/* End marks */}
+          {[-20, 20].map((x) => (
+            <mesh key={x} position={[x, 0, 0]}>
+              <boxGeometry args={[0.3, 0.3, 0.3]} />
+              <meshBasicMaterial color={GRID_ACCENT} transparent opacity={0.4} />
             </mesh>
           ))}
         </group>
-      ))}
-
-      {/* Radar sweep (centered on the middle section) */}
-      <mesh ref={radarRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <circleGeometry args={[150, 64]} />
-        <meshBasicMaterial
-          color={BRAND_COLORS.LA_LOUNGE_LIGHT}
-          transparent
-          opacity={0.03}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Crosshair lines spanning the full height (architectural plan vibe) */}
-      {Array.from({ length: 16 }).map((_, i) => (
-        <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 16, 0]}>
-          <boxGeometry args={[300, 0.005, 0.03]} />
-          <meshBasicMaterial color={PINK_LIGHT} transparent opacity={0.15} />
-        </mesh>
       ))}
     </group>
   )
 }
 
 // ============================================================
-// LUT FURNITURE — real 3D meshes, positioned at card 1 Y
+// MASTER ARCHITECTURE — wireframe event structures (modified from La Lounge)
+// Spread across the full background, not just one section.
+// ============================================================
+
+function MasterArchitecture() {
+  const groupRef = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.005
+    }
+  })
+
+  const { elements, materials, geometries } = useMemo(() => {
+    const items: ReactElement[] = []
+    const geos: THREE.BufferGeometry[] = []
+    const track = <T extends THREE.BufferGeometry>(geo: T): T => {
+      geos.push(geo)
+      return geo
+    }
+
+    // Materials — muted blueprint ink (not pure La Lounge pink)
+    const matBold = new THREE.LineBasicMaterial({
+      color: BRAND_COLORS.LA_LOUNGE,
+      transparent: true,
+      opacity: 0.7,
+    })
+    const matMain = new THREE.LineBasicMaterial({
+      color: RING_COLOR,
+      transparent: true,
+      opacity: 0.6,
+    })
+    const matSub = new THREE.LineBasicMaterial({
+      color: GRID_ACCENT,
+      transparent: true,
+      opacity: 0.4,
+    })
+
+    // Scattered architectural elements across the full background
+    // (not concentrated in one section like La Lounge's stage)
+
+    // Small platform outlines at 3 positions
+    const platforms = [
+      { x: 0, z: -20, y: 0, w: 12, d: 6 },
+      { x: -15, z: 10, y: 0, w: 8, d: 4 },
+      { x: 15, z: 10, y: 0, w: 8, d: 4 },
+    ]
+    platforms.forEach((p, i) => {
+      const geo = track(new THREE.BoxGeometry(p.w, 0.4, p.d))
+      items.push(
+        <lineSegments
+          key={`plat_${i}`}
+          geometry={track(new THREE.EdgesGeometry(geo))}
+          material={matMain}
+          position={[p.x, p.y + 0.2, p.z]}
+        />,
+      )
+    })
+
+    // Vertical pillars at scattered positions
+    const pillars: Array<[number, number]> = [
+      [-20, -15],
+      [20, -15],
+      [-20, 15],
+      [20, 15],
+      [-10, -25],
+      [10, -25],
+      [-10, 25],
+      [10, 25],
+    ]
+    pillars.forEach(([x, z], i) => {
+      const geo = track(new THREE.BoxGeometry(0.5, 8, 0.5))
+      items.push(
+        <lineSegments
+          key={`pil_${i}`}
+          geometry={track(new THREE.EdgesGeometry(geo))}
+          material={matSub}
+          position={[x, 4, z]}
+        />,
+      )
+    })
+
+    // Horizontal truss lines connecting some pillars
+    const trussPairs: Array<[[number, number], [number, number]]> = [
+      [
+        [-20, -15],
+        [20, -15],
+      ],
+      [
+        [-20, 15],
+        [20, 15],
+      ],
+      [
+        [-10, -25],
+        [10, -25],
+      ],
+    ]
+    trussPairs.forEach((pair, i) => {
+      const w = Math.abs(pair[0][0] - pair[1][0])
+      const cx = (pair[0][0] + pair[1][0]) / 2
+      const cz = (pair[0][1] + pair[1][1]) / 2
+      const geo = track(new THREE.BoxGeometry(w, 0.3, 0.3))
+      items.push(
+        <lineSegments
+          key={`truss_${i}`}
+          geometry={track(new THREE.EdgesGeometry(geo))}
+          material={matBold}
+          position={[cx, 8, cz]}
+        />,
+      )
+    })
+
+    // Small circular table outlines scattered
+    const tables: Array<[number, number]> = [
+      [-8, -5],
+      [8, -5],
+      [-8, 5],
+      [8, 5],
+      [0, 20],
+    ]
+    tables.forEach(([x, z], i) => {
+      const geo = track(new THREE.CylinderGeometry(1, 1, 0.3, 16))
+      items.push(
+        <lineSegments
+          key={`tab_${i}`}
+          geometry={track(new THREE.EdgesGeometry(geo))}
+          material={matSub}
+          position={[x, 0.15, z]}
+        />,
+      )
+    })
+
+    // Floating technical nodes (elevation lines from ground)
+    for (let k = 0; k < 30; k++) {
+      const px = (Math.random() - 0.5) * 80
+      const pz = (Math.random() - 0.5) * 80
+      const py = 2 + Math.random() * 8
+      // Elevation line from ground to node
+      const lineGeo = track(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(px, 0, pz),
+          new THREE.Vector3(px, py, pz),
+        ]),
+      )
+      items.push(<primitive key={`elev_${k}`} object={new THREE.Line(lineGeo, matSub)} />)
+    }
+
+    return {
+      elements: items,
+      materials: { matBold, matMain, matSub },
+      geometries: geos,
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      materials.matBold.dispose()
+      materials.matMain.dispose()
+      materials.matSub.dispose()
+      geometries.forEach((g) => g.dispose())
+    }
+  }, [materials, geometries])
+
+  return <group ref={groupRef}>{elements}</group>
+}
+
+// ============================================================
+// LUT FURNITURE — real 3D meshes (top section overlay)
 // ============================================================
 
 function FurnitureChair({ position, color }: { position: Vec3; color: string }) {
@@ -122,17 +305,14 @@ function FurnitureChair({ position, color }: { position: Vec3; color: string }) 
   })
   return (
     <group ref={ref} position={position}>
-      {/* Seat */}
       <mesh position={[0, 0.5, 0]}>
         <boxGeometry args={[1.2, 0.15, 1.2]} />
         <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
       </mesh>
-      {/* Backrest */}
       <mesh position={[0, 1.1, -0.5]}>
         <boxGeometry args={[1.2, 1.2, 0.15]} />
         <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
       </mesh>
-      {/* Legs (gold) */}
       {(
         [
           [-0.5, -0.5],
@@ -153,201 +333,73 @@ function FurnitureChair({ position, color }: { position: Vec3; color: string }) 
 function FurnitureTable({ position, color }: { position: Vec3; color: string }) {
   return (
     <group position={position}>
-      {/* Top (ivory) */}
       <mesh position={[0, 1, 0]}>
         <cylinderGeometry args={[1.5, 1.5, 0.1, 32]} />
         <meshStandardMaterial color={IVORY} roughness={0.1} metalness={0.3} />
       </mesh>
-      {/* Pole (wood) */}
       <mesh position={[0, 0.5, 0]}>
         <cylinderGeometry args={[0.1, 0.1, 1, 16]} />
         <meshStandardMaterial color={WOOD} roughness={0.5} />
       </mesh>
-      {/* Base (wood) */}
       <mesh position={[0, 0.05, 0]}>
         <cylinderGeometry args={[0.8, 0.8, 0.1, 32]} />
         <meshStandardMaterial color={WOOD} roughness={0.5} />
       </mesh>
-      {/* Tablecloth accent (brand red) */}
       <mesh position={[0, 1.06, 0]}>
         <cylinderGeometry args={[1.55, 1.55, 0.02, 32]} />
-        <meshStandardMaterial color={color} roughness={0.6} metalness={0} />
+        <meshStandardMaterial color={color} roughness={0.6} />
       </mesh>
     </group>
   )
 }
 
-function LutFurniture({ y }: { y: number }) {
+function FurnitureSofa({ position, color }: { position: Vec3; color: string }) {
   return (
-    <group position={[0, y, 0]}>
-      <FurnitureChair position={[-5, 0, 0]} color={BRAND_COLORS.LUT} />
-      <FurnitureChair position={[-2, 0, 1]} color={IVORY} />
+    <group position={position}>
+      {/* Base */}
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[3, 0.6, 1.2]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Back */}
+      <mesh position={[0, 1, -0.5]}>
+        <boxGeometry args={[3, 0.8, 0.2]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Arms */}
+      <mesh position={[-1.5, 0.6, 0]}>
+        <boxGeometry args={[0.3, 0.8, 1.2]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      <mesh position={[1.5, 0.6, 0]}>
+        <boxGeometry args={[0.3, 0.8, 1.2]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+    </group>
+  )
+}
+
+function LutFurniture({ y, scale }: { y: number; scale: number }) {
+  // The group scale handles both object size AND horizontal spread.
+  // On mobile (tighter card spacing) we pass a smaller scale (0.6) so the
+  // furniture does not bleed into adjacent sections (the middle La Lounge
+  // card sits between the LUT and Birthday overlays). Tall objects (the
+  // floor lamp at 2.3 units tall) were removed so vertical extent stays
+  // within the section; horizontal X positions were also tightened.
+  return (
+    <group position={[0, y, 0]} scale={scale}>
+      <FurnitureChair position={[-4, 0, 0]} color={BRAND_COLORS.LUT} />
+      <FurnitureChair position={[-1.5, 0, 1]} color={IVORY} />
       <FurnitureChair position={[4, 0, -1]} color={BRAND_COLORS.LUT} />
-      <FurnitureTable position={[-3.5, 0, 2]} color={BRAND_COLORS.LUT} />
+      <FurnitureTable position={[-3, 0, 2]} color={BRAND_COLORS.LUT} />
       <FurnitureTable position={[3, 0, 1]} color={BRAND_COLORS.LUT} />
+      <FurnitureSofa position={[0, 0, -3]} color={BRAND_COLORS.LUT} />
     </group>
   )
 }
 
 // ============================================================
-// LA LOUNGE ARCHITECTURE — wireframe event blueprint, positioned at card 2 Y
-// ============================================================
-
-function LaLoungeArchitecture({ y }: { y: number }) {
-  const groupRef = useRef<THREE.Group>(null)
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.01
-    }
-  })
-
-  // Memoize geometries + materials and dispose them on unmount (R3F does not
-  // auto-dispose geometries passed via the `geometry={...}` prop).
-  const { elements, materials, geometries } = useMemo(() => {
-    const items: ReactElement[] = []
-    const geos: THREE.BufferGeometry[] = []
-    const track = <T extends THREE.BufferGeometry>(geo: T): T => {
-      geos.push(geo)
-      return geo
-    }
-
-    const matBold = new THREE.LineBasicMaterial({
-      color: BRAND_COLORS.LA_LOUNGE,
-      transparent: true,
-      opacity: 0.9,
-    })
-    const matMain = new THREE.LineBasicMaterial({
-      color: BRAND_COLORS.LA_LOUNGE,
-      transparent: true,
-      opacity: 0.7,
-    })
-    const matSub = new THREE.LineBasicMaterial({
-      color: BRAND_COLORS.LA_LOUNGE_LIGHT,
-      transparent: true,
-      opacity: 0.5,
-    })
-
-    // Stage platform
-    const stageGeo = track(new THREE.BoxGeometry(16, 0.8, 8))
-    items.push(
-      <lineSegments
-        key="stage"
-        geometry={track(new THREE.EdgesGeometry(stageGeo))}
-        material={matBold}
-        position={[0, 0.4, 0]}
-      />,
-    )
-
-    // LED screen
-    const screenGeo = track(new THREE.BoxGeometry(14, 6, 0.3))
-    items.push(
-      <lineSegments
-        key="screen"
-        geometry={track(new THREE.EdgesGeometry(screenGeo))}
-        material={matBold}
-        position={[0, 4, -3.5]}
-      />,
-    )
-
-    // Truss pillars (4 corners)
-    for (const [x, z] of [
-      [-10, -5],
-      [10, -5],
-      [-10, 5],
-      [10, 5],
-    ] as Array<[number, number]>) {
-      const pillarGeo = track(new THREE.BoxGeometry(0.6, 10, 0.6))
-      items.push(
-        <lineSegments
-          key={`pil_${x}_${z}`}
-          geometry={track(new THREE.EdgesGeometry(pillarGeo))}
-          material={matMain}
-          position={[x, 5, z]}
-        />,
-      )
-    }
-
-    // Seating booths (semi-circular tori)
-    for (const side of [-1, 1] as const) {
-      const boothGeo = track(new THREE.TorusGeometry(2.5, 0.8, 8, 16, Math.PI))
-      items.push(
-        <lineSegments
-          key={`booth_${side}`}
-          geometry={track(new THREE.EdgesGeometry(boothGeo))}
-          material={matMain}
-          position={[side * 6, 0.5, 3]}
-          rotation={[Math.PI / 2, 0, side > 0 ? Math.PI / 2 : -Math.PI / 2]}
-        />,
-      )
-    }
-
-    // Tables + chairs (4 clusters)
-    for (const [tx, tz] of [
-      [-4, -2],
-      [4, -2],
-      [-4, 4],
-      [4, 4],
-    ] as Array<[number, number]>) {
-      const tGeo = track(new THREE.CylinderGeometry(1.2, 1.2, 0.5, 16))
-      items.push(
-        <lineSegments
-          key={`tab_${tx}_${tz}`}
-          geometry={track(new THREE.EdgesGeometry(tGeo))}
-          material={matSub}
-          position={[tx, 0.25, tz]}
-        />,
-      )
-      for (let c = 0; c < 4; c++) {
-        const angle = (c / 4) * Math.PI * 2
-        const cGeo = track(new THREE.BoxGeometry(0.5, 0.8, 0.5))
-        items.push(
-          <lineSegments
-            key={`chair_${tx}_${tz}_${c}`}
-            geometry={track(new THREE.EdgesGeometry(cGeo))}
-            material={matSub}
-            position={[tx + Math.cos(angle) * 2, 0.4, tz + Math.sin(angle) * 2]}
-          />,
-        )
-      }
-    }
-
-    return {
-      elements: items,
-      materials: { matBold, matMain, matSub },
-      geometries: geos,
-    }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      materials.matBold.dispose()
-      materials.matMain.dispose()
-      materials.matSub.dispose()
-      geometries.forEach((g) => g.dispose())
-    }
-  }, [materials, geometries])
-
-  return (
-    <group ref={groupRef} position={[0, y, 0]}>
-      {elements}
-      {/* Center dance floor rings */}
-      {[3, 5, 7].map((r, i) => (
-        <mesh key={`dring_${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-          <ringGeometry args={[r, r + 0.15, 64]} />
-          <meshBasicMaterial
-            color={BRAND_COLORS.LA_LOUNGE}
-            transparent
-            opacity={0.5}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-// ============================================================
-// BIRTHDAY PARTY OBJECTS — 3D meshes, positioned at card 3 Y
+// BIRTHDAY PARTY — 3D party objects (bottom section overlay)
 // ============================================================
 
 function Balloon({ position, color }: { position: Vec3; color: string }) {
@@ -361,11 +413,16 @@ function Balloon({ position, color }: { position: Vec3; color: string }) {
   return (
     <group ref={ref} position={position}>
       <mesh>
-        <sphereGeometry args={[0.6, 16, 16]} />
+        <sphereGeometry args={[0.7, 16, 16]} />
         <meshStandardMaterial color={color} roughness={0.3} metalness={0.1} />
       </mesh>
+      {/* Knot */}
+      <mesh position={[0, -0.7, 0]}>
+        <coneGeometry args={[0.1, 0.2, 8]} />
+        <meshStandardMaterial color={color} roughness={0.3} />
+      </mesh>
       {/* String */}
-      <mesh position={[0, -0.8, 0]}>
+      <mesh position={[0, -1.3, 0]}>
         <cylinderGeometry args={[0.01, 0.01, 1, 4]} />
         <meshBasicMaterial color={IVORY} />
       </mesh>
@@ -375,36 +432,36 @@ function Balloon({ position, color }: { position: Vec3; color: string }) {
 
 function BirthdayCake({ position }: { position: Vec3 }) {
   return (
-    <group position={position}>
-      {/* Bottom tier */}
+    <group position={position} scale={1.2}>
       <mesh position={[0, 0.3, 0]}>
-        <cylinderGeometry args={[1.2, 1.2, 0.6, 32]} />
+        <cylinderGeometry args={[1.4, 1.4, 0.6, 32]} />
         <meshStandardMaterial color={IVORY} roughness={0.5} />
       </mesh>
-      {/* Middle tier */}
       <mesh position={[0, 0.8, 0]}>
-        <cylinderGeometry args={[0.9, 0.9, 0.5, 32]} />
+        <cylinderGeometry args={[1, 1, 0.5, 32]} />
         <meshStandardMaterial color={BRAND_COLORS.YOUR_BIRTHDAY} roughness={0.4} />
       </mesh>
-      {/* Top tier */}
       <mesh position={[0, 1.2, 0]}>
-        <cylinderGeometry args={[0.6, 0.6, 0.4, 32]} />
+        <cylinderGeometry args={[0.7, 0.7, 0.4, 32]} />
         <meshStandardMaterial color={IVORY} roughness={0.5} />
       </mesh>
-      {/* Candle */}
-      <mesh position={[0, 1.6, 0]}>
-        <cylinderGeometry args={[0.05, 0.05, 0.3, 8]} />
-        <meshStandardMaterial color={BRAND_COLORS.LUT} />
-      </mesh>
-      {/* Flame */}
-      <mesh position={[0, 1.85, 0]}>
-        <coneGeometry args={[0.08, 0.2, 8]} />
-        <meshStandardMaterial
-          color={BRAND_COLORS.YOUR_BIRTHDAY}
-          emissive={BRAND_COLORS.YOUR_BIRTHDAY}
-          emissiveIntensity={0.8}
-        />
-      </mesh>
+      {/* Candles */}
+      {[-0.3, 0, 0.3].map((x, i) => (
+        <group key={i} position={[x, 1.5, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.05, 0.05, 0.3, 8]} />
+            <meshStandardMaterial color={i === 1 ? BRAND_COLORS.LUT : BRAND_COLORS.LA_LOUNGE} />
+          </mesh>
+          <mesh position={[0, 0.25, 0]}>
+            <coneGeometry args={[0.06, 0.15, 8]} />
+            <meshStandardMaterial
+              color={BRAND_COLORS.YOUR_BIRTHDAY}
+              emissive={BRAND_COLORS.YOUR_BIRTHDAY}
+              emissiveIntensity={1}
+            />
+          </mesh>
+        </group>
+      ))}
     </group>
   )
 }
@@ -415,7 +472,7 @@ function Confetti({ count }: { count: number }) {
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 30
-      pos[i * 3 + 1] = Math.random() * 8
+      pos[i * 3 + 1] = Math.random() * 5
       pos[i * 3 + 2] = (Math.random() - 0.5) * 20
     }
     return pos
@@ -433,48 +490,40 @@ function Confetti({ count }: { count: number }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial
+      <PointMaterial
         color={BRAND_COLORS.YOUR_BIRTHDAY}
-        size={0.3}
+        size={0.4}
         sizeAttenuation
         transparent
         opacity={0.7}
+        depthWrite={false}
       />
     </points>
   )
 }
 
-function BirthdayParty({ y }: { y: number }) {
+function BirthdayParty({ y, scale }: { y: number; scale: number }) {
+  // The group scale handles both object size AND horizontal spread.
+  // On mobile (tighter card spacing) we pass a smaller scale (0.6) so the
+  // party objects do not bleed into adjacent sections (the middle La Lounge
+  // card sits between the LUT and Birthday overlays). Tall party light
+  // beams (6 units tall at y=4) were removed so vertical extent stays
+  // within the section; balloon X positions were tightened and balloon
+  // base Y positions lowered so they don't float as high.
   return (
-    <group position={[0, y, 0]}>
-      <Balloon position={[-5, 1, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY} />
-      <Balloon position={[-2, 2, 1]} color={BRAND_COLORS.LA_LOUNGE} />
-      <Balloon position={[2, 1.5, -1]} color="#A855F7" />
-      <Balloon position={[5, 2, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY_LIGHT} />
+    <group position={[0, y, 0]} scale={scale}>
+      <Balloon position={[-4, 0.5, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY} />
+      <Balloon position={[-2, 1, 1]} color={BRAND_COLORS.LA_LOUNGE} />
+      <Balloon position={[2, 0.8, -1]} color="#A855F7" />
+      <Balloon position={[4, 1, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY_LIGHT} />
       <BirthdayCake position={[0, 0, 2]} />
-      <Confetti count={30} />
-      {/* Party light beams */}
-      {[-6, 6].map((x, i) => (
-        <mesh
-          key={`light_${i}`}
-          position={[x, 4, -3]}
-          rotation={[0.3, x > 0 ? -0.3 : 0.3, 0]}
-        >
-          <coneGeometry args={[1.5, 6, 8, 1, true]} />
-          <meshBasicMaterial
-            color={i === 0 ? BRAND_COLORS.YOUR_BIRTHDAY : BRAND_COLORS.LA_LOUNGE}
-            transparent
-            opacity={0.15}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      ))}
+      <Confetti count={40} />
     </group>
   )
 }
 
 // ============================================================
-// CAMERA RIG — follows the vertical center of the three sections
+// CAMERA RIG
 // ============================================================
 
 function CameraRig({
@@ -484,8 +533,6 @@ function CameraRig({
 }) {
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    // Camera follows the vertical midpoint between LUT and Birthday sections
-    // so all three sections remain in view at once.
     const centerY = (sectionYs.lut + sectionYs.birthday) / 2
     state.camera.position.x = Math.sin(t * 0.04) * 3
     state.camera.position.y = centerY
@@ -501,22 +548,25 @@ function CameraRig({
 
 export function Hero3DBackground() {
   const [enabled, setEnabled] = useState(false)
-  // Keep the Canvas mounted at all times (never unmount via inView) —
-  // toggling frameloop instead prevents WebGL context-loss cycles.
   const [inView, setInView] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [sectionYs, setSectionYs] = useState({
-    lut: 12,
-    lalounge: 0,
-    birthday: -12,
-  })
+  const [sectionYs, setSectionYs] = useState({ lut: 12, lalounge: 0, birthday: -12 })
 
   useEffect(() => {
     setEnabled(shouldEnable3D())
   }, [])
 
-  // Measure actual card positions and compute 3D Y offsets that align
-  // the 3D sections with their respective cards on both mobile + desktop.
+  // Responsive detection — on mobile (<768px) the cards are stacked closer
+  // together, so the 3D furniture (top) and party objects (bottom) need a
+  // smaller scale to avoid bleeding into the middle (La Lounge) section.
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   useEffect(() => {
     const measure = () => {
       const cards = document.querySelectorAll('[role=button]')
@@ -526,19 +576,14 @@ export function Hero3DBackground() {
       const sectionH = sectionRect.height
       if (sectionH === 0) return
 
-      // Card centers as fraction of section height (0 = top, 1 = bottom)
       const cardCenters = Array.from(cards).map((c) => {
         const r = (c as HTMLElement).getBoundingClientRect()
         return (r.top + r.bottom) / 2 - sectionRect.top
       })
 
-      // Map to 3D Y. Camera at z=50, fov=50 → visible Y = ±tan(25°)*50 ≈ ±23.3
-      // We want card 1 (top) → positive Y, card 3 (bottom) → negative Y.
-      // Convert fraction (0..1) to Y: fraction 0.5 → Y=0, 0.0 → Y=+23, 1.0 → Y=-23
       const visibleY = Math.tan((50 * Math.PI) / 180 / 2) * 50
       const toY = (frac: number) => (0.5 - frac) * 2 * visibleY
 
-      // Only update if we have at least 3 cards measured
       if (cardCenters.length >= 3) {
         setSectionYs({
           lut: toY(cardCenters[0] / sectionH),
@@ -549,12 +594,9 @@ export function Hero3DBackground() {
     }
 
     measure()
-    // Re-measure on resize + after fonts/images load
     window.addEventListener('resize', measure)
     window.addEventListener('load', measure)
-    const timeoutId = setTimeout(measure, 500) // after hydration
-    // ResizeObserver catches layout shifts that the resize event misses
-    // (e.g. fonts loading, images loading, dynamic content).
+    const timeoutId = setTimeout(measure, 500)
     const ro = new ResizeObserver(() => measure())
     const section = document.querySelector('section')
     if (section) ro.observe(section)
@@ -611,17 +653,15 @@ export function Hero3DBackground() {
 
         <CameraRig sectionYs={sectionYs} />
 
-        {/* UNIFIED blueprint grid — one continuous grid covering everything */}
-        <UnifiedBlueprintGrid />
+        {/* MASTER BLUEPRINT — one continuous base (La Lounge style, modified) */}
+        <MasterBlueprintGrid />
+        <MasterArchitecture />
 
-        {/* 3D overlays at each card's Y position */}
-        <group scale={1.5}>
-          <LutFurniture y={sectionYs.lut} />
-        </group>
-        <LaLoungeArchitecture y={sectionYs.lalounge} />
-        <group scale={1.5}>
-          <BirthdayParty y={sectionYs.birthday} />
-        </group>
+        {/* LUT furniture overlay (top) — smaller on mobile to prevent overlap */}
+        <LutFurniture y={sectionYs.lut} scale={isMobile ? 0.6 : 0.9} />
+
+        {/* Birthday party overlay (bottom) — smaller on mobile to prevent overlap */}
+        <BirthdayParty y={sectionYs.birthday} scale={isMobile ? 0.6 : 0.9} />
       </Canvas>
     </div>
   )
