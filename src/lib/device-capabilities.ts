@@ -24,11 +24,15 @@ export function shouldEnable3D(): boolean {
     return false
   }
 
-  // Low memory / cores → skip 3D
+  // Low memory / cores → skip 3D.
+  // v20: lowered from 4→2 cores/mem because the scene is now optimized
+  // (draw calls reduced 52% via geometry merging + instancing). 2-core
+  // devices can run it comfortably. Only gate on truly incapable hardware
+  // (< 2 cores or < 2 GB).
   const nav = navigator as Navigator & { deviceMemory?: number }
   const mem = nav.deviceMemory ?? 4
   const cores = nav.hardwareConcurrency ?? 4
-  if (mem < 4 || cores < 4) return false
+  if (mem < 2 || cores < 2) return false
 
   return true
 }
