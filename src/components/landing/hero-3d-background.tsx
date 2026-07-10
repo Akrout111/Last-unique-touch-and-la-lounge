@@ -725,6 +725,10 @@ export function Hero3DBackground() {
   const [inView, setInView] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Mirrors the IntersectionObserver's latest isIntersecting value so the
+  // mobile scroll-pause can avoid resuming the render loop after the user
+  // has scrolled past the hero (IO won't re-fire false on every scroll tick).
+  const inViewRef = useRef(true)
   const [sectionYs, setSectionYs] = useState({ lut: 12, lalounge: 0, birthday: -12 })
 
   useEffect(() => {
@@ -792,6 +796,7 @@ export function Hero3DBackground() {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
+          inViewRef.current = entry.isIntersecting
           setInView(entry.isIntersecting)
         }
       },
@@ -810,10 +815,18 @@ export function Hero3DBackground() {
     const onScroll = () => {
       setInView(false)
       clearTimeout(scrollTimeout)
-      scrollTimeout = window.setTimeout(() => setInView(true), 150)
+      scrollTimeout = window.setTimeout(() => {
+        // Only resume if the hero is actually in view — otherwise the IO
+        // may not re-fire false (no threshold crossing) and we'd wake the
+        // render loop while the hero is off-screen.
+        if (inViewRef.current) setInView(true)
+      }, 150)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      clearTimeout(scrollTimeout)
+    }
   }, [isMobile])
 
   if (!enabled) return null
@@ -854,7 +867,7 @@ export function Hero3DBackground() {
         {/* Warm focal accent — behind LUT sofa (F.5: 0.6→0.8 for unambiguous candlelit tone) */}
         <pointLight position={[0, 3, 5]} intensity={0.8} color="#D4A574" distance={15} />
         {/* Warm focal accent — on birthday cake (F.5: 0.4→0.6) */}
-        <pointLight position={[0, 2, 2]} intensity={0.6} color="#F5B914" distance={8} />
+        <pointLight position={[0, 2, 2]} intensity={0.6} color={BRAND_COLORS.YOUR_BIRTHDAY} distance={8} />
 
         <CameraRig sectionYs={sectionYs} isMobile={isMobile} />
 
