@@ -85,15 +85,15 @@ function MasterBlueprintGrid() {
 
   return (
     <group ref={gridRef}>
-      {/* Fine grid (B7 — 200 divisions = La Lounge parity; dense 1.5-unit cells).
-          gridHelper is a single draw call regardless of division count, so this
-          is free perf while delivering the dense La Lounge look. */}
-      <gridHelper args={[300, 200, GRID_MAIN, GRID_LIGHT]} position={[0, 0, 0]} />
-      {/* Major grid (B7 — 30 gold accent divisions) */}
+      {/* Fine grid (v23-build-B3 — 60 divisions = cleaner 5-unit cells; was 200
+          in v22 which was too dense/ugly. gridHelper is a single draw call
+          regardless of division count.) */}
+      <gridHelper args={[300, 60, GRID_MAIN, GRID_LIGHT]} position={[0, 0, 0]} />
+      {/* Major grid (30 gold accent divisions — unchanged) */}
       <gridHelper args={[300, 30, GRID_ACCENT, GRID_LIGHT]} position={[0, -0.01, 0]} />
 
-      {/* Radial rings (B7 — 12 rings, r=8+i*6, La Lounge parity) */}
-      {Array.from({ length: 12 }).map((_, i) => (
+      {/* Radial rings (v23-build-B3 — 6 rings, fewer & more elegant; was 12) */}
+      {Array.from({ length: 6 }).map((_, i) => (
         <mesh key={`radial_${i}`} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[8 + i * 6, 8.06 + i * 6, 96]} />
           <meshBasicMaterial color={RING_COLOR} transparent opacity={0.2} side={THREE.DoubleSide} />
@@ -106,11 +106,12 @@ function MasterBlueprintGrid() {
         <meshBasicMaterial color={RADAR_COLOR} transparent opacity={0.04} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* Crosshairs (B7 — 16 lines, every 11.25°, La Lounge parity) */}
-      {Array.from({ length: 16 }).map((_, i) => (
-        <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 16, 0]}>
+      {/* Crosshairs (v23-build-B3 — 8 lines, every 22.5°, cleaner; was 16 at
+          11.25°. Opacity 0.15→0.12 so the fewer lines read visible yet calm.) */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={`cross_${i}`} rotation={[0, (i * Math.PI) / 8, 0]}>
           <boxGeometry args={[300, 0.005, 0.03]} />
-          <meshBasicMaterial color={GRID_MAIN} transparent opacity={0.15} />
+          <meshBasicMaterial color={GRID_MAIN} transparent opacity={0.12} />
         </mesh>
       ))}
 
@@ -408,29 +409,66 @@ function FurnitureSofa({ position, color }: { position: Vec3; color: string }) {
   )
 }
 
+function FloorLamp({ position }: { position: Vec3 }) {
+  // v23-build-B3 — Re-added (was removed in v19-fix-H6). A simple brass
+  // floor lamp: weighted base + thin stem + open ivory shade with a warm
+  // emissive tint so it reads as a lit accent from the top-down camera.
+  return (
+    <group position={position}>
+      {/* Base — weighted brass disc */}
+      <mesh position={[0, 0.1, 0]}>
+        <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+        <meshStandardMaterial color={GOLD_TONE} metalness={0.95} roughness={0.15} />
+      </mesh>
+      {/* Stem — thin brass rod */}
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 2.8, 8]} />
+        <meshStandardMaterial color={GOLD_TONE} metalness={0.95} roughness={0.15} />
+      </mesh>
+      {/* Shade — open ivory cone with warm emissive glow */}
+      <mesh position={[0, 2.9, 0]}>
+        <coneGeometry args={[0.4, 0.5, 16, 1, true]} />
+        <meshStandardMaterial color={IVORY} roughness={0.8} emissive="#FFE4B5" emissiveIntensity={0.3} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  )
+}
+
 function LutFurniture({ z, scale }: { z: number; scale: number }) {
-  // B.5 — Conversation vignette: sofa center-back, 2 flanking chairs angled
-  // ±25° toward center, 1 coffee table front-center, 2 front chairs rotated
-  // 180° to face the sofa. Removed the 2 pedestal tables (replaced by the
-  // single coffee table). Group scale handles object size + horizontal
-  // spread; on mobile we pass a smaller scale (0.6) so the vignette does
-  // not bleed into adjacent sections.
+  // v23-build-B3 — Expanded conversation vignette (6→10 pieces) centered
+  // at X=0 on Z=sectionZs.lut so the group sits directly behind card 1.
+  // Pieces: 1 rug + 1 sofa + 6 chairs + 2 tables + 1 floor lamp = 11 meshes
+  // (rug counted separately as a floor decal). Group scale handles object
+  // size + horizontal spread; on mobile we pass a smaller scale so the
+  // vignette does not bleed into adjacent sections.
   // v22 Phase A — Y=0.5 lift: chair-leg bottoms sit at local Y=-0.5; lifting the
   // outer group to world Y=0.5 puts the leg bottoms at world Y=0 so they rest
   // ON the blueprint floor (no longer buried beneath).
   const deg = Math.PI / 180
   return (
     <group position={[0, 0.5, z]} scale={scale}>
+      {/* Rug under the furniture (flat on floor) */}
+      <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[10, 8]} />
+        <meshStandardMaterial color="#3D1F1F" roughness={0.9} />
+      </mesh>
       {/* Sofa — center-back */}
       <FurnitureSofa position={[0, 0, -3]} color={BRAND_COLORS.LUT} />
-      {/* Flanking chairs — angled ±25° toward center */}
+      {/* Flanking chairs */}
       <FurnitureChair position={[-3, 0, -1]} color={BRAND_COLORS.LUT} rotation={[0, 25 * deg, 0]} />
       <FurnitureChair position={[3, 0, -1]} color={BRAND_COLORS.LUT} rotation={[0, -25 * deg, 0]} />
-      {/* Coffee table — front-center (replaces the 2 pedestal tables) */}
-      <FurnitureTable position={[0, 0, 1]} color={BRAND_COLORS.LUT} />
-      {/* Front chairs — rotated 180° to face the sofa */}
+      {/* Coffee table — center */}
+      <FurnitureTable position={[0, 0, 0]} color={BRAND_COLORS.LUT} />
+      {/* Front chairs facing sofa */}
       <FurnitureChair position={[-2.5, 0, 2]} color={BRAND_COLORS.LUT} rotation={[0, 180 * deg, 0]} />
       <FurnitureChair position={[2.5, 0, 2]} color={BRAND_COLORS.LUT} rotation={[0, 180 * deg, 0]} />
+      {/* NEW: 2 more chairs on the sides */}
+      <FurnitureChair position={[-4, 0, 1]} color={IVORY} rotation={[0, 90 * deg, 0]} />
+      <FurnitureChair position={[4, 0, 1]} color={IVORY} rotation={[0, -90 * deg, 0]} />
+      {/* NEW: Side table */}
+      <FurnitureTable position={[-4.5, 0, -2]} color={BRAND_COLORS.LUT} />
+      {/* NEW: Floor lamp */}
+      <FloorLamp position={[4.5, 0, -2]} />
     </group>
   )
 }
@@ -642,25 +680,90 @@ function DustMotes() {
   )
 }
 
+function GiftBox({ position, color }: { position: Vec3; color: string }) {
+  // v23-build-B3 — Wrapped present: colored box + ivory lid + gold ribbon
+  // (vertical + horizontal bands) + a small gold torus bow on top.
+  return (
+    <group position={position}>
+      {/* Box */}
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[1, 0.8, 1]} />
+        <meshStandardMaterial color={color} roughness={0.5} metalness={0.1} />
+      </mesh>
+      {/* Lid */}
+      <mesh position={[0, 0.85, 0]}>
+        <boxGeometry args={[1.1, 0.15, 1.1]} />
+        <meshStandardMaterial color={IVORY} roughness={0.4} metalness={0.2} />
+      </mesh>
+      {/* Ribbon vertical */}
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[0.15, 0.8, 1.01]} />
+        <meshStandardMaterial color={GOLD_TONE} metalness={0.9} roughness={0.2} />
+      </mesh>
+      {/* Ribbon horizontal */}
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[1.01, 0.8, 0.15]} />
+        <meshStandardMaterial color={GOLD_TONE} metalness={0.9} roughness={0.2} />
+      </mesh>
+      {/* Bow */}
+      <mesh position={[0, 1, 0]}>
+        <torusGeometry args={[0.2, 0.06, 8, 16]} />
+        <meshStandardMaterial color={GOLD_TONE} metalness={0.9} roughness={0.2} />
+      </mesh>
+    </group>
+  )
+}
+
+function Banner() {
+  // v23-build-B3 — A curved garland arching over the party scene: a thin
+  // tube following a sin-arched Catmull-Rom spline from x=-6 to x=+6 at
+  // y=3..4.5, z=-1 (behind the cake). Slight emissive tint so it reads as
+  // a lit bunting from the top-down camera.
+  const points = useMemo(() => {
+    const pts: THREE.Vector3[] = []
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20
+      const x = -6 + t * 12
+      const y = 3 + Math.sin(t * Math.PI) * 1.5
+      pts.push(new THREE.Vector3(x, y, -1))
+    }
+    return pts
+  }, [])
+  return (
+    <mesh>
+      <tubeGeometry args={[new THREE.CatmullRomCurve3(points), 50, 0.05, 8, false]} />
+      <meshStandardMaterial color={BRAND_COLORS.YOUR_BIRTHDAY} emissive={BRAND_COLORS.YOUR_BIRTHDAY} emissiveIntensity={0.2} roughness={0.4} />
+    </mesh>
+  )
+}
+
 function BirthdayParty({ z, scale }: { z: number; scale: number }) {
+  // v23-build-B3 — Expanded party scene (5→10 objects) centered at X=0 on
+  // Z=sectionZs.birthday so the group sits directly behind card 3.
+  // Pieces: 6 balloons + 1 cake + 2 gift boxes + 1 banner + confetti.
   // The group scale handles both object size AND horizontal spread.
-  // On mobile (tighter card spacing) we pass a smaller scale (0.6) so the
-  // party objects do not bleed into adjacent sections (the middle La Lounge
-  // card sits between the LUT and Birthday overlays). Tall party light
-  // beams (6 units tall at y=4) were removed so vertical extent stays
-  // within the section; balloon X positions were tightened and balloon
-  // base Y positions lowered so they don't float as high.
+  // On mobile (tighter card spacing) we pass a smaller scale so the party
+  // objects do not bleed into adjacent sections (the middle La Lounge card
+  // sits between the LUT and Birthday overlays).
   // v22 Phase A — no Y lift: cake base already at local Y=0.3, so the group
   // sits directly on the floor at world Y=0.
   return (
     <group position={[0, 0, z]} scale={scale}>
-      <Balloon position={[-4, 0.5, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY} />
-      <Balloon position={[-2, 1, 1]} color={BRAND_COLORS.LA_LOUNGE} />
-      {/* B.4 — was #A855F7 (off-brand purple); now pink to keep the {red, pink, gold} triad */}
-      <Balloon position={[2, 0.8, -1]} color={BRAND_COLORS.LA_LOUNGE_LIGHT} />
-      <Balloon position={[4, 1, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY_LIGHT} />
+      {/* Balloons (6 — was 4) */}
+      <Balloon position={[-5, 0.5, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY} />
+      <Balloon position={[-3, 1, 1]} color={BRAND_COLORS.LA_LOUNGE} />
+      <Balloon position={[-1, 0.8, -1]} color={BRAND_COLORS.LA_LOUNGE_LIGHT} />
+      <Balloon position={[1, 1.2, 0]} color={BRAND_COLORS.YOUR_BIRTHDAY_LIGHT} />
+      <Balloon position={[3, 0.6, 1]} color={BRAND_COLORS.YOUR_BIRTHDAY} />
+      <Balloon position={[5, 1, -1]} color={BRAND_COLORS.LA_LOUNGE} />
+      {/* Cake — center */}
       <BirthdayCake position={[0, 0, 2]} />
-      {/* C.3 — Denser confetti: count 40→80 */}
+      {/* NEW: Gift boxes (2) */}
+      <GiftBox position={[-4, 0, 2]} color={BRAND_COLORS.LUT} />
+      <GiftBox position={[4, 0, 2]} color={BRAND_COLORS.LA_LOUNGE} />
+      {/* NEW: Banner/garland arch */}
+      <Banner />
+      {/* Confetti (count 80) */}
       <Confetti count={80} />
     </group>
   )
