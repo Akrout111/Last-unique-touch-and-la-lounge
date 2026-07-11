@@ -14,11 +14,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Loader2, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useCart } from '@/components/providers/cart-provider'
 import { localizedName } from '@/lib/products'
+import { formatDate } from '@/lib/format-date'
 
 const checkoutSchema = z.object({
   customerName: z.string().min(3).max(100),
   customerPhone: z.string().regex(/^\+?[0-9\s-]{8,20}$/),
-  customerEmail: z.string().email(),
+  // v29-fix-F7 Fix #8: bound email length (parity with the server-side
+  // schema in /api/orders — a >200-char email is rejected by the server
+  // anyway; capping it here avoids a confusing "form valid → server 400"
+  // round-trip).
+  customerEmail: z.string().email().max(200),
   address: z.string().min(10).max(500),
   city: z.string().min(2).max(50),
   notes: z.string().max(1000).optional(),
@@ -421,9 +426,11 @@ export function CheckoutView() {
                         {productName}
                       </p>
                       <p className="text-xs text-muted-foreground">
+                        {/* v29-fix-F7 Fix #7: locale-aware date formatting
+                            (was `item.startDate.split('T')[0]` — locale-neutral ISO). */}
                         {t('cart.item.period', {
-                          start: item.startDate.split('T')[0],
-                          end: item.endDate.split('T')[0],
+                          start: formatDate(item.startDate, locale),
+                          end: formatDate(item.endDate, locale),
                           days: item.days,
                         })}
                       </p>

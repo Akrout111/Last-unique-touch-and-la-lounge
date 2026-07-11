@@ -22,13 +22,16 @@ export async function generateMetadata({
  * omitted entirely so we never publish the `965XXXXXXXX` placeholder to
  * search engines.
  *
- * FIX-4B / R3-E #7: use `NEXT_PUBLIC_SITE_URL` (with the production hostname
- * as the fallback) so preview / staging deployments don't publish
- * lastuniquetouch.com canonical URLs in their JSON-LD. Matches the pattern
- * in `src/lib/seo.ts:3`.
+ * FIX-4B / R3-E #7: use `NEXT_PUBLIC_SITE_URL` so preview / staging
+ * deployments don't publish lastuniquetouch.com canonical URLs in their
+ * JSON-LD. v29-fix-F8 #10: the fallback now matches `src/lib/seo.ts:3`
+ * (`http://localhost:3000`) so all canonical-URL emitters agree on a single
+ * default — previously this file emitted `https://lastuniquetouch.com` while
+ * `seo.ts` emitted `http://localhost:3000`, leaking inconsistent hosts into
+ * metadata + JSON-LD on unconfigured deployments.
  */
 function buildOrganizationLd(): Record<string, unknown> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lastuniquetouch.com'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const base: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -62,7 +65,8 @@ const organizationLd = buildOrganizationLd()
 // explicitly declares the site's canonical homepage URL + search action.
 // FIX-4B / R3-E #7: uses NEXT_PUBLIC_SITE_URL so preview deployments don't
 // leak lastuniquetouch.com URLs into their JSON-LD.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lastuniquetouch.com'
+// v29-fix-F8 #10: fallback aligned with `src/lib/seo.ts:3`.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 const websiteLd: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',

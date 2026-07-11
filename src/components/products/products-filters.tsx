@@ -141,12 +141,13 @@ export function ProductsFilters({
             <button
               key={chip.slug ?? 'all'}
               onClick={() => handleCategoryClick(chip.slug)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              aria-pressed={isActive}
+              className={`min-h-[44px] px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-lut text-white'
                   : 'bg-stone-50 text-foreground hover:bg-secondary'
               }`}
-            >
+>
               {chip.label}
             </button>
           )

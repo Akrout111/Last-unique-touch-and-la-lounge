@@ -20,9 +20,9 @@ export default function GlobalError({
     <html lang={isArabic ? 'ar' : 'en'} dir={isArabic ? 'rtl' : 'ltr'}>
       <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0, padding: '20px' }}>
         <div style={{ maxWidth: '500px', margin: '50px auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>
+          <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>
             {isArabic ? 'حدث خطأ حرج' : 'Critical Error'}
-          </h2>
+          </h1>
           <p style={{ color: '#666', marginBottom: '24px' }}>
             {isArabic
               ? 'نعتذر — حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'

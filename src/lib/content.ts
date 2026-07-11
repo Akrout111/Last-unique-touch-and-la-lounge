@@ -46,7 +46,13 @@ export async function getContent(
       return fallbackContent
     } catch {
       // Neither the requested locale nor the Arabic fallback exists.
-      return `# ${page}\n\nContent not available.`
+      // v29-fix-F7 Fix #4: localize the fallback message so an Arabic
+      // visitor whose content file is missing sees Arabic, not English.
+      // (This runs server-side outside the NextIntlClientProvider, so we
+      // branch on the `locale` argument directly rather than calling
+      // useTranslations / getTranslations.)
+      const heading = locale === 'ar' ? 'المحتوى غير متوفر' : 'Content not available'
+      return `# ${page}\n\n${heading}`
     }
   }
 }

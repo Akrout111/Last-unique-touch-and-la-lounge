@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRouter, usePathname, Link } from '@/i18n/routing'
-import { Search, Eye } from 'lucide-react'
+import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 interface AdminBooking {
@@ -24,6 +24,11 @@ interface BookingsTableProps {
   currentStatus: string
   currentSearch: string
   locale: string
+  // V29 / F8 #12: pagination props. Both default to safe values so any
+  // existing callers that don't pass them keep working (no pagination
+  // control rendered when totalPages <= 1).
+  currentPage?: number
+  totalPages?: number
 }
 
 // Semantic status colors — no indigo/blue (per project policy).
@@ -38,7 +43,14 @@ const statusColors: Record<string, string> = {
   COMPLETED: 'bg-emerald-100 text-emerald-700',
 }
 
-export function BookingsTable({ bookings, currentStatus, currentSearch: _currentSearch, locale: _locale }: BookingsTableProps) {
+export function BookingsTable({
+  bookings,
+  currentStatus,
+  currentSearch: _currentSearch,
+  locale: _locale,
+  currentPage = 1,
+  totalPages = 1,
+}: BookingsTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
@@ -79,6 +91,24 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
     router.replace(`${pathname}?${params.toString()}`)
   }
 
+  // V29 / F8 #12: build a paginated href that preserves the current status +
+  // q filters (and any other params) while swapping in the new `page` value.
+  // Uses `Link` from the i18n router so the href is locale-prefixed correctly.
+  const buildPageHref = (page: number) => {
+    const params = new URLSearchParams(searchParams)
+    if (page > 1) {
+      params.set('page', String(page))
+    } else {
+      params.delete('page')
+    }
+    const qs = params.toString()
+    return qs ? `${pathname}?${qs}` : pathname
+  }
+
+  const showPagination = totalPages > 1
+  const canPrev = currentPage > 1
+  const canNext = currentPage < totalPages
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -100,12 +130,13 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
           <button
             key={status}
             onClick={() => handleStatusChange(status)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            aria-pressed={currentStatus === status}
+            className={`min-h-[44px] px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               currentStatus === status
                 ? 'bg-lut text-white'
                 : 'bg-card border border-border text-foreground hover:bg-muted'
             }`}
-          >
+>
             {status === 'all' ? t('admin.bookings.filterStatus.all') : t(`admin.bookings.filterStatus.${status}` as const)}
           </button>
         ))}
@@ -164,6 +195,49 @@ export function BookingsTable({ bookings, currentStatus, currentSearch: _current
           </table>
         </div>
       </div>
+
+      {/* V29 / F8 #12: basic Prev/Next pagination. Only rendered when there
+          is more than one page. Uses locale-aware `Link` so the URLs are
+          prefixed correctly and prefetchable; preserves existing status / q
+          filters via `buildPageHref`. */}
+      {showPagination && (
+        <nav
+          className="flex items-center justify-between gap-4 pt-2"
+          aria-label={t('admin.bookings.title')}
+        >
+          <Link
+            href={buildPageHref(currentPage - 1)}
+            aria-label={t('admin.bookings.pagination.previous')}
+            aria-disabled={!canPrev}
+            className={`inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
+              canPrev
+                ? 'border-border bg-card text-foreground hover:bg-muted'
+                : 'border-border bg-card text-muted-foreground pointer-events-none opacity-50'
+            }`}
+          >
+            <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+            {t('admin.bookings.pagination.previous')}
+          </Link>
+
+          <span className="text-sm text-muted-foreground" aria-live="polite">
+            {t('admin.bookings.pagination.pageOf', { current: currentPage, total: totalPages })}
+          </span>
+
+          <Link
+            href={buildPageHref(currentPage + 1)}
+            aria-label={t('admin.bookings.pagination.next')}
+            aria-disabled={!canNext}
+            className={`inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-md text-sm font-medium border transition-colors ${
+              canNext
+                ? 'border-border bg-card text-foreground hover:bg-muted'
+                : 'border-border bg-card text-muted-foreground pointer-events-none opacity-50'
+            }`}
+          >
+            {t('admin.bookings.pagination.next')}
+            <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+          </Link>
+        </nav>
+      )}
     </div>
   )
 }

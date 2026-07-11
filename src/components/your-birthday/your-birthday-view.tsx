@@ -611,7 +611,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.name')}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] focus:ring-2 focus:ring-[var(--c-birthday-pink)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -626,7 +626,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.phone')}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] focus:ring-2 focus:ring-[var(--c-birthday-pink)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -639,7 +639,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.email')}
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] focus:ring-2 focus:ring-[var(--c-birthday-pink)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -653,7 +653,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         aria-required="true"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] focus:ring-2 focus:ring-[var(--c-birthday-pink)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -668,7 +668,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.location')}
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] focus:ring-2 focus:ring-[var(--c-birthday-pink)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -680,7 +680,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.notes')}
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full p-3.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] text-sm"
+                        className="w-full p-3.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-pink)] focus:ring-2 focus:ring-[var(--c-birthday-pink)]/50 text-sm"
                       />
                     </div>
                   </div>

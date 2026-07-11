@@ -155,74 +155,86 @@ export interface ProductListResult {
  * products across all tenants). This fixes the multi-tenant bug where `LUT`
  * was hard-coded as the default. Admin callers pass an explicit brand read
  * from the `admin-brand` cookie via `getAdminBrand()`.
+ *
+ * PERF (V29 / F8 #11): wrapped in `unstable_cache` (5-min TTL, tagged
+ * `products`) — matches the pattern already used by `getProductBySlug` and
+ * `getCategoriesByBrand`. The cache key is derived from the full
+ * `ProductListParams` argument, so different brand/category/search/sort/page
+ * combos get distinct cache entries. Admin product mutations call
+ * `revalidateTag('products')` (already wired up wherever products are written)
+ * to bust the entire product cache immediately.
  */
-export async function getProducts(params: ProductListParams = {}): Promise<ProductListResult> {
-  const {
-    brand,
-    categorySlug,
-    search,
-    sort = 'newest',
-    page = 1,
-    pageSize = 12,
-  } = params
+export const getProducts = unstable_cache(
+  async (params: ProductListParams = {}): Promise<ProductListResult> => {
+    const {
+      brand,
+      categorySlug,
+      search,
+      sort = 'newest',
+      page = 1,
+      pageSize = 12,
+    } = params
 
-  const where: Prisma.ProductWhereInput = {
-    isActive: true,
-  }
+    const where: Prisma.ProductWhereInput = {
+      isActive: true,
+    }
 
-  // Brand filter (only applied when an explicit brand is provided)
-  if (brand) {
-    where.brand = brand
-  }
+    // Brand filter (only applied when an explicit brand is provided)
+    if (brand) {
+      where.brand = brand
+    }
 
-  // Category filter
-  if (categorySlug) {
-    where.category = { slug: categorySlug }
-  }
+    // Category filter
+    if (categorySlug) {
+      where.category = { slug: categorySlug }
+    }
 
-  // Text search (SQLite-friendly: case-insensitive contains)
-  if (search && search.trim()) {
-    const q = search.trim()
-    where.OR = [
-      { nameAr: { contains: q } },
-      { nameEn: { contains: q } },
-      { descriptionAr: { contains: q } },
-      { descriptionEn: { contains: q } },
-    ]
-  }
+    // Text search (SQLite-friendly: case-insensitive contains)
+    if (search && search.trim()) {
+      const q = search.trim()
+      where.OR = [
+        { nameAr: { contains: q } },
+        { nameEn: { contains: q } },
+        { descriptionAr: { contains: q } },
+        { descriptionEn: { contains: q } },
+      ]
+    }
 
-  // Sort
-  const orderBy: Prisma.ProductOrderByWithRelationInput =
-    sort === 'price-asc' ? { rentalPricePerDay: 'asc' } :
-    sort === 'price-desc' ? { rentalPricePerDay: 'desc' } :
-    { createdAt: 'desc' }
+    // Sort
+    const orderBy: Prisma.ProductOrderByWithRelationInput =
+      sort === 'price-asc' ? { rentalPricePerDay: 'asc' } :
+      sort === 'price-desc' ? { rentalPricePerDay: 'desc' } :
+      { createdAt: 'desc' }
 
-  const [products, total] = await Promise.all([
-    db.product.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: {
-        category: {
-          select: { id: true, nameAr: true, nameEn: true, slug: true },
+    const [products, total] = await Promise.all([
+      db.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          category: {
+            select: { id: true, nameAr: true, nameEn: true, slug: true },
+          },
         },
-      },
-    }),
-    db.product.count({ where }),
-  ])
+      }),
+      db.product.count({ where }),
+    ])
 
-  return {
-    products: products.map((p) => ({
-      ...p,
-      images: parseImages(p.images),
-    })),
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  }
-}
+    return {
+      products: products.map((p) => ({
+        ...p,
+        images: parseImages(p.images),
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    }
+  },
+  ['products-list'],
+  { revalidate: 300, tags: ['products'] }
+)
 
 /**
  * Get a single product by slug (for product detail page — Phase 4).

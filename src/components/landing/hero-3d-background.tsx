@@ -1494,7 +1494,14 @@ function MasterArchitecture() {
           new THREE.Vector3(px, py, pz),
         ]),
       )
-      items.push(<primitive key={`elev_${k}`} object={new THREE.Line(lineGeo, matSub)} />)
+      // Create the THREE.Line instance in the useMemo body (consistent with
+      // how BlueprintBalloon / other tracked primitives are constructed) so
+      // the JSX is purely declarative and the instance is reused, not
+      // re-allocated on each render of the memo result. `lineGeo` is already
+      // tracked above for disposal; the Line wrapper itself holds no native
+      // GL resources beyond the tracked geometry/material.
+      const elevLine = new THREE.Line(lineGeo, matSub)
+      items.push(<primitive key={`elev_${k}`} object={elevLine} />)
     }
 
     // --- Zone markers (HTML: 4 pink triangular cones at central platform) ---

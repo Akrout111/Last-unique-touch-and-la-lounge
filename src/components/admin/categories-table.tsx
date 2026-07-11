@@ -202,7 +202,7 @@ function CategoryForm({ category, onSubmit, onCancel, submitting }: CategoryForm
         <h3 className="font-semibold text-foreground">
           {category ? t('admin.products.edit') : t('admin.categories.add')}
         </h3>
-        <button type="button" onClick={onCancel} aria-label={t('common.close')} className="text-muted-foreground hover:text-foreground">
+        <button type="button" onClick={onCancel} aria-label={t('common.close')} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground">
           <X className="w-4 h-4" />
         </button>
       </div>

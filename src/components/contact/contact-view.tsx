@@ -35,7 +35,11 @@ const BRAND_TO_CONTACT_BRAND: Record<BrandKey, ContactBrand> = {
 
 const contactSchema = z.object({
   name: z.string().min(3).max(100),
-  email: z.string().email(),
+  // v29-fix-F7 Fix #8: bound email length (parity with the server-side
+  // schema in /api/contact — a >200-char email is rejected by the server
+  // anyway; capping it here avoids a confusing "form valid → server 400"
+  // round-trip).
+  email: z.string().email().max(200),
   phone: z.string().regex(/^\+?[0-9\s-]{8,20}$/).optional().or(z.literal('')),
   subject: z.string().min(5).max(200),
   message: z.string().min(20).max(2000),

@@ -131,7 +131,7 @@ export function ConfirmDelete({ trigger, itemName, onConfirm }: ConfirmDeletePro
               <button
                 type="button"
                 onClick={() => !deleting && setOpen(false)}
-                className="text-muted-foreground hover:text-foreground"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground"
                 aria-label={t('cancel')}
               >
                 <X className="w-5 h-5" />

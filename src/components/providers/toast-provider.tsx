@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 
 type ToastType = 'success' | 'error' | 'warning'
@@ -18,6 +19,7 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null)
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations()
   const [toasts, setToasts] = useState<Toast[]>([])
   // Track all pending setTimeout IDs so they can be cleared on unmount.
   const timeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
@@ -47,7 +49,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         className="fixed bottom-4 end-4 z-[100] space-y-2"
         role="region"
-        aria-label="Notifications"
+        aria-label={t('a11y.notifications')}
       >
         {toasts.map((toast) => (
           <div

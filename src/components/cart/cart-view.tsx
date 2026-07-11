@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Trash2, Minus, Plus, ShoppingCart, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useCart } from '@/components/providers/cart-provider'
 import { localizedName } from '@/lib/products'
+import { formatDate } from '@/lib/format-date'
 
 export function CartView() {
   const t = useTranslations()
@@ -103,8 +104,10 @@ export function CartView() {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item, index) => {
             const productName = localizedName(item.nameAr, item.nameEn, locale)
-            const startDateFormatted = item.startDate.split('T')[0]
-            const endDateFormatted = item.endDate.split('T')[0]
+            // v29-fix-F7 Fix #7: locale-aware date formatting
+            // (was `item.startDate.split('T')[0]` — locale-neutral ISO).
+            const startDateFormatted = formatDate(item.startDate, locale)
+            const endDateFormatted = formatDate(item.endDate, locale)
             const isExiting = exitingIndex === index
 
             return (

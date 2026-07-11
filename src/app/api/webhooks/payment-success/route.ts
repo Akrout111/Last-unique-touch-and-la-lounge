@@ -35,7 +35,11 @@ import { safeEqualStrings } from '@/lib/crypto-utils'
 const MAX_TIMESTAMP_SKEW_MS = 5 * 60 * 1000 // 5 minutes
 
 const schema = z.object({
-  orderId: z.string().min(1),
+  // v29-fix-F7 Fix #2: bound orderId length. Booking.id is a cuid (24 chars);
+  // 100 is a safe upper bound. Without this, a malicious caller (or buggy
+  // payment gateway) could POST an arbitrarily-large orderId that gets
+  // loaded into memory before the HMAC signature check rejects it.
+  orderId: z.string().min(1).max(100),
 })
 
 /**

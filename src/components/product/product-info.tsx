@@ -48,6 +48,16 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const [endDate, setEndDate] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [availability, setAvailability] = useState<AvailabilityState>('idle')
+  // v29-fix-F7 Fix #9: track the available stock returned by the
+  // availability API (sum of product.stock minus overlapping bookings'
+  // quantities). Used as the upper bound for the quantity stepper so the
+  // user can never select more units than are actually bookable for the
+  // chosen date range. `null` means "no availability check has succeeded
+  // yet" — in that case we fall back to `product.stock` (the absolute
+  // upper bound) for the stepper. Once a check returns availableStock=0
+  // (unavailable), the stepper caps at 1 but `canAddToCart` stays false
+  // because the availability state is 'unavailable'.
+  const [availableStock, setAvailableStock] = useState<number | null>(null)
   const [added, setAdded] = useState(false)
 
   // Holds the "added to cart" reset timeout so we can clear it on unmount
@@ -104,12 +114,27 @@ export function ProductInfo({ product }: ProductInfoProps) {
       const res = await fetch(`/api/products/${product.id}/availability?${params}`)
       if (!res.ok) {
         setAvailability('error')
+        // Reset available stock on error so a stale value from a previous
+        // successful check doesn't keep the stepper capped incorrectly.
+        setAvailableStock(null)
         return
       }
-      const data = await res.json() as { available: boolean }
+      // v29-fix-F7 Fix #9: the availability API returns `availableStock`
+      // (product.stock minus the quantity already booked in overlapping
+      // CONFIRMED/PENDING bookings). Capture it so the quantity stepper
+      // can cap at the actually-bookable amount rather than the absolute
+      // `product.stock` — which would let the user select more units than
+      // are free for the chosen dates and only fail at add-to-cart time.
+      const data = (await res.json()) as { available: boolean; availableStock?: number }
+      setAvailableStock(
+        typeof data.availableStock === 'number' && data.availableStock >= 0
+          ? data.availableStock
+          : null
+      )
       setAvailability(data.available ? 'available' : 'unavailable')
     } catch {
       setAvailability('error')
+      setAvailableStock(null)
     }
   }, [startDate, endDate, product.id])
 
@@ -119,6 +144,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
         checkAvailability()
       } else {
         setAvailability('idle')
+        // No date range selected → reset available stock so the stepper
+        // falls back to `product.stock` (the absolute upper bound).
+        setAvailableStock(null)
       }
     }, 400)
     return () => clearTimeout(timer)
@@ -156,7 +184,28 @@ export function ProductInfo({ product }: ProductInfoProps) {
     addedTimeoutRef.current = setTimeout(() => setAdded(false), 2000)
   }
 
-  const maxQty = Math.max(1, product.stock)
+  // v29-fix-F7 Fix #9: cap the quantity stepper at the actually-available
+  // stock for the selected date range (returned by the availability API).
+  // Before a successful availability check (availableStock === null), fall
+  // back to the absolute `product.stock` so the user can still pre-select a
+  // quantity before dates are chosen. Math.max(1, ...) guarantees the
+  // stepper's "decrease" button never disables for the first unit on a
+  // fresh page load (matches the previous behavior).
+  const maxQty = Math.max(1, availableStock ?? product.stock)
+
+  // v29-fix-F7 Fix #9: if a previous quantity selection now exceeds the
+  // freshly-fetched availableStock (e.g. user picked 5 then changed dates
+  // to a range with only 2 free), clamp the current quantity down so the
+  // stepper doesn't display an invalid value. We use `Math.min` so this
+  // only ever DECREASES the quantity (never silently increases it).
+  // Done in a useEffect (rather than during render) to follow React's
+  // recommended pattern for adjusting state in response to prop/state
+  // changes.
+  useEffect(() => {
+    if (availableStock !== null && quantity > maxQty) {
+      setQuantity(maxQty)
+    }
+  }, [availableStock, maxQty, quantity])
 
   return (
     <div className="space-y-5">

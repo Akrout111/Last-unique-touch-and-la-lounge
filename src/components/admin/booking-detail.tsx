@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, Check, X, CheckCheck, Loader2 } from 'lucide-rea
 import { useToast } from '@/components/providers/toast-provider'
 import { updateBookingStatusAction } from '@/app/[locale]/admin/(dashboard)/bookings/actions'
 import { localizedName } from '@/lib/products'
+import { formatDate } from '@/lib/format-date'
 
 interface BookingDetailData {
   id: string
@@ -161,11 +162,13 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.startDate')}</dt>
-              <dd className="text-sm font-medium text-foreground">{booking.startDate.split('T')[0]}</dd>
+              {/* v29-fix-F7 Fix #7: locale-aware date formatting
+                  (was `booking.startDate.split('T')[0]` — locale-neutral ISO). */}
+              <dd className="text-sm font-medium text-foreground">{formatDate(booking.startDate, locale)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.endDate')}</dt>
-              <dd className="text-sm font-medium text-foreground">{booking.endDate.split('T')[0]}</dd>
+              <dd className="text-sm font-medium text-foreground">{formatDate(booking.endDate, locale)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.days')}</dt>
