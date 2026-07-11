@@ -71,20 +71,12 @@ type Vec3 = [number, number, number]
 // ============================================================
 
 function MasterBlueprintGrid() {
-  const gridRef = useRef<THREE.Group>(null)
-  const radarRef = useRef<THREE.Mesh>(null)
-
-  useFrame((state) => {
-    if (gridRef.current) {
-      gridRef.current.rotation.y = state.clock.elapsedTime * 0.008
-    }
-    if (radarRef.current) {
-      radarRef.current.rotation.z = -state.clock.elapsedTime * 0.3
-    }
-  })
-
+  // v24-fix-F4 — STATIC: useFrame rotation (grid + radar sweep) removed;
+  // the entire blueprint base is now fixed. Combined with the Canvas
+  // `frameloop='demand'` setting, this contributes to a single-render
+  // background that does not drift.
   return (
-    <group ref={gridRef}>
+    <group>
       {/* Fine grid (v23-build-B3 — 60 divisions = cleaner 5-unit cells; was 200
           in v22 which was too dense/ugly. gridHelper is a single draw call
           regardless of division count.) */}
@@ -100,8 +92,8 @@ function MasterBlueprintGrid() {
         </mesh>
       ))}
 
-      {/* Radar sweep */}
-      <mesh ref={radarRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+      {/* Radar sweep (v24-fix-F4 — no longer rotates; static decal) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
         <circleGeometry args={[150, 64]} />
         <meshBasicMaterial color={RADAR_COLOR} transparent opacity={0.04} side={THREE.DoubleSide} />
       </mesh>
@@ -126,13 +118,7 @@ function MasterBlueprintGrid() {
 // ============================================================
 
 function MasterArchitecture() {
-  const groupRef = useRef<THREE.Group>(null)
-
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.005
-    }
-  })
+  // v24-fix-F4 — STATIC: useFrame rotation removed; architecture is fixed.
 
   const { elements, materials, geometries } = useMemo(() => {
     const items: ReactElement[] = []
@@ -279,7 +265,7 @@ function MasterArchitecture() {
   }, [materials, geometries])
 
   return (
-    <group ref={groupRef}>
+    <group>
       {elements}
       {/* C.3 — La Lounge zone markers: 4 small pink triangles at the corners
           of the central platform (x=±8, z=±4) marking the La Lounge zone.
@@ -318,18 +304,10 @@ function FurnitureChair({
   color: string
   rotation?: Vec3
 }) {
-  const ref = useRef<THREE.Group>(null)
-  useFrame((state) => {
-    if (!ref.current) return
-    const t = state.clock.elapsedTime
-    // Float is relative to the outer (base-positioned, base-rotated) group
-    // so the conversation-vignette arrangement is preserved.
-    ref.current.position.y = Math.sin(t * 0.8 + position[0]) * 0.2
-    ref.current.rotation.y = Math.sin(t * 0.3 + position[2]) * 0.15
-  })
+  // v24-fix-F4 — STATIC: useFrame bob/wiggle removed; chair is fixed.
   return (
     <group position={position} rotation={rotation}>
-      <group ref={ref}>
+      <group>
         {/* Seat — velvet upholstery (B.2): matte, no metallic sheen */}
         <mesh position={[0, 0.5, 0]}>
           <boxGeometry args={[1.2, 0.15, 1.2]} />
@@ -478,15 +456,10 @@ function LutFurniture({ z, scale }: { z: number; scale: number }) {
 // ============================================================
 
 function Balloon({ position, color }: { position: Vec3; color: string }) {
-  const ref = useRef<THREE.Group>(null)
-  useFrame((state) => {
-    if (!ref.current) return
-    const t = state.clock.elapsedTime
-    ref.current.position.y = position[1] + Math.sin(t * 0.5 + position[0]) * 0.5
-    ref.current.position.x = position[0] + Math.cos(t * 0.3 + position[2]) * 0.2
-  })
+  // v24-fix-F4 — STATIC: useFrame float removed; balloon is fixed at its
+  // initial position prop.
   return (
-    <group ref={ref} position={position}>
+    <group position={position}>
       <mesh>
         <sphereGeometry args={[0.7, 16, 16]} />
         {/* C.3 — Glossy mylar/foil: metalness 0.1→0.2, roughness 0.3→0.2 */}
@@ -591,7 +564,6 @@ function BirthdayCake({ position }: { position: Vec3 }) {
 }
 
 function Confetti({ count }: { count: number }) {
-  const ref = useRef<THREE.Points>(null)
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
@@ -604,15 +576,10 @@ function Confetti({ count }: { count: number }) {
     return pos
   }, [count])
 
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.rotation.y = state.clock.elapsedTime * 0.05
-      ref.current.position.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.5
-    }
-  })
-
+  // v24-fix-F4 — STATIC: useFrame rotation/bob removed; confetti points
+  // stay at their initial random positions.
   return (
-    <points ref={ref}>
+    <points>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
@@ -636,7 +603,9 @@ function Confetti({ count }: { count: number }) {
 // ============================================================
 
 function DustMotes() {
-  const ref = useRef<THREE.Points>(null)
+  // v24-fix-F4 — STATIC: useFrame drift/rotation removed; motes stay at
+  // their initial random positions. (Was: per-frame buffer mutation for
+  // upward drift + slow Y rotation — incompatible with frameloop='demand'.)
   const count = 120
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
@@ -648,22 +617,8 @@ function DustMotes() {
     return pos
   }, [])
 
-  useFrame((state) => {
-    if (!ref.current) return
-    const livePositions = ref.current.geometry.attributes.position.array as Float32Array
-    const t = state.clock.elapsedTime
-    for (let i = 0; i < count; i++) {
-      // Slow upward drift
-      livePositions[i * 3 + 1] += 0.01
-      // Reset to bottom when too high
-      if (livePositions[i * 3 + 1] > 20) livePositions[i * 3 + 1] = -20
-    }
-    ref.current.geometry.attributes.position.needsUpdate = true
-    ref.current.rotation.y = t * 0.01
-  })
-
   return (
-    <points ref={ref}>
+    <points>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
@@ -776,15 +731,12 @@ function BirthdayParty({ z, scale }: { z: number; scale: number }) {
 // ============================================================
 
 function SceneGroup({ children }: { children: React.ReactNode }) {
-  const ref = useRef<THREE.Group>(null)
-  useFrame((state) => {
-    if (!ref.current) return
-    // Very slow drift (~0.17°/sec) — adds cinematic life without
-    // competing with the inner rotations of MasterBlueprintGrid /
-    // MasterArchitecture (which compound on top of this baseline).
-    ref.current.rotation.y = state.clock.elapsedTime * 0.003
-  })
-  return <group ref={ref}>{children}</group>
+  // v24-fix-F4 — STATIC: useFrame rotation removed so the entire scene no
+  // longer drifts. Combined with the Canvas `frameloop='demand'` setting,
+  // the 3D background renders ONCE on mount (and on prop/state changes
+  // such as sectionZs updates) and then stops per-frame rendering — no
+  // battery drain, no scroll glitch.
+  return <group>{children}</group>
 }
 
 // ============================================================
@@ -799,7 +751,6 @@ function CameraRig({
   isMobile: boolean
 }) {
   useFrame((state) => {
-    const t = state.clock.elapsedTime
     const centerZ = (sectionZs.lut + sectionZs.birthday) / 2
 
     // v22 Phase A — Pitched top-down camera (~60° from horizontal).
@@ -814,11 +765,13 @@ function CameraRig({
     const height = camDist * Math.sin(pitch)
     const depth = camDist * Math.cos(pitch)
 
-    // Subtle horizontal drift (museum turntable feel). Same 0.02 freq as v20;
-    // mobile amplitude 1.5→1.0 to stay inside the narrower 42° FOV.
-    const driftX = Math.sin(t * 0.02) * (isMobile ? 1 : 1.5)
-
-    state.camera.position.x = driftX
+    // v24-fix-F4 — STATIC: horizontal driftX oscillation removed; camera
+    // now fixed at x=0. The height / depth / centerZ calculations above
+    // were already static (derived from sectionZs, not from elapsed time),
+    // so they are unchanged. With `frameloop='demand'`, this useFrame fires
+    // on mount and on every invalidation (e.g., sectionZs updates) to keep
+    // the camera locked to the section centers without per-frame work.
+    state.camera.position.x = 0
     state.camera.position.y = height
     state.camera.position.z = centerZ + depth
 
@@ -849,10 +802,9 @@ export function Hero3DBackground() {
   const [inView, setInView] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  // Mirrors the IntersectionObserver's latest isIntersecting value so the
-  // mobile scroll-pause can avoid resuming the render loop after the user
-  // has scrolled past the hero (IO won't re-fire false on every scroll tick).
-  const inViewRef = useRef(true)
+  // v24-fix-F4 — `inViewRef` REMOVED (was the mirror for the mobile
+  // scroll-pause, which is now also removed). `inView` itself still drives
+  // the Canvas `frameloop` ('demand' vs 'never') via the IntersectionObserver.
   const [sectionZs, setSectionZs] = useState({ lut: -10, lalounge: 0, birthday: 10 })
 
   useEffect(() => {
@@ -934,7 +886,6 @@ export function Hero3DBackground() {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          inViewRef.current = entry.isIntersecting
           setInView(entry.isIntersecting)
         }
       },
@@ -944,28 +895,18 @@ export function Hero3DBackground() {
     return () => observer.disconnect()
   }, [])
 
-  // A.5: Mobile scroll-pause — during active scroll, set inView=false to pause the
-  // 3D render loop (rAF competes with the scroll compositor on mid-tier phones).
-  // Resumes after 150ms of no scrolling. Desktop is unaffected (early return).
-  useEffect(() => {
-    if (!isMobile) return
-    let scrollTimeout: number
-    const onScroll = () => {
-      setInView(false)
-      clearTimeout(scrollTimeout)
-      scrollTimeout = window.setTimeout(() => {
-        // Only resume if the hero is actually in view — otherwise the IO
-        // may not re-fire false (no threshold crossing) and we'd wake the
-        // render loop while the hero is off-screen.
-        if (inViewRef.current) setInView(true)
-      }, 150)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      clearTimeout(scrollTimeout)
-    }
-  }, [isMobile])
+  // v24-fix-F4 — Mobile scroll-pause REMOVED. The previous mechanism
+  // rapidly toggled inView (false on every scroll event → true 150ms
+  // later), which flipped the Canvas `frameloop` between 'never' and
+  // 'always'. Switching frameloop from 'never' back to 'always' forces
+  // R3F to re-render the scene from scratch, causing the visible "scroll
+  // glitch" (a flash/jump of the 3D scene). Now that the scene is fully
+  // STATIC (all per-frame motion removed — see SceneGroup / CameraRig /
+  // MasterBlueprintGrid / MasterArchitecture / FurnitureChair / Balloon /
+  // Confetti / DustMotes edits), the Canvas uses `frameloop='demand'`,
+  // which renders ONCE on mount and then only on prop/state changes
+  // (e.g., sectionZs updates from re-measurement). No per-frame rAF loop
+  // means no rAF/scroll-compositor contention, so the pause is unnecessary.
 
   if (!enabled) return null
 
@@ -976,7 +917,7 @@ export function Hero3DBackground() {
       className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
     >
       <Canvas
-        frameloop={inView ? 'always' : 'never'}
+        frameloop={inView ? 'demand' : 'never'}
         camera={{ position: [0, isMobile ? 28 : 45, isMobile ? 16 : 26], fov: isMobile ? 42 : 50 }}
         dpr={[1, 1.5]}
         gl={{
@@ -1014,9 +955,8 @@ export function Hero3DBackground() {
 
         <CameraRig sectionZs={sectionZs} isMobile={isMobile} />
 
-        {/* B.6 — Unified parent rotation wraps the whole scene so it drifts
-            together as one composition (~0.17°/sec). Lights + camera stay
-            outside so the cinematic framing is preserved. */}
+        {/* v24-fix-F4 — SceneGroup now STATIC (no rotation). Lights + camera
+            stay outside the group so the framing is preserved. */}
         <SceneGroup>
           {/* MASTER BLUEPRINT — one continuous base (La Lounge style, modified) */}
           <MasterBlueprintGrid />

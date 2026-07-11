@@ -29,10 +29,14 @@ export function shouldEnable3D(): boolean {
   // (draw calls reduced 52% via geometry merging + instancing). 2-core
   // devices can run it comfortably. Only gate on truly incapable hardware
   // (< 2 cores or < 2 GB).
+  // v24-fix-F4: restored from < 4 back to < 2 — commit 6a540be (v23-fix-F3)
+  // had accidentally reverted this, which disabled the 3D background in the
+  // 2-core preview browser (and on mid-range mobile devices) and prevented
+  // verification of the static-background / scroll-glitch fix in this task.
   const nav = navigator as Navigator & { deviceMemory?: number }
   const mem = nav.deviceMemory ?? 4
   const cores = nav.hardwareConcurrency ?? 4
-  if (mem < 4 || cores < 4) return false
+  if (mem < 2 || cores < 2) return false
 
   return true
 }
