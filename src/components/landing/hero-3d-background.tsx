@@ -50,6 +50,7 @@ import {
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { shouldEnable3D } from '@/lib/device-capabilities'
+import { BRAND_COLORS } from '@/lib/brand-colors'
 
 // ═════════════════════════════════════════════════════════════════
 // PALETTE — Cinematic warm/cool harmony (from HTML file)
@@ -68,9 +69,9 @@ const PALETTE = {
   BRASS_POLISHED: '#C9A96E',
   MYLAR_PINK: '#E8A4C8',
   MYLAR_GOLD: '#F0D878',
-  LUT: '#8B6F47',
-  LA_LOUNGE: '#E8A4C8',
-  YOUR_BIRTHDAY: '#F0D878',
+  LUT: BRAND_COLORS.LUT,
+  LA_LOUNGE: BRAND_COLORS.LA_LOUNGE,
+  YOUR_BIRTHDAY: BRAND_COLORS.YOUR_BIRTHDAY,
   WARM_KEY: '#FFF0DD',
   COOL_FILL: '#C8D8E8',
   AMBIENT_BASE: '#E8D8E0',
@@ -436,13 +437,9 @@ function useMylarMaterial(color: string) {
 function Balloon({
   position,
   color,
-  balloonRefs,
 }: {
   position: Vec3
   color: string
-  balloonRefs: MutableRefObject<
-    Array<{ mesh: THREE.Group | null; baseY: number; baseX: number; baseZ: number }>
-  >
 }) {
   const ref = useRef<THREE.Group>(null)
   const mylarMat = useMylarMaterial(color)
@@ -453,23 +450,6 @@ function Balloon({
     },
     [mylarMat],
   )
-
-  // Register this balloon's ref + base position for float animation
-  useEffect(() => {
-    balloonRefs.current.push({
-      mesh: null,
-      baseY: position[1],
-      baseX: position[0],
-      baseZ: position[2],
-    })
-    const captured = balloonRefs.current
-    return () => {
-      const i = captured.findIndex(
-        (b) => b.baseX === position[0] && b.baseY === position[1] && b.baseZ === position[2],
-      )
-      if (i >= 0) captured.splice(i, 1)
-    }
-  }, [balloonRefs, position])
 
   useFrame((state) => {
     if (!ref.current) return
@@ -756,23 +736,19 @@ function Confetti({ count }: { count: number }) {
 function BirthdayParty({
   z,
   scale,
-  balloonRefs,
 }: {
   z: number
   scale: number
-  balloonRefs: MutableRefObject<
-    Array<{ mesh: THREE.Group | null; baseY: number; baseX: number; baseZ: number }>
-  >
 }) {
   return (
     <group position={[0, 0, z]} scale={scale}>
       {/* 6 mylar balloons (HTML: -5, -3, -1, 1, 3, 5 X positions) */}
-      <Balloon position={[-5, 0.5, 0]} color={PALETTE.YOUR_BIRTHDAY} balloonRefs={balloonRefs} />
-      <Balloon position={[-3, 1, 1]} color={PALETTE.LA_LOUNGE} balloonRefs={balloonRefs} />
-      <Balloon position={[-1, 0.8, -1]} color={PALETTE.MYLAR_PINK} balloonRefs={balloonRefs} />
-      <Balloon position={[1, 1.2, 0]} color={PALETTE.MYLAR_GOLD} balloonRefs={balloonRefs} />
-      <Balloon position={[3, 0.6, 1]} color={PALETTE.YOUR_BIRTHDAY} balloonRefs={balloonRefs} />
-      <Balloon position={[5, 1, -1]} color={PALETTE.LA_LOUNGE} balloonRefs={balloonRefs} />
+      <Balloon position={[-5, 0.5, 0]} color={PALETTE.YOUR_BIRTHDAY} />
+      <Balloon position={[-3, 1, 1]} color={PALETTE.LA_LOUNGE} />
+      <Balloon position={[-1, 0.8, -1]} color={PALETTE.MYLAR_PINK} />
+      <Balloon position={[1, 1.2, 0]} color={PALETTE.MYLAR_GOLD} />
+      <Balloon position={[3, 0.6, 1]} color={PALETTE.YOUR_BIRTHDAY} />
+      <Balloon position={[5, 1, -1]} color={PALETTE.LA_LOUNGE} />
       {/* Cake — 3-tier with candles */}
       <BirthdayCake position={[0, 0, 2]} />
       {/* Gift boxes */}
@@ -795,13 +771,9 @@ function BirthdayParty({
 function BlueprintBalloon({
   position,
   mat,
-  refs,
 }: {
   position: Vec3
   mat: THREE.LineBasicMaterial
-  refs: MutableRefObject<
-    Array<{ mesh: THREE.Group | null; baseY: number; baseX: number; baseZ: number }>
-  >
 }) {
   const ref = useRef<THREE.Group>(null)
   // String line (2 points)
@@ -832,22 +804,6 @@ function BlueprintBalloon({
       }),
     [],
   )
-
-  useEffect(() => {
-    refs.current.push({
-      mesh: null,
-      baseY: position[1],
-      baseX: position[0],
-      baseZ: position[2],
-    })
-    const captured = refs.current
-    return () => {
-      const i = captured.findIndex(
-        (b) => b.baseX === position[0] && b.baseY === position[1] && b.baseZ === position[2],
-      )
-      if (i >= 0) captured.splice(i, 1)
-    }
-  }, [refs, position])
 
   useEffect(
     () => () => {
@@ -1038,13 +994,9 @@ function BlueprintStar({
 function CenterBlueprintScene({
   z,
   scale,
-  balloonRefs,
 }: {
   z: number
   scale: number
-  balloonRefs: MutableRefObject<
-    Array<{ mesh: THREE.Group | null; baseY: number; baseX: number; baseZ: number }>
-  >
 }) {
   const groupRef = useRef<THREE.Group>(null)
 
@@ -1310,11 +1262,11 @@ function CenterBlueprintScene({
       {elements}
 
       {/* Blueprint balloons (5) */}
-      <BlueprintBalloon position={[-3.5, 2.5, -1]} mat={materials.bpMatBold} refs={balloonRefs} />
-      <BlueprintBalloon position={[3.5, 2.8, 1]} mat={materials.bpMatMain} refs={balloonRefs} />
-      <BlueprintBalloon position={[-2, 3.5, 1.5]} mat={materials.bpMatMain} refs={balloonRefs} />
-      <BlueprintBalloon position={[2, 3.2, -1.5]} mat={materials.bpMatBold} refs={balloonRefs} />
-      <BlueprintBalloon position={[0, 4.0, 0]} mat={materials.bpMatBold} refs={balloonRefs} />
+      <BlueprintBalloon position={[-3.5, 2.5, -1]} mat={materials.bpMatBold} />
+      <BlueprintBalloon position={[3.5, 2.8, 1]} mat={materials.bpMatMain} />
+      <BlueprintBalloon position={[-2, 3.5, 1.5]} mat={materials.bpMatMain} />
+      <BlueprintBalloon position={[2, 3.2, -1.5]} mat={materials.bpMatBold} />
+      <BlueprintBalloon position={[0, 4.0, 0]} mat={materials.bpMatBold} />
 
       {/* Blueprint gifts (3) */}
       <BlueprintGift position={[-3, 0.45, 2]} mat={materials.bpMatMain} matBold={materials.bpMatBold} matSub={materials.bpMatSub} />
@@ -1722,15 +1674,6 @@ export function Hero3DBackground() {
   // consumed by CameraRig's useFrame for smooth damping.
   const mouseRef = useRef<MouseState>({ x: 0, y: 0, targetX: 0, targetY: 0 })
 
-  // Balloons refs (top BirthdayParty + center CenterBlueprintScene)
-  // — used to track balloon base positions for float animation.
-  const birthdayBalloonRefs = useRef<
-    Array<{ mesh: THREE.Group | null; baseY: number; baseX: number; baseZ: number }>
-  >([])
-  const blueprintBalloonRefs = useRef<
-    Array<{ mesh: THREE.Group | null; baseY: number; baseX: number; baseZ: number }>
-  >([])
-
   useEffect(() => {
     setEnabled(shouldEnable3D())
   }, [])
@@ -1809,7 +1752,7 @@ export function Hero3DBackground() {
     )
     observer.observe(node)
     return () => observer.disconnect()
-  }, [])
+  }, [enabled])
 
   // Mouse parallax — window-level mousemove listener populates the shared ref
   useEffect(() => {
@@ -1934,18 +1877,10 @@ export function Hero3DBackground() {
         <LutFurniture z={sectionZs.lut} scale={isMobile ? 0.5 : 0.9} />
 
         {/* Center blueprint birthday scene (middle, ~0) — wireframe party */}
-        <CenterBlueprintScene
-          z={sectionZs.lalounge}
-          scale={isMobile ? 0.5 : 0.9}
-          balloonRefs={blueprintBalloonRefs}
-        />
+        <CenterBlueprintScene z={sectionZs.lalounge} scale={isMobile ? 0.5 : 0.9} />
 
         {/* Birthday party (bottom, +Z) — mylar balloons + cake + gifts */}
-        <BirthdayParty
-          z={sectionZs.birthday}
-          scale={isMobile ? 0.5 : 0.9}
-          balloonRefs={birthdayBalloonRefs}
-        />
+        <BirthdayParty z={sectionZs.birthday} scale={isMobile ? 0.5 : 0.9} />
 
         {/* Gold spine — pulsing horizontal cylinder */}
         <GoldSpine />
