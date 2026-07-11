@@ -853,7 +853,7 @@ export function Hero3DBackground() {
   // mobile scroll-pause can avoid resuming the render loop after the user
   // has scrolled past the hero (IO won't re-fire false on every scroll tick).
   const inViewRef = useRef(true)
-  const [sectionZs, setSectionZs] = useState({ lut: -14, lalounge: 0, birthday: 14 })
+  const [sectionZs, setSectionZs] = useState({ lut: -10, lalounge: 0, birthday: 10 })
 
   useEffect(() => {
     setEnabled(shouldEnable3D())
@@ -883,19 +883,26 @@ export function Hero3DBackground() {
         return (r.top + r.bottom) / 2 - sectionRect.top
       })
 
-      // v22 Phase A — Z mapping (SIGN-FLIPPED vs old toY so LUT sits at -Z).
-      // Card 1 (top, frac~0.27) → negative Z (far, appears at top via perspective).
-      // Card 3 (bottom, frac~0.81) → positive Z (near, appears at bottom).
+      // v22 Phase A → v23-fix-F3 — Z mapping (SIGN-FLIPPED vs old toY so LUT
+      // sits at -Z).
+      // Card 1 (top, frac~0.36) → negative Z (far, appears at top via perspective).
+      // Card 3 (bottom, frac~0.74) → positive Z (near, appears at bottom).
       // visibleZ depends on camera pitch — at 60° pitch, ground-projected
-      // visible Z ≈ camDist / sin(pitch) * tan(fov/2). 0.4 scale factor keeps
-      // all 3 sections within the central ~40% of the visible Z swath (avoids
-      // extreme perspective distortion at the near/far edges of the FOV cone).
+      // visible Z ≈ camDist / sin(pitch) * tan(fov/2).
+      //
+      // v23-fix-F3: Bumped scale factor 0.4 → 0.7. With 0.4 the LUT/Birthday
+      // objects only spanned ±~4.3 units of Z while the camera sees ~28 units,
+      // so they bunched together near screen center instead of spreading to
+      // sit behind their cards. Card fracs span 0.36→0.74 (range 0.38); 0.7
+      // widens the Z range so each object lands visually behind its card on
+      // both desktop and mobile, while still avoiding the extreme near/far
+      // edges of the FOV cone (which would distort the furniture/party props).
       const camDist = isMobile ? 32 : 52
       const pitch = Math.PI / 3
       const visibleZ =
         (camDist / Math.sin(pitch)) *
         Math.tan(((isMobile ? 42 : 50) * Math.PI) / 180 / 2)
-      const toZ = (frac: number) => (frac - 0.5) * 2 * visibleZ * 0.4 // 0.4 = scale factor to fit
+      const toZ = (frac: number) => (frac - 0.5) * 2 * visibleZ * 0.7 // 0.7 = widened for card alignment
 
       if (cardCenters.length >= 3) {
         setSectionZs({
