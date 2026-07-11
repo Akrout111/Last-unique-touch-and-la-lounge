@@ -71,10 +71,18 @@ type Vec3 = [number, number, number]
 // ============================================================
 
 function MasterBlueprintGrid() {
-  // v24-fix-F4 — STATIC: useFrame rotation (grid + radar sweep) removed;
-  // the entire blueprint base is now fixed. Combined with the Canvas
-  // `frameloop='demand'` setting, this contributes to a single-render
-  // background that does not drift.
+  // v25-fix-F5 — SUBTLE animation restored: the radar sweep circle rotates
+  // slowly in place (z-axis spin via radarRef). Only this one circle moves —
+  // the rest of the grid (rings, crosshairs, fine/major grids) stays static.
+  // The whole-grid useFrame rotation from v22 stays REMOVED (that was the
+  // v24-fix-F4 fix). Pairs with `frameloop='always'` so the radar visibly
+  // sweeps; the rotation is gentle enough (~11°/s) to not cause scroll issues.
+  const radarRef = useRef<THREE.Mesh>(null)
+  useFrame((state) => {
+    if (radarRef.current) {
+      radarRef.current.rotation.z = -state.clock.elapsedTime * 0.2
+    }
+  })
   return (
     <group>
       {/* Fine grid (v23-build-B3 — 60 divisions = cleaner 5-unit cells; was 200
@@ -92,8 +100,9 @@ function MasterBlueprintGrid() {
         </mesh>
       ))}
 
-      {/* Radar sweep (v24-fix-F4 — no longer rotates; static decal) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+      {/* Radar sweep (v25-fix-F5 — rotates slowly in place via radarRef;
+          only this circle moves, NOT the grid. Was static in v24-fix-F4.) */}
+      <mesh ref={radarRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
         <circleGeometry args={[150, 64]} />
         <meshBasicMaterial color={RADAR_COLOR} transparent opacity={0.04} side={THREE.DoubleSide} />
       </mesh>
@@ -304,9 +313,21 @@ function FurnitureChair({
   color: string
   rotation?: Vec3
 }) {
-  // v24-fix-F4 — STATIC: useFrame bob/wiggle removed; chair is fixed.
+  // v25-fix-F5 — SUBTLE in-place animation: tiny vertical bob (±0.05 units,
+  // ~5cm — barely visible but adds life) and tiny rotation sway (±0.03 rad
+  // ≈ ±2°). Chair stays in its position — only Y bobs and rotation.y sways;
+  // NO horizontal/vertical translation drift. Pairs with `frameloop='always'`.
+  const ref = useRef<THREE.Group>(null)
+  useFrame((state) => {
+    if (!ref.current) return
+    const t = state.clock.elapsedTime
+    // Tiny in-place bob (0.05 amplitude = 5cm — barely visible but adds life)
+    ref.current.position.y = position[1] + Math.sin(t * 0.5 + position[0]) * 0.05
+    // Tiny rotation sway (±2°)
+    ref.current.rotation.y = rotation[1] + Math.sin(t * 0.3 + position[2]) * 0.03
+  })
   return (
-    <group position={position} rotation={rotation}>
+    <group ref={ref} position={position} rotation={rotation}>
       <group>
         {/* Seat — velvet upholstery (B.2): matte, no metallic sheen */}
         <mesh position={[0, 0.5, 0]}>
@@ -456,10 +477,18 @@ function LutFurniture({ z, scale }: { z: number; scale: number }) {
 // ============================================================
 
 function Balloon({ position, color }: { position: Vec3; color: string }) {
-  // v24-fix-F4 — STATIC: useFrame float removed; balloon is fixed at its
-  // initial position prop.
+  // v25-fix-F5 — SUBTLE in-place float (±0.1 units) and tiny Z-rotation
+  // sway (±0.05 rad ≈ ±3°). Balloon stays at its initial X/Z; only Y bobs
+  // and Z rotation sways so balloons gently hover without drifting sideways.
+  const ref = useRef<THREE.Group>(null)
+  useFrame((state) => {
+    if (!ref.current) return
+    const t = state.clock.elapsedTime
+    ref.current.position.y = position[1] + Math.sin(t * 0.4 + position[0]) * 0.1
+    ref.current.rotation.z = Math.sin(t * 0.2 + position[2]) * 0.05
+  })
   return (
-    <group position={position}>
+    <group ref={ref} position={position}>
       <mesh>
         <sphereGeometry args={[0.7, 16, 16]} />
         {/* C.3 — Glossy mylar/foil: metalness 0.1→0.2, roughness 0.3→0.2 */}
@@ -576,10 +605,18 @@ function Confetti({ count }: { count: number }) {
     return pos
   }, [count])
 
-  // v24-fix-F4 — STATIC: useFrame rotation/bob removed; confetti points
-  // stay at their initial random positions.
+  // v25-fix-F5 — SUBTLE slow rotation in place; confetti shimmers without
+  // drifting out of position. (Was: per-frame rotation+bob in v22; removed
+  // in v24-fix-F4 for static mode; restored here as rotation-only so the
+  // particle cloud rotates gently without translating points.)
+  const ref = useRef<THREE.Points>(null)
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.y = state.clock.elapsedTime * 0.02
+    }
+  })
   return (
-    <points>
+    <points ref={ref}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
@@ -603,9 +640,10 @@ function Confetti({ count }: { count: number }) {
 // ============================================================
 
 function DustMotes() {
-  // v24-fix-F4 — STATIC: useFrame drift/rotation removed; motes stay at
-  // their initial random positions. (Was: per-frame buffer mutation for
-  // upward drift + slow Y rotation — incompatible with frameloop='demand'.)
+  // v25-fix-F5 — SUBTLE slow rotation in place; motes shimmer without
+  // drifting. (Was: per-frame buffer mutation for upward drift + slow Y
+  // rotation in v22; removed in v24-fix-F4 for static mode; restored here
+  // as rotation-only so the particle field twinkles gently in place.)
   const count = 120
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
@@ -617,8 +655,15 @@ function DustMotes() {
     return pos
   }, [])
 
+  const ref = useRef<THREE.Points>(null)
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.y = state.clock.elapsedTime * 0.01
+    }
+  })
+
   return (
-    <points>
+    <points ref={ref}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
@@ -725,17 +770,75 @@ function BirthdayParty({ z, scale }: { z: number; scale: number }) {
 }
 
 // ============================================================
+// BRAND CRYSTAL — central 3D gem (v25-fix-F5)
+// A brand-colored octahedron (diamond shape) that sits in the center of
+// the background, directly behind the middle La Lounge card. Slowly spins
+// on Y and gently bobs in place (±0.2 units). Uses LA_LOUNGE pink for the
+// physical crystal body + YOUR_BIRTHDAY gold for the inner glow core and
+// outer wireframe shell, so it reads as a "brand crystal" (بلور براند).
+// ============================================================
+
+function BrandCrystal({ z }: { z: number }) {
+  const ref = useRef<THREE.Group>(null)
+  useFrame((state) => {
+    if (!ref.current) return
+    const t = state.clock.elapsedTime
+    // Slow rotation in place (the crystal spins slowly on Y)
+    ref.current.rotation.y = t * 0.3
+    // Gentle bob (amplitude 0.2) — keeps X/Z fixed; only Y oscillates
+    ref.current.position.y = 2 + Math.sin(t * 0.5) * 0.2
+  })
+  return (
+    <group ref={ref} position={[0, 2, z]}>
+      {/* Main crystal — octahedron (diamond shape) */}
+      <mesh>
+        <octahedronGeometry args={[1.2, 0]} />
+        <meshPhysicalMaterial
+          color={BRAND_COLORS.LA_LOUNGE}
+          metalness={0.3}
+          roughness={0.05}
+          transmission={0.9}
+          thickness={1.5}
+          ior={2.4}
+          transparent
+          opacity={0.85}
+          emissive={BRAND_COLORS.LA_LOUNGE}
+          emissiveIntensity={0.15}
+        />
+      </mesh>
+      {/* Inner glow core */}
+      <mesh scale={0.4}>
+        <octahedronGeometry args={[1.2, 0]} />
+        <meshBasicMaterial color={BRAND_COLORS.YOUR_BIRTHDAY} transparent opacity={0.4} />
+      </mesh>
+      {/* Outer wireframe shell */}
+      <mesh scale={1.15}>
+        <octahedronGeometry args={[1.2, 0]} />
+        <meshBasicMaterial color={BRAND_COLORS.YOUR_BIRTHDAY} wireframe transparent opacity={0.3} />
+      </mesh>
+    </group>
+  )
+}
+
+// ============================================================
 // SCENE ROTATOR — unified slow parent rotation (B.6)
 // Wraps the entire scene (grid + architecture + overlays + spine)
 // so the whole composition drifts together as one piece.
 // ============================================================
 
 function SceneGroup({ children }: { children: React.ReactNode }) {
-  // v24-fix-F4 — STATIC: useFrame rotation removed so the entire scene no
-  // longer drifts. Combined with the Canvas `frameloop='demand'` setting,
-  // the 3D background renders ONCE on mount (and on prop/state changes
-  // such as sectionZs updates) and then stops per-frame rendering — no
-  // battery drain, no scroll glitch.
+  // v24-fix-F4 → v25-fix-F5 — The whole-scene useFrame rotation is still
+  // REMOVED (the scene no longer drifts as a whole). However, the Canvas
+  // `frameloop` is now `'always'` (was `'demand'` in v24-fix-F4) so that
+  // the per-object subtle animations added in v25-fix-F5 (FurnitureChair
+  // bob/sway, Balloon float, Confetti/DustMotes slow rotation, radar
+  // sweep, BrandCrystal spin/bob) actually render every frame. The
+  // mobile scroll-pause `useEffect` from v20 Phase A is NOT re-added —
+  // it caused the v24 scroll glitch by rapidly flipping `frameloop`
+  // between 'never' and 'always'. The per-object animations are subtle
+  // enough (small amplitudes, slow speeds) that they do not cause the
+  // scroll-compositor contention that the v20 Phase A scroll-pause was
+  // originally meant to mitigate.
   return <group>{children}</group>
 }
 
@@ -765,12 +868,14 @@ function CameraRig({
     const height = camDist * Math.sin(pitch)
     const depth = camDist * Math.cos(pitch)
 
-    // v24-fix-F4 — STATIC: horizontal driftX oscillation removed; camera
-    // now fixed at x=0. The height / depth / centerZ calculations above
-    // were already static (derived from sectionZs, not from elapsed time),
-    // so they are unchanged. With `frameloop='demand'`, this useFrame fires
-    // on mount and on every invalidation (e.g., sectionZs updates) to keep
-    // the camera locked to the section centers without per-frame work.
+    // v24-fix-F4 → v25-fix-F5 — STATIC: horizontal driftX oscillation
+    // removed; camera now fixed at x=0. The height / depth / centerZ
+    // calculations above were already static (derived from sectionZs, not
+    // from elapsed time), so they are unchanged. With `frameloop='always'`
+    // (v25-fix-F5), this useFrame runs every frame but sets the camera to
+    // the same position each time — effectively a no-op after convergence
+    // (the camera only meaningfully moves when `sectionZs` updates flow in
+    // from the re-measurement effect).
     state.camera.position.x = 0
     state.camera.position.y = height
     state.camera.position.z = centerZ + depth
@@ -895,18 +1000,18 @@ export function Hero3DBackground() {
     return () => observer.disconnect()
   }, [])
 
-  // v24-fix-F4 — Mobile scroll-pause REMOVED. The previous mechanism
-  // rapidly toggled inView (false on every scroll event → true 150ms
-  // later), which flipped the Canvas `frameloop` between 'never' and
-  // 'always'. Switching frameloop from 'never' back to 'always' forces
-  // R3F to re-render the scene from scratch, causing the visible "scroll
-  // glitch" (a flash/jump of the 3D scene). Now that the scene is fully
-  // STATIC (all per-frame motion removed — see SceneGroup / CameraRig /
-  // MasterBlueprintGrid / MasterArchitecture / FurnitureChair / Balloon /
-  // Confetti / DustMotes edits), the Canvas uses `frameloop='demand'`,
-  // which renders ONCE on mount and then only on prop/state changes
-  // (e.g., sectionZs updates from re-measurement). No per-frame rAF loop
-  // means no rAF/scroll-compositor contention, so the pause is unnecessary.
+  // v24-fix-F4 → v25-fix-F5 — Mobile scroll-pause REMOVED (still removed).
+  // The previous mechanism rapidly toggled inView (false on every scroll
+  // event → true 150ms later), which flipped the Canvas `frameloop` between
+  // 'never' and 'always' and forced R3F to re-render the scene from scratch
+  // — causing the visible "scroll glitch" (a flash/jump of the 3D scene).
+  // v25-fix-F5 restores `frameloop='always'` (was `'demand'` in v24-fix-F4)
+  // so that the new subtle per-object animations actually render every frame,
+  // but the scroll-pause is STILL NOT re-added. The per-object animations
+  // are small in amplitude (±0.05–0.2 units, slow rotation) so they do not
+  // cause the rAF/scroll-compositor contention the v20 Phase A scroll-pause
+  // was originally meant to mitigate; re-adding it would re-introduce the
+  // very scroll glitch it was meant to fix.
 
   if (!enabled) return null
 
@@ -917,7 +1022,7 @@ export function Hero3DBackground() {
       className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
     >
       <Canvas
-        frameloop={inView ? 'demand' : 'never'}
+        frameloop={inView ? 'always' : 'never'}
         camera={{ position: [0, isMobile ? 28 : 45, isMobile ? 16 : 26], fov: isMobile ? 42 : 50 }}
         dpr={[1, 1.5]}
         gl={{
@@ -952,6 +1057,10 @@ export function Hero3DBackground() {
         <pointLight position={[0, 5, sectionZs.lut]} intensity={0.8} color="#D4A574" distance={20} />
         {/* Warm focal accent over Birthday section */}
         <pointLight position={[0, 5, sectionZs.birthday]} intensity={0.6} color={BRAND_COLORS.YOUR_BIRTHDAY} distance={15} />
+        {/* v25-fix-F5 — Crystal glow light: a soft pink point light at the
+            crystal position (Y=3) so the central brand crystal reads as a
+            luminous gem against the dark blueprint base. */}
+        <pointLight position={[0, 3, sectionZs.lalounge]} intensity={0.5} color={BRAND_COLORS.LA_LOUNGE} distance={12} />
 
         <CameraRig sectionZs={sectionZs} isMobile={isMobile} />
 
@@ -964,6 +1073,12 @@ export function Hero3DBackground() {
 
           {/* LUT furniture overlay (top, -Z) — smaller on mobile to prevent overlap */}
           <LutFurniture z={sectionZs.lut} scale={isMobile ? 0.5 : 0.9} />
+
+          {/* v25-fix-F5 — Brand crystal in the center (behind the middle La
+              Lounge card). A 3D diamond/octahedron that slowly spins and
+              gently bobs in place, using the brand colors (LA_LOUNGE pink
+              body + YOUR_BIRTHDAY gold inner glow + wireframe shell). */}
+          <BrandCrystal z={sectionZs.lalounge} />
 
           {/* Birthday party overlay (bottom, +Z) — smaller on mobile to prevent overlap */}
           <BirthdayParty z={sectionZs.birthday} scale={isMobile ? 0.5 : 0.9} />
