@@ -141,6 +141,13 @@ async function verifySessionCookie(cookieValue: string | undefined): Promise<boo
   // Tokens from the future are also invalid (clock skew / tampering).
   if (age < -60_000) return false
 
+  // G3-1: SESSION_EPOCH revocation — reject tokens issued before the epoch.
+  // Mirrors the check in auth.ts:verifySessionToken(). Without this, a stolen
+  // pre-epoch cookie passes the proxy gate → attacker can READ admin dashboard
+  // data (customer PII) even after the admin bumps SESSION_EPOCH.
+  const sessionEpoch = parseInt(process.env.SESSION_EPOCH || '0', 10)
+  if (sessionEpoch > 0 && timestampNum < sessionEpoch) return false
+
   return true
 }
 

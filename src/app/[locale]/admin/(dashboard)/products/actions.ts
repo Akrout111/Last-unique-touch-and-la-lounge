@@ -108,7 +108,7 @@ export async function createProductAction(formData: FormData): Promise<{ success
     shouldRedirect = true
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Create product error:', message, error)
+    console.error('Create product error:', message)
     return { success: false, error: 'internal_error' }
   }
 
@@ -200,7 +200,7 @@ export async function updateProductAction(id: string, formData: FormData): Promi
     shouldRedirect = true
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Update product error:', message, error)
+    console.error('Update product error:', message)
     return { success: false, error: 'internal_error' }
   }
 
@@ -239,7 +239,7 @@ export async function deleteProductAction(id: string): Promise<{ success: boolea
     return { success: true }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Delete product error:', message, error)
+    console.error('Delete product error:', message)
     return { success: false, error: 'internal_error' }
   }
 }

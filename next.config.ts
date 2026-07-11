@@ -23,9 +23,7 @@ const nextConfig: NextConfig = {
   // Don't expose Next.js in the X-Powered-By response header (D4).
   poweredByHeader: false,
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-    ],
+    // G3-2: removed dead `images.unsplash.com` remotePattern (0 matches in src/)
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },

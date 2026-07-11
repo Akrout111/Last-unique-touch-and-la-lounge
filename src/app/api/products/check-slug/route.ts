@@ -67,11 +67,11 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ exists: !!product })
-  } catch (error: unknown) {
+  } catch {
     // If the DB is unavailable, fail open (let the page handle it).
     // Returning `exists: true` means the middleware won't 404 the request,
     // and the page's own `getProductBySlug` + `notFound()` will handle it.
-    console.error('[check-slug] DB query failed:', error)
+    console.error('[check-slug] DB query failed:')
     return NextResponse.json({ exists: true, error: 'db_unavailable' })
   }
 }

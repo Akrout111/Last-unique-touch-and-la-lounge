@@ -43,8 +43,8 @@ export async function loginAction(formData: FormData): Promise<{ success: boolea
 
     revalidatePath('/admin')
     return { success: true }
-  } catch (error) {
-    console.error('[auth] loginAction error:', error)
+  } catch {
+    console.error('[auth] loginAction error:')
     return { success: false, error: 'server_error' }
   }
 }

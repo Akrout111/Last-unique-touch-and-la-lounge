@@ -104,9 +104,9 @@ function fanOutToN8n(payload: unknown): void {
         )
       }
     })
-    .catch((error) => {
+    .catch(() => {
       // Catch but don't throw — the message is already persisted locally.
-      console.error('[contact] n8n webhook failed:', error)
+      console.error('[contact] n8n webhook failed:')
     })
     .finally(() => {
       clearTimeout(timeout)
@@ -210,7 +210,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id: contactMessage.id }, { status: 201 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Contact form error:', message, error)
+    console.error('Contact form error:', message)
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }

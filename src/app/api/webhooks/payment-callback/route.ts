@@ -433,7 +433,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Payment callback error:', message, error)
+    console.error('Payment callback error:', message)
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }

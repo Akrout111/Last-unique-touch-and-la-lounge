@@ -96,7 +96,7 @@ export async function GET(
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Availability check error:', message, error)
+    console.error('Availability check error:', message)
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }

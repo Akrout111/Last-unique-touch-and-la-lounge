@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Birthday booking creation error:', message, error)
+    console.error('Birthday booking creation error:', message)
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }
