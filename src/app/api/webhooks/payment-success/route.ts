@@ -1,35 +1,106 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import { createHmac } from 'crypto'
 import { db } from '@/lib/db'
 import { triggerOrderConfirmedWebhook } from '@/lib/n8n'
 import { safeEqualStrings } from '@/lib/crypto-utils'
+
+// ===== v28-g2-F1 Fix #2: Replay protection parity with payment-callback =====
+//
+// Previously this route authenticated ONLY via the `x-internal-secret` header
+// — no timestamp, no nonce, no body signature. If `INTERNAL_API_SECRET` ever
+// leaked (via a misconfigured log, env dump, SSRF, or git push), an attacker
+// could replay captured requests indefinitely. The IdempotencyKey table
+// prevented double-processing of the SAME orderId, but the attacker could
+// submit DIFFERENT orderIds to confirm ALL pending orders (skipping payment).
+//
+// The fix mirrors /api/webhooks/payment-callback exactly:
+//   - Signature = HMAC-SHA256(PAYMENT_WEBHOOK_SECRET, rawBody + timestamp + nonce)
+//   - Timestamp must be within MAX_TIMESTAMP_SKEW of server time.
+//   - Each (orderId, nonce) pair is logged via IdempotencyKey (already in place)
+//     so a replay with the same nonce fails signature, and a replay with a
+//     fresh nonce but stale timestamp fails the skew check.
+//
+// Required headers (V9 Fix #3 pattern):
+//   - X-Webhook-Timestamp: ms since epoch (must be within 5 min of server time)
+//   - X-Webhook-Nonce:     unique per webhook (UUID recommended)
+//   - X-Webhook-Signature: hex HMAC-SHA256(secret, rawBody + timestamp + nonce)
+//
+// The previous `x-internal-secret` shared-secret scheme is REMOVED. Any caller
+// still using it must be migrated to the HMAC scheme. There are no in-tree
+// callers (the route is invoked by an external mock payment-gateway simulator
+// and by dev scripts).
+
+const MAX_TIMESTAMP_SKEW_MS = 5 * 60 * 1000 // 5 minutes
 
 const schema = z.object({
   orderId: z.string().min(1),
 })
 
 /**
- * Resolve the shared internal API secret used to authenticate internal calls.
- * Fail-closed in production: throw if INTERNAL_API_SECRET is not set.
+ * Resolve the payment webhook signing secret. Fail-closed in production.
+ * Uses the same PAYMENT_WEBHOOK_SECRET as /api/webhooks/payment-callback so
+ * the operator only has to configure one signing secret for both routes.
  */
-function getInternalSecret(): string {
+function getWebhookSecret(): string {
   const isProduction = process.env.NODE_ENV === 'production'
-  const secret = process.env.INTERNAL_API_SECRET
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET
 
   if (secret && secret.length >= 16) {
     return secret
   }
 
   if (isProduction) {
-    throw new Error('INTERNAL_API_SECRET must be set in production.')
+    throw new Error('PAYMENT_WEBHOOK_SECRET must be set in production.')
   }
 
   console.warn(
-    '[payment-success] WARNING: INTERNAL_API_SECRET is not set. ' +
+    '[payment-success] WARNING: PAYMENT_WEBHOOK_SECRET is not set. ' +
       'Using dev-only insecure secret. Do NOT use in production.'
   )
-  return 'dev-insecure-internal-api-secret'
+  return 'dev-insecure-payment-webhook-secret'
+}
+
+/**
+ * Verify the webhook signature.
+ *
+ * Signature = HMAC-SHA256(secret, rawBody + timestamp + nonce)
+ *
+ * The raw body, timestamp, and nonce are all part of the signed payload so
+ * that:
+ *   - Replaying the same body with a different nonce fails signature check.
+ *   - Replaying the same (body, nonce) with an old timestamp fails the
+ *     skew check (even if the signature were somehow valid).
+ *
+ * Mirrors the verifier in /api/webhooks/payment-callback/route.ts.
+ */
+function verifyWebhookSignature(
+  rawBody: string,
+  timestamp: string,
+  nonce: string,
+  signature: string,
+  secret: string
+): boolean {
+  // 1. Timestamp skew check — reject webhooks older than MAX_TIMESTAMP_SKEW.
+  //    This bounds the replay window to 5 minutes.
+  const ts = parseInt(timestamp, 10)
+  if (isNaN(ts) || Math.abs(Date.now() - ts) > MAX_TIMESTAMP_SKEW_MS) {
+    return false
+  }
+
+  // 2. Required header presence.
+  if (!nonce || !signature) return false
+
+  // 3. Signature = HMAC(secret, rawBody + timestamp + nonce)
+  const payload = `${rawBody}${timestamp}${nonce}`
+  const expectedSig = createHmac('sha256', secret).update(payload).digest('hex')
+
+  try {
+    return safeEqualStrings(signature, expectedSig)
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -39,37 +110,45 @@ function getInternalSecret(): string {
  * In production, this will be replaced by /api/webhooks/payment-callback
  * which receives real confirmations from the external payment gateway company.
  *
- * Authenticated by the `x-internal-secret` header against INTERNAL_API_SECRET (C3).
+ * Authenticated by HMAC-SHA256 signature + timestamp + nonce (v28-g2-F1 Fix #2)
+ * — the same scheme as /api/webhooks/payment-callback. Required headers:
+ *   - X-Webhook-Timestamp: ms since epoch (must be within 5 min of server time)
+ *   - X-Webhook-Nonce:     unique per webhook (UUID recommended)
+ *   - X-Webhook-Signature: hex HMAC-SHA256(PAYMENT_WEBHOOK_SECRET, rawBody + timestamp + nonce)
+ *
+ * Responses:
+ *   200 { success: true, ... }                       — booking updated or already confirmed
+ *   400 { error: "invalid_json" | "invalid_input" }
+ *   401 { error: "invalid_signature" }
+ *   404 { error: "order_not_found" }
+ *   503 { error: "server_misconfigured" }
  */
 export async function POST(req: NextRequest) {
   try {
-    // --- Internal secret authentication (C3) ---
-    const providedSecret = req.headers.get('x-internal-secret') ?? ''
-
-    let expectedSecret: string
+    // --- Read the raw body FIRST (V9 Fix #3 pattern) ---
+    // We need the raw bytes for signature verification — `req.json()` would
+    // re-serialize and break the signature. Use `req.text()` then parse.
+    let rawBody: string
     try {
-      expectedSecret = getInternalSecret()
+      rawBody = await req.text()
     } catch {
-      // Fail-closed: production without INTERNAL_API_SECRET configured.
       return NextResponse.json(
-        { error: 'server_misconfigured' },
-        { status: 500 }
+        { error: 'invalid_json' },
+        { status: 400 }
       )
     }
 
-    if (!providedSecret || !safeEqualStrings(providedSecret, expectedSecret)) {
-      return NextResponse.json(
-        { error: 'unauthorized' },
-        { status: 401 }
-      )
-    }
-
+    // --- Parse body defensively (D2): invalid JSON -> 400, not 500 ---
     let body: unknown
     try {
-      body = await req.json()
+      body = JSON.parse(rawBody)
     } catch {
-      return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'invalid_json' },
+        { status: 400 }
+      )
     }
+
     const parsed = schema.safeParse(body)
 
     if (!parsed.success) {
@@ -84,6 +163,39 @@ export async function POST(req: NextRequest) {
 
     const { orderId } = parsed.data
 
+    // --- Resolve the signing secret (fail-closed in production) ---
+    let secret: string
+    try {
+      secret = getWebhookSecret()
+    } catch {
+      // 503 (not 500) so monitoring can distinguish a misconfiguration
+      // from a real server error — D3.
+      return NextResponse.json(
+        { error: 'server_misconfigured' },
+        { status: 503 }
+      )
+    }
+
+    // --- Signature + timestamp + nonce verification (v28-g2-F1 Fix #2) ---
+    const timestamp = req.headers.get('x-webhook-timestamp') ?? ''
+    const nonce = req.headers.get('x-webhook-nonce') ?? ''
+    const signature = req.headers.get('x-webhook-signature') ?? ''
+
+    const signatureValid = verifyWebhookSignature(
+      rawBody,
+      timestamp,
+      nonce,
+      signature,
+      secret
+    )
+
+    if (!signatureValid) {
+      return NextResponse.json(
+        { error: 'invalid_signature' },
+        { status: 401 }
+      )
+    }
+
     // R2-A-4: namespace the idempotency key with a route prefix so a
     // payment-success key (raw orderId) can never collide with keys from
     // /api/orders or /api/bookings/birthday (which share the same UNIQUE
@@ -92,7 +204,13 @@ export async function POST(req: NextRequest) {
     // pre-seed the key — when payment-success later tries to create
     // `key: orderId` for that same booking, the create throws P2002 and
     // we silently swallow the legitimate payment confirmation.
-    const namespacedKey = `payment-success:${orderId}`
+    //
+    // v28-g2-F1 Fix #2: now that the route requires a per-webhook nonce,
+    // we include the nonce in the key so two legitimate retries of the
+    // same orderId with DIFFERENT nonces don't collide on the idempotency
+    // table (a replay with the SAME nonce fails signature verification
+    // above and never reaches here).
+    const namespacedKey = `payment-success:${orderId}:${nonce}`
 
     // Fix #2: race-condition hardening. Previously the flow was
     //   findUnique → status check → update → triggerOrderConfirmedWebhook
@@ -117,8 +235,7 @@ export async function POST(req: NextRequest) {
     //     real UNIQUE constraint on `key`) and mirror the exact pattern
     //     from /api/orders/route.ts: `tx.idempotencyKey.create()` inside
     //     the transaction, and on P2002 treat the webhook as already
-    //     processed. There is no nonce in this route (it's an internal
-    //     mock), so we use `orderId` as the idempotency key directly.
+    //     processed.
     let txResult:
       | { type: 'already_confirmed' }
       | { type: 'not_found' }
@@ -129,8 +246,9 @@ export async function POST(req: NextRequest) {
         async (tx) => {
           // 1. Idempotency: create the key FIRST inside the Serializable
           //    transaction. If two concurrent payment-success webhooks
-          //    for the same orderId arrive, the second create throws
-          //    P2002 — caught below — which we map to `already_confirmed`.
+          //    for the same (orderId, nonce) arrive, the second create
+          //    throws P2002 — caught below — which we map to
+          //    `already_confirmed`.
           const idempotencyRecord = await tx.idempotencyKey.create({
             data: {
               key: namespacedKey,
@@ -182,6 +300,7 @@ export async function POST(req: NextRequest) {
               event: 'payment_success_processed',
               details: JSON.stringify({
                 orderId,
+                nonce,
                 fromStatus: booking.status,
                 toStatus: 'CONFIRMED',
               }),
@@ -193,8 +312,8 @@ export async function POST(req: NextRequest) {
         { isolationLevel: 'Serializable' }
       )
     } catch (error: unknown) {
-      // P2002 on IdempotencyKey.key = the same orderId has already been
-      // processed by a prior payment-success webhook. Return success so
+      // P2002 on IdempotencyKey.key = the same (orderId, nonce) has already
+      // been processed by a prior payment-success webhook. Return success so
       // the (internal) caller treats it as idempotent.
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

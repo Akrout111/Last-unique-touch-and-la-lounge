@@ -785,6 +785,8 @@ function BlueprintBalloon({
       ]),
     [],
   )
+  // G1-A2 #2: memoize the THREE.Line so it's not re-allocated per render
+  // (moved after stringMat definition — see below)
   // Balloon body — wireframe icosahedron
   const balloonEdges = useMemo(
     () => new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.8, 1)),
@@ -803,6 +805,11 @@ function BlueprintBalloon({
         opacity: 0.3,
       }),
     [],
+  )
+  // G1-A2 #2: memoize the THREE.Line so it's not re-allocated per render
+  const stringLine = useMemo(
+    () => new THREE.Line(stringGeo, stringMat),
+    [stringGeo, stringMat],
   )
 
   useEffect(
@@ -831,7 +838,7 @@ function BlueprintBalloon({
     <group ref={ref} position={position}>
       <lineSegments geometry={balloonEdges} material={mat} />
       <lineSegments position={[0, -0.8, 0]} geometry={knotEdges} material={mat} />
-      <primitive object={new THREE.Line(stringGeo, stringMat)} />
+      <primitive object={stringLine} />
     </group>
   )
 }

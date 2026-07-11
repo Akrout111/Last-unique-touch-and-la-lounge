@@ -47,7 +47,10 @@ const itemSchema = z.object({
 const customerSchema = z.object({
   customerName: z.string().min(3).max(100),
   customerPhone: z.string().regex(/^\+?[0-9\s-]{8,20}$/),
-  customerEmail: z.string().email(),
+  // v28-g2-F2 Fix 3: cap email length (.max(200)) — defense-in-depth so a
+  // megabyte-long local-part cannot pass validation. SQLite doesn't enforce
+  // VARCHAR length, so without this the only cap is the .email() regex.
+  customerEmail: z.string().email().max(200),
   address: z.string().min(10).max(500),
   city: z.string().min(2).max(50),
   notes: z.string().max(1000).optional(),
@@ -384,13 +387,62 @@ export async function POST(req: NextRequest) {
               // should retry the request.
             } else if (existing.orderId) {
               // Key is still valid and has an orderId — return the
-              // original booking (idempotent success).
+              // original booking(s) (idempotent success).
+              //
+              // v28-g2-F2 Fix 1: the IdempotencyKey.orderId column is
+              // FK-constrained to Booking.id (migration
+              // 20260708154153_add_idempotency_fk_and_indexes.sql:10),
+              // so it can only hold ONE booking id. For a multi-item
+              // order the original tx created N bookings (up to 50 per
+              // the items schema) but only `bookings[0]?.id` was linked
+              // here (line 333). The full list is recoverable from the
+              // SecurityLog entry written in the same tx (lines 338-346),
+              // which records `bookingIds: bookings.map(b => b.id)` in its
+              // details JSON. We query that to reconstruct the array; if
+              // the log is missing or unparseable we degrade gracefully
+              // to the pre-fix single-booking response.
+              let allBookingIds: string[] = [existing.orderId]
+              try {
+                const log = await db.securityLog.findFirst({
+                  where: {
+                    event: 'order_idempotency',
+                    // Match the exact JSON substring produced by
+                    // JSON.stringify({ idempotencyKey, ... }). Using
+                    // JSON.stringify(idempotencyKey) on the search value
+                    // ensures quotes/backslashes in the user-supplied key
+                    // are escaped identically to how they appear in the
+                    // stored details string.
+                    details: {
+                      contains: `"idempotencyKey":${JSON.stringify(idempotencyKey)}`,
+                    },
+                  },
+                  orderBy: { createdAt: 'desc' },
+                  select: { details: true },
+                })
+                if (log?.details) {
+                  const parsed = JSON.parse(log.details) as {
+                    bookingIds?: unknown
+                  }
+                  if (
+                    Array.isArray(parsed?.bookingIds) &&
+                    parsed.bookingIds.length > 0 &&
+                    parsed.bookingIds.every(
+                      (id) => typeof id === 'string'
+                    )
+                  ) {
+                    allBookingIds = parsed.bookingIds as string[]
+                  }
+                }
+              } catch {
+                // SecurityLog missing or details unparseable — fall back
+                // to the single orderId (no regression vs pre-fix).
+              }
               return NextResponse.json(
                 {
                   success: true,
-                  orderId: existing.orderId,
-                  bookingIds: [existing.orderId],
-                  totalBookings: 1,
+                  orderId: allBookingIds[0],
+                  bookingIds: allBookingIds,
+                  totalBookings: allBookingIds.length,
                   message: 'duplicate_request',
                 },
                 { status: 200 }
@@ -436,7 +488,8 @@ export async function POST(req: NextRequest) {
     }
 
     const message = error instanceof Error ? error.message : 'Internal error'
-    console.error('Order creation error:', message, error)
+    // G1-A2 #6: log only the message, not the full Prisma error object (may contain PII)
+    console.error('Order creation error:', message)
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }

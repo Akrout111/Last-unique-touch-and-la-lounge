@@ -21,6 +21,34 @@ const SESSION_COOKIE =
     : 'lut_admin_session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 
+// v28-g2-F1 Fix #1: Session revocation via SESSION_EPOCH.
+//
+// `verifySessionToken` issues tokens of the form `timestamp.HMAC(SECRET, timestamp)`.
+// Previously a token remained valid for the full 7-day SESSION_MAX_AGE window
+// regardless of any operator action — so a stolen cookie survived admin
+// password rotation (changing ADMIN_PASSWORD does NOT invalidate the token,
+// because the signature only depends on SESSION_SECRET). The only escape was
+// rotating SESSION_SECRET, which kills every admin session at once.
+//
+// SESSION_EPOCH lets the operator invalidate all previously-issued tokens
+// without rotating SESSION_SECRET. The verifier rejects any token whose
+// embedded timestamp is older than SESSION_EPOCH (ms since epoch). Bumping
+// SESSION_EPOCH (e.g. after a password change, suspected cookie theft, or
+// routine hygiene) instantly revokes all outstanding sessions while leaving
+// the SECRET untouched. Tokens minted after the bump carry a fresh timestamp
+// and remain valid.
+//
+// The value is read on EVERY verification (not cached at module load) so a
+// runtime env update takes effect on the next request without a restart.
+// Default of 0 means "no epoch enforced" (preserves existing behavior for
+// deployments that haven't configured it).
+function getSessionEpoch(): number {
+  const raw = process.env.SESSION_EPOCH
+  if (!raw) return 0
+  const parsed = parseInt(raw, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
 // Dev-only secret. Used ONLY when SESSION_SECRET is not set and NODE_ENV !== 'production'.
 // In production, a missing SESSION_SECRET causes the module to throw at load time.
 const DEV_ONLY_SESSION_SECRET = 'dev-insecure-session-secret-do-not-use-in-prod'
@@ -129,6 +157,14 @@ function verifySessionToken(token: string): boolean {
   if (age > SESSION_MAX_AGE * 1000) return false
   // V14: reject future timestamps (mirror proxy.ts guard)
   if (age < -60_000) return false
+
+  // v28-g2-F1 Fix #1: SESSION_EPOCH revocation. Reject any token issued
+  // before the configured epoch. This lets the operator invalidate ALL
+  // outstanding sessions (e.g. after a password rotation) by bumping the
+  // env var — without rotating SESSION_SECRET and without waiting for the
+  // 7-day TTL to expire.
+  const sessionEpoch = getSessionEpoch()
+  if (sessionEpoch > 0 && timestampNum < sessionEpoch) return false
 
   return true
 }

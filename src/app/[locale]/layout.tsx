@@ -115,10 +115,13 @@ export default async function LocaleLayout({
             to the LUT brand red regardless of which brand is active. */}
       </head>
       <body className="min-h-[100dvh] flex flex-col antialiased">
-        {/* Skip-to-content link (WCAG 2.4.1 / C14) — first focusable element */}
+        {/* Skip-to-content link (WCAG 2.4.1 / C14) — first focusable element.
+            v28-g2-F2 Fix 5: use logical `focus:start-4` (not physical
+            `focus:left-4`) so the link appears on the START side in both LTR
+            (left) and RTL (right) when focused. */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:rounded-md focus:shadow-lg"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:start-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:rounded-md focus:shadow-lg"
         >
           {t('a11y.skipToContent')}
         </a>

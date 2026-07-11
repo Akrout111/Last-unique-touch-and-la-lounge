@@ -16,7 +16,10 @@ import { getClientIp } from '@/lib/get-client-ip'
 const birthdaySchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().regex(/^\+?[0-9\s-]{8,20}$/),
-  email: z.string().email().optional().or(z.literal('')),
+  // v28-g2-F2 Fix 3: cap email length (.max(200)) — defense-in-depth so a
+  // megabyte-long local-part cannot pass validation. SQLite doesn't enforce
+  // VARCHAR length, so without this the only cap is the .email() regex.
+  email: z.string().email().max(200).optional().or(z.literal('')),
   // Fix #7: strict YYYY-MM-DD format to prevent Date parsing ambiguity.
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   notes: z.string().max(2000).optional().or(z.literal('')),

@@ -68,11 +68,20 @@ const nextConfig: NextConfig = {
     const scriptSrc = isDev
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
       : "script-src 'self' 'unsafe-inline'"
+    // v28-g2-F1 Fix #4: tighten img-src — drop the catch-all `https:`. The
+    // previous `"img-src 'self' data: blob: https:"` allowed ANY HTTPS image
+    // origin, but the codebase only uses self-hosted images (verified via
+    // Grep for `images.unsplash.com` in `src/` → 0 matches; the
+    // `images.remotePatterns` entry for unsplash in next.config is a leftover
+    // that no component actually references). The catch-all `https:` would let
+    // a future XSS load attacker-controlled tracking pixels or exfiltrate
+    // data via image URLs. Now restricted to `'self' data: blob:` matching
+    // actual usage.
     const csp = [
       "default-src 'self'",
       scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https:",
+      "img-src 'self' data: blob:",
       "font-src 'self' data: https://fonts.gstatic.com",
       // In dev, allow HMR websocket + eval-based source maps.
       isDev ? "connect-src 'self' ws: w:" : "connect-src 'self'",

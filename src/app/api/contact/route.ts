@@ -14,7 +14,10 @@ import { validateWebhookUrl } from '@/lib/n8n'
  */
 const contactSchema = z.object({
   name: z.string().min(3).max(100),
-  email: z.string().email(),
+  // v28-g2-F2 Fix 3: cap email length (.max(200)) — defense-in-depth so a
+  // megabyte-long local-part cannot pass validation. SQLite doesn't enforce
+  // VARCHAR length, so without this the only cap is the .email() regex.
+  email: z.string().email().max(200),
   phone: z.string().regex(/^\+?[0-9\s-]{8,20}$/).optional().or(z.literal('')),
   subject: z.string().min(5).max(200),
   message: z.string().min(20).max(2000),

@@ -2,7 +2,7 @@
 
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, ContactShadows, Float, useGLTF } from '@react-three/drei'
-import { Suspense, useRef } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 interface ModelCanvasProps {
@@ -190,56 +190,101 @@ function GLBModel({ modelUrl }: { modelUrl: string }) {
 export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
   const hasModel = Boolean(modelUrl && modelUrl.trim().length > 0)
 
+  // v28-g2-F1 Fix #3: pause the render loop when the canvas is off-screen.
+  //
+  // Previously the PDP <Canvas> had no `frameloop` prop (default 'always'),
+  // so it ran continuously at 60fps even when the user had scrolled past it
+  // — burning ~10-15% CPU + 200-400 mW GPU on a mid-range laptop while the
+  // page was being read. Combined with `shadows`, `OrbitControls.autoRotate`,
+  // and `<Float>`, the canvas also kept a 1024×1024 shadow map allocated the
+  // whole time.
+  //
+  // Now an IntersectionObserver flips `inView` to false when the wrapper div
+  // leaves the viewport, and `frameloop` switches to 'never' — R3F stops
+  // issuing requestAnimationFrame ticks, freeing the GPU/CPU. The same
+  // pattern is used by hero-3d-background.tsx (lines ~1741-1755),
+  // purple-waves-3d.tsx, and background-3d.tsx.
+  //
+  // threshold of 0.05 means as soon as 5% of the canvas is visible we resume
+  // rendering — small enough that scrolling back into view restores the
+  // animation without a visible "wake-up" flash.
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(true)
+
+  useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setInView(entry.isIntersecting)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <Canvas
-      shadows
-      camera={{ position: [3, 2, 4], fov: 45 }}
-      gl={{ antialias: true, alpha: true }}
-      style={{ background: 'transparent' }}
-      dpr={[1, 1.5]}
-      onCreated={({ gl }) => {
-        // Prevent the page from crashing when the GPU yanks the WebGL context
-        // (e.g. tab backgrounding, driver reset). Calling preventDefault lets
-        // R3F attempt context restoration instead of tearing down the canvas.
-        gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
-      }}
+    <div
+      ref={containerRef}
+      className="w-full h-full"
+      // aria-hidden is unnecessary here — the 3D scene is interactive
+      // (OrbitControls) and the parent product-3d-viewer.tsx renders a
+      // visible heading + hint above/below it.
     >
-      <ambientLight intensity={0.4} />
-      <directionalLight
-        position={[5, 5, 5]}
-        intensity={1.2}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-      />
-      <pointLight position={[-3, 2, -3]} intensity={0.3} color="#D4A574" />
-
-      <Suspense fallback={null}>
-        <Float speed={2} rotationIntensity={0.3} floatIntensity={0.5}>
-          {hasModel ? (
-            <GLBModel modelUrl={modelUrl} />
-          ) : (
-            <FurnitureModel productSlug={productSlug} />
-          )}
-        </Float>
-        <ContactShadows
-          position={[0, -1.2, 0]}
-          opacity={0.4}
-          scale={5}
-          blur={2}
-          far={3}
+      <Canvas
+        shadows
+        frameloop={inView ? 'always' : 'never'}
+        camera={{ position: [3, 2, 4], fov: 45 }}
+        gl={{ antialias: true, alpha: true }}
+        style={{ background: 'transparent' }}
+        dpr={[1, 1.5]}
+        onCreated={({ gl }) => {
+          // Prevent the page from crashing when the GPU yanks the WebGL context
+          // (e.g. tab backgrounding, driver reset). Calling preventDefault lets
+          // R3F attempt context restoration instead of tearing down the canvas.
+          gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
+        }}
+      >
+        <ambientLight intensity={0.4} />
+        <directionalLight
+          position={[5, 5, 5]}
+          intensity={1.2}
+          castShadow
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
         />
-      </Suspense>
+        <pointLight position={[-3, 2, -3]} intensity={0.3} color="#D4A574" />
 
-      <OrbitControls
-        enablePan={false}
-        minDistance={2}
-        maxDistance={8}
-        minPolarAngle={Math.PI / 6}
-        maxPolarAngle={Math.PI / 1.8}
-        autoRotate
-        autoRotateSpeed={1}
-      />
-    </Canvas>
+        <Suspense fallback={null}>
+          <Float speed={2} rotationIntensity={0.3} floatIntensity={0.5}>
+            {hasModel ? (
+              <GLBModel modelUrl={modelUrl} />
+            ) : (
+              <FurnitureModel productSlug={productSlug} />
+            )}
+          </Float>
+          <ContactShadows
+            position={[0, -1.2, 0]}
+            opacity={0.4}
+            scale={5}
+            blur={2}
+            far={3}
+          />
+        </Suspense>
+
+        <OrbitControls
+          enablePan={false}
+          minDistance={2}
+          maxDistance={8}
+          minPolarAngle={Math.PI / 6}
+          maxPolarAngle={Math.PI / 1.8}
+          autoRotate
+          autoRotateSpeed={1}
+        />
+      </Canvas>
+    </div>
   )
 }

@@ -432,7 +432,12 @@ export function CheckoutView() {
                       </p>
                     </div>
                     <p className="text-sm font-medium text-foreground shrink-0">
-                      {item.total.toFixed(3)}
+                      {/* v28-g2-F2 Fix 4: add currency suffix to match the
+                          totals section (lines 449, 457, 467) which all
+                          render `{value.toFixed(3)} {t('common.currency')}`.
+                          Without this the per-item row showed a bare number
+                          while the totals below it were currency-labeled. */}
+                      {item.total.toFixed(3)} {t('common.currency')}
                     </p>
                   </div>
                 )

@@ -66,11 +66,15 @@ function getSessionSecret(): string | null {
  */
 function safeEqualStrings(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    // Still iterate to keep timing roughly constant.
+    // Still iterate to keep timing roughly constant. Accumulate into a
+    // variable (not `void`) so the JIT can't elide the XOR as dead code.
     const maxLen = Math.max(a.length, b.length)
+    let dummy = 0
     for (let i = 0; i < maxLen; i++) {
-      void (a.charCodeAt(i % a.length) ^ b.charCodeAt(i % b.length))
+      dummy |= a.charCodeAt(i % a.length) ^ b.charCodeAt(i % b.length)
     }
+    // Use the dummy so it's not optimized away
+    if (dummy === -1) return true // never true — just prevents elision
     return false
   }
   let result = 0
