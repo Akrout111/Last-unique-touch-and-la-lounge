@@ -136,7 +136,7 @@ export function ExperienceCard({
 
           {/* Ambient glow — uses the actual brand hex (LUT red / La Lounge magenta / Your Birthday gold) */}
           <div
-            className="absolute bottom-0 right-0 w-24 h-24 rounded-full blur-xl transition-colors duration-700 group-hover:brightness-150"
+            className="absolute bottom-0 end-0 w-24 h-24 rounded-full blur-xl transition-colors duration-700 group-hover:brightness-150"
             style={{ backgroundColor: brandGlowSoft }}
           />
 
