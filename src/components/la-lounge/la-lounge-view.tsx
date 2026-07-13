@@ -8,10 +8,14 @@ import { LaLoungeSunburst } from '@/components/brand/lalounge-sunburst'
 import { LaLoungeLightSweep } from '@/components/brand/lalounge-light-sweep'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
-// Lazy-load the 3D purple waves scene so the page's initial JS bundle stays
-// small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
-// the browser; the component itself guards on `shouldEnable3D()`.
-const PurpleWaves3D = dynamic(() => import('./purple-waves-3d'), { ssr: false, loading: () => null })
+// v31-build-B6: lazy-load the new vanilla-Three.js event-blueprint scene.
+// Replaces the previous R3F `PurpleWaves3D` (kept on disk as a fallback).
+// ssr:false because WebGL only exists in the browser; the component itself
+// also gates on `shouldEnable3D()` and returns null on incapable devices.
+const LaLounge3DBackground = dynamic(() => import('./la-lounge-3d-background'), {
+  ssr: false,
+  loading: () => null,
+})
 
 export default function LaLoungeView() {
   const router = useRouter()
@@ -62,12 +66,15 @@ export default function LaLoungeView() {
 
   return (
     <div className="relative w-full bg-background">
-      {/* === Hero section — title centered, purple 3D background === */}
-      <div className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center">
-        <ErrorBoundary>
-          <PurpleWaves3D />
-        </ErrorBoundary>
+      {/* === v31-build-B6: Fixed full-screen 3D blueprint background ===
+          Sits behind all page content (z-0). Hero + services use z-10 so
+          they stack above it. Renders null on incapable devices. */}
+      <ErrorBoundary>
+        <LaLounge3DBackground />
+      </ErrorBoundary>
 
+      {/* === Hero section — title centered, 3D blueprint background === */}
+      <div className="relative z-10 min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center">
         {/* La Lounge art-deco sunburst — static decorative halo behind the
             title. Phase 5 motion cleanup: dimmed from opacity-40 to opacity-20
             so it reads as a faint halo without competing with the LightSweep
