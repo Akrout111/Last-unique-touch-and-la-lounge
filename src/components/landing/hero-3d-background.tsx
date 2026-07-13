@@ -1,1907 +1,1163 @@
 'use client'
 
-/**
- * Hero3DBackground — Cinematic 3D hero background (v26-build-B4).
- *
- * Converted from `upload/hero-3d-blueprint-center.html` (vanilla Three.js)
- * to React Three Fiber (R3F). The HTML scene was authored as a single-file
- * cinematic 3D background; this module re-implements it as R3F JSX while
- * preserving the project's existing infrastructure (gating, IntersectionObserver,
- * measure(), top-down camera, mobile detection, frameloop toggle).
- *
- * Scene composition (mirrors the HTML file):
- *   1. PALETTE — cinematic warm plum + gold + pink harmony (HTML PALETTE)
- *   2. CUSTOM SHADER GRID — animated pulse/rings/flow via ShaderMaterial
- *   3. RADIAL RINGS — 8 concentric rings (decreasing opacity)
- *   4. MASTER ARCHITECTURE — wireframe platforms/pillars/trusses/tables/
- *      elevation markers/zone markers spread across the full background
- *   5. LUT FURNITURE — velvet + brass + ivory PBR meshes (castShadow) at
- *      sectionZs.lut (rug + sofa + 6 chairs + 2 tables + floor lamp)
- *   6. CENTER BLUEPRINT BIRTHDAY SCENE — full wireframe party scene at
- *      sectionZs.lalounge (cake + balloons + gifts + garland + table +
- *      chairs + confetti + stars + hat + "1")
- *   7. BIRTHDAY PARTY — mylar balloons (iridescence) + 3-tier cake with
- *      gold rings + gift boxes + banner + confetti at sectionZs.birthday
- *   8. GOLD SPINE — pulsing horizontal cylinder connecting the 3 sections
- *   9. DUST MOTES — 200 particles drifting (sin-based Y oscillation)
- *  10. MOUSE PARALLAX — camera smoothly follows mouse (damped)
- *  11. CINEMATIC LIGHTING — ambient + hemi + 3 directional (key/fill/rim)
- *      + 2 spotlights + 3 point lights
- *  12. SHADOWS — Canvas `shadows` + castShadow on furniture + receiveShadow
- *      on rug + shadowMaterial floor
- *
- * Project integrations (preserved from v25-fix-F5):
- *   - shouldEnable3D() gating (returns null on low-end / reduced-motion / no WebGL)
- *   - IntersectionObserver + frameloop toggle (inView → 'always', else 'never')
- *   - measure() computes sectionZs dynamically from card centers via
- *     document.querySelectorAll('[role=button]')
- *   - Top-down pitched camera (~60° from horizontal) — same as HTML file
- *   - Mobile detection (isMobile) for camera distance + scene scale
- */
-
-import {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-  type ReactElement,
-  type MutableRefObject,
-} from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
 import { shouldEnable3D } from '@/lib/device-capabilities'
-import { BRAND_COLORS } from '@/lib/brand-colors'
+import React, { useRef, useMemo, useState, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
 
 // ═════════════════════════════════════════════════════════════════
-// PALETTE — Cinematic warm/cool harmony (from HTML file)
+// PALETTE & CONFIG
 // ═════════════════════════════════════════════════════════════════
 const PALETTE = {
-  DEEP_PLUM: '#0d0609',
-  WARM_FOG: '#1a0f12',
-  GRID_MAIN: '#E8D5E0',
-  GRID_LIGHT: '#F0E6EB',
-  GRID_ACCENT: '#C9A96E',
-  GRID_PULSE: '#FFD1E8',
-  RING_COLOR: '#B890A0',
-  VELVET_PLUM: '#6B3A5A',
-  VELVET_GOLD: '#8B6F47',
-  IVORY_LACQUER: '#F8F4EC',
-  BRASS_POLISHED: '#C9A96E',
-  MYLAR_PINK: '#E8A4C8',
-  MYLAR_GOLD: '#F0D878',
-  LUT: BRAND_COLORS.LUT,
-  LA_LOUNGE: BRAND_COLORS.LA_LOUNGE,
-  YOUR_BIRTHDAY: BRAND_COLORS.YOUR_BIRTHDAY,
-  WARM_KEY: '#FFF0DD',
-  COOL_FILL: '#C8D8E8',
-  AMBIENT_BASE: '#E8D8E0',
-  CRYSTAL_RIM: '#FF88CC',
-} as const
+  DEEP_PLUM: 0x0d0609,
+  GRID_MAIN: 0xE8D5E0, GRID_LIGHT: 0xF0E6EB, GRID_ACCENT: 0xC9A96E, GRID_PULSE: 0xFFD1E8,
+  RING_COLOR: 0xB890A0, VELVET_PLUM: 0x6B3A5A, VELVET_GOLD: 0x8B6F47,
+  IVORY_LACQUER: 0xF8F4EC, BRASS_POLISHED: 0xC9A96E,
+  MYLAR_PINK: 0xE8A4C8, MYLAR_GOLD: 0xF0D878,
+  LUT: 0x6B3A5A, LA_LOUNGE: 0xC9A96E, YOUR_BIRTHDAY: 0xFFD1E8,
+  WARM_KEY: 0xFFF0DD, COOL_FILL: 0xC8D8E8, AMBIENT_BASE: 0xE8D8E0, CRYSTAL_RIM: 0xFF88CC,
+  NEON_CYAN: 0x00FFFF, NEON_MAGENTA: 0xFF00FF, NEON_YELLOW: 0xFFFF00
+};
 
-type Vec3 = [number, number, number]
+type Vec3 = [number, number, number];
 
 // ═════════════════════════════════════════════════════════════════
-// SHADER STRINGS — Custom animated grid (from HTML file)
+// SHADERS
 // ═════════════════════════════════════════════════════════════════
-const gridVertexShader = /* glsl */ `
-  varying vec2 vUv;
-  varying vec3 vWorldPos;
+const gridVertexShader = `
+  varying vec2 vUv; varying vec3 vWorldPos;
+  void main() { vUv = uv; vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+`;
+const gridFragmentShader = `
+  uniform float uTime; uniform vec3 uColorMain; uniform vec3 uColorAccent; uniform vec3 uColorLight; uniform vec3 uColorPulse;
+  uniform float uFadeStart; uniform float uFadeEnd;
+  varying vec2 vUv; varying vec3 vWorldPos;
+  float gridLine(vec2 coord, float width) { vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord); float line = min(grid.x, grid.y); return 1.0 - min(line, 1.0); }
   void main() {
-    vUv = uv;
-    vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`
-
-const gridFragmentShader = /* glsl */ `
-  uniform float uTime;
-  uniform vec3 uColorMain;
-  uniform vec3 uColorAccent;
-  uniform vec3 uColorLight;
-  uniform vec3 uColorPulse;
-  uniform float uFadeStart;
-  uniform float uFadeEnd;
-  varying vec2 vUv;
-  varying vec3 vWorldPos;
-
-  float gridLine(vec2 coord, float width) {
-    vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);
-    float line = min(grid.x, grid.y);
-    return 1.0 - min(line, 1.0);
-  }
-
-  void main() {
-    float dist = length(vWorldPos.xz);
-    float fade = 1.0 - smoothstep(uFadeStart, uFadeEnd, dist);
-    float fine = gridLine(vUv * 60.0, 1.0) * 0.15;
-    float major = gridLine(vUv * 12.0, 1.0) * 0.35;
+    float dist = length(vWorldPos.xz); 
+    float fade = 1.0 - smoothstep(uFadeStart, uFadeEnd, dist); 
+    float fine = gridLine(vUv * 60.0, 1.0) * 0.1; 
+    float major = gridLine(vUv * 12.0, 1.0) * 0.35; 
     float accent = gridLine(vUv * 6.0, 1.0) * 0.5;
     float pulse = sin(dist * 0.15 - uTime * 0.8) * 0.5 + 0.5;
-    float ring = smoothstep(0.02, 0.0, abs(fract(dist * 0.08 - uTime * 0.12) - 0.5) * 2.0) * pulse * 0.4;
-    float flow = smoothstep(0.02, 0.0, abs(fract(vUv.y * 40.0 + uTime * 0.05) - 0.5) * 2.0) * 0.08;
-    vec3 color = mix(uColorLight, uColorMain, fine + major);
-    color = mix(color, uColorAccent, accent);
-    color = mix(color, uColorPulse, ring);
-    color += uColorAccent * flow;
+    float ring = smoothstep(0.02, 0.0, abs(fract(dist * 0.08 - uTime * 0.12) - 0.5) * 2.0) * pulse * 0.3;
+    float flow = smoothstep(0.02, 0.0, abs(fract(vUv.y * 40.0 + uTime * 0.05) - 0.5) * 2.0) * 0.05;
+    vec3 color = mix(uColorLight, uColorMain, fine + major); color = mix(color, uColorAccent, accent); color = mix(color, uColorPulse, ring); color += uColorAccent * flow;
     float alpha = (fine + major * 0.6 + accent * 0.4 + ring + flow) * fade;
-    gl_FragColor = vec4(color, alpha * 0.9);
+    gl_FragColor = vec4(color, alpha * 0.8);
   }
-`
+`;
+
+const holoVertexShader = `
+  varying vec2 vUv; varying vec3 vNormal; varying vec3 vViewPosition;
+  void main() {
+    vUv = uv;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    vNormal = normalize(normalMatrix * normal);
+    vViewPosition = -mvPosition.xyz;
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+const holoFragmentShader = `
+  uniform float uTime; uniform vec3 uColor; 
+  varying vec2 vUv; varying vec3 vNormal; varying vec3 vViewPosition;
+  void main() {
+    vec3 normal = normalize(vNormal);
+    vec3 viewDir = normalize(vViewPosition);
+    float fresnel = pow(1.0 - dot(normal, viewDir), 2.0);
+    float scanline = sin(vUv.y * 150.0 + uTime * 15.0) * 0.15 + 0.85;
+    float flicker = sin(uTime * 40.0) * 0.05 + 0.95;
+    float alpha = (fresnel * 0.8 + 0.2) * scanline * flicker;
+    gl_FragColor = vec4(uColor * fresnel * 1.0, alpha * 0.4); 
+  }
+`;
+
+const screenFragmentShader = `
+  varying vec2 vUv; uniform float uTime;
+  void main() {
+    float wave = sin(vUv.x * 30.0 + uTime * 10.0) * 0.5 + 0.5;
+    float grid = step(0.9, mod(vUv.y * 20.0, 1.0));
+    vec3 col = vec3(0.0, 1.0, 1.0) * wave + vec3(1.0, 0.0, 1.0) * grid;
+    gl_FragColor = vec4(col, 0.6);
+  }
+`;
 
 // ═════════════════════════════════════════════════════════════════
-// SHARED MOUSE REF TYPE — for camera parallax
+// HELPER COMPONENTS
 // ═════════════════════════════════════════════════════════════════
-type MouseState = {
-  x: number
-  y: number
-  targetX: number
-  targetY: number
-}
-type MouseRef = MutableRefObject<MouseState>
+const VelvetMaterial = ({ color }: { color: number }) => (
+  <meshPhysicalMaterial 
+    color={color} 
+    roughness={0.8} 
+    metalness={0}
+    sheen={1.0} 
+    sheenRoughness={0.2} 
+    sheenColor={new THREE.Color(color).multiplyScalar(1.5)} 
+  />
+);
+
+const BrassMaterial = () => (
+  <meshStandardMaterial color={PALETTE.BRASS_POLISHED} metalness={1.0} roughness={0.15} />
+);
+
+const IvoryMaterial = () => (
+  <meshStandardMaterial color={PALETTE.IVORY_LACQUER} roughness={0.1} metalness={0.5} />
+);
+
+const GlassMaterial = () => (
+  <meshPhysicalMaterial 
+    color={0xffffff} transmission={1.0} thickness={1.0} roughness={0.01} 
+    ior={1.5} clearcoat={1.0} transparent opacity={0.25} 
+  />
+);
+
+const WoodMaterial = () => (
+  <meshStandardMaterial color={PALETTE.VELVET_GOLD} roughness={0.4} metalness={0.3} />
+);
+
+const BlackLacquerMaterial = () => (
+  <meshStandardMaterial color={0x050505} roughness={0.1} metalness={0.5} />
+);
+
+const DarkMetalMaterial = () => (
+  <meshStandardMaterial color={0x0a0a0a} metalness={1.0} roughness={0.2} />
+);
+
+const MylarMaterial = ({ color }: { color: number }) => (
+  <meshStandardMaterial color={color} roughness={0.1} metalness={0.6} />
+);
 
 // ═════════════════════════════════════════════════════════════════
-// LUT FURNITURE — velvet + brass + ivory PBR meshes (castShadow)
-// Mirrors HTML's createChair / createTable / createSofa / createLamp
+// FURNITURE COMPONENTS
 // ═════════════════════════════════════════════════════════════════
+const Chair = ({ position, color, rotation = [0,0,0] }: { position: Vec3, color: number, rotation?: Vec3 }) => (
+  <group position={position} rotation={rotation}>
+    <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+      <boxGeometry args={[1.2, 0.2, 1.2]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    <mesh position={[0, 1.1, -0.5]} castShadow>
+      <boxGeometry args={[1.2, 1.2, 0.15]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    {([[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]] as [number, number][]).map(([x, z], i) => (
+      <mesh key={i} position={[x, 0, z]} castShadow>
+        <cylinderGeometry args={[0.05, 0.04, 1, 16]} />
+        <BrassMaterial />
+      </mesh>
+    ))}
+  </group>
+);
 
-function FurnitureChair({
-  position,
-  color,
-  rotation = [0, 0, 0] as Vec3,
-}: {
-  position: Vec3
-  color: string
-  rotation?: Vec3
-}) {
-  // Velvet material: MeshPhysicalMaterial with sheen (HTML's createVelvetMat)
-  const sheenColor = useMemo(
-    () => new THREE.Color(color).multiplyScalar(1.3),
-    [color],
-  )
+const Table = ({ position, isGlass = false }: { position: Vec3, isGlass?: boolean }) => (
+  <group position={position}>
+    <mesh position={[0, 1, 0]} castShadow receiveShadow>
+      <cylinderGeometry args={[1.6, 1.6, 0.12, 64]} />
+      {isGlass ? <GlassMaterial /> : <IvoryMaterial />}
+    </mesh>
+    <mesh position={[0, 0.5, 0]} castShadow>
+      <cylinderGeometry args={[0.1, 0.15, 1, 32]} />
+      <WoodMaterial />
+    </mesh>
+    <mesh position={[0, 0.06, 0]} castShadow receiveShadow>
+      <cylinderGeometry args={[1.0, 1.0, 0.12, 64]} />
+      <WoodMaterial />
+    </mesh>
+    <mesh position={[0, 1.07, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[1.65, 0.03, 16, 96]} />
+      <BrassMaterial />
+    </mesh>
+  </group>
+);
+
+const Sofa = ({ position, color }: { position: Vec3, color: number }) => (
+  <group position={position}>
+    <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+      <boxGeometry args={[3.2, 0.7, 1.3]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    <mesh position={[0, 1.1, -0.5]} castShadow>
+      <boxGeometry args={[3.2, 0.9, 0.25]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    <mesh position={[-1.6, 0.65, 0]} castShadow>
+      <boxGeometry args={[0.35, 0.9, 1.3]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    <mesh position={[1.6, 0.65, 0]} castShadow>
+      <boxGeometry args={[0.35, 0.9, 1.3]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    <mesh position={[-1, 0.9, 0.2]} rotation={[0, 0, 0.1]} castShadow>
+      <boxGeometry args={[0.8, 0.4, 0.4]} />
+      <VelvetMaterial color={PALETTE.YOUR_BIRTHDAY} />
+    </mesh>
+    <mesh position={[1, 0.9, 0.2]} rotation={[0, 0, -0.1]} castShadow>
+      <boxGeometry args={[0.8, 0.4, 0.4]} />
+      <VelvetMaterial color={PALETTE.LA_LOUNGE} />
+    </mesh>
+  </group>
+);
+
+const Lamp = ({ position }: { position: Vec3 }) => (
+  <group position={position}>
+    <mesh position={[0, 0.1, 0]} castShadow>
+      <cylinderGeometry args={[0.35, 0.45, 0.2, 32]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 1.5, 0]}>
+      <cylinderGeometry args={[0.035, 0.035, 2.8, 16]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 2.9, 0]}>
+      <coneGeometry args={[0.45, 0.6, 32, 1, true]} />
+      <meshStandardMaterial color={PALETTE.IVORY_LACQUER} roughness={0.6} emissive={0xFFE4B5} emissiveIntensity={1.0} side={THREE.DoubleSide} transparent opacity={0.9} />
+    </mesh>
+    <mesh position={[0, 2.7, 0]}>
+      <sphereGeometry args={[0.15, 16, 16]} />
+      <meshBasicMaterial color={0xFFF8E7} />
+    </mesh>
+    <pointLight position={[0, 2.7, 0]} intensity={2.0} distance={8} decay={2} color={0xFFE4B5} />
+  </group>
+);
+
+const CoffeeTableTray = () => (
+  <group>
+    <mesh position={[0, 1.1, 0]} castShadow>
+      <boxGeometry args={[1.2, 0.05, 0.8]} />
+      <meshStandardMaterial color={PALETTE.BRASS_POLISHED} metalness={1} roughness={0.2} />
+    </mesh>
+    <mesh position={[-0.3, 1.18, 0]} rotation={[0, 0.2, 0]} castShadow>
+      <boxGeometry args={[0.4, 0.1, 0.6]} />
+      <meshStandardMaterial color={PALETTE.LUT} roughness={0.7} />
+    </mesh>
+    <mesh position={[-0.35, 1.26, 0.05]} rotation={[0, 0.3, 0]} castShadow>
+      <boxGeometry args={[0.4, 0.08, 0.6]} />
+      <meshStandardMaterial color={PALETTE.LA_LOUNGE} roughness={0.7} />
+    </mesh>
+    <mesh position={[0.3, 1.32, 0]}>
+      <cylinderGeometry args={[0.15, 0.1, 0.4, 16]} />
+      <meshPhysicalMaterial color={0xffffff} roughness={0.1} transmission={0.5} transparent opacity={0.5} />
+    </mesh>
+    {Array.from({ length: 3 }).map((_, i) => (
+      <mesh key={i} position={[0.3 + (Math.random()-0.5)*0.1, 1.55 + (Math.random()-0.5)*0.05, (Math.random()-0.5)*0.1]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshStandardMaterial color={PALETTE.YOUR_BIRTHDAY} emissive={PALETTE.YOUR_BIRTHDAY} emissiveIntensity={0.2} />
+      </mesh>
+    ))}
+  </group>
+);
+
+const Plant = () => (
+  <group position={[7, 0, 2]}>
+    <mesh position={[0, 0.3, 0]} castShadow>
+      <cylinderGeometry args={[0.5, 0.4, 0.6, 16]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 0.58, 0]}>
+      <cylinderGeometry args={[0.48, 0.48, 0.05, 16]} />
+      <meshStandardMaterial color={0x111111} />
+    </mesh>
+    {Array.from({ length: 5 }).map((_, i) => (
+      <group key={i}>
+        <mesh position={[0, 1.2, 0]} rotation={[0, 0, (Math.random()-0.5)*0.5]} >
+          <cylinderGeometry args={[0.03, 0.05, 1.5 + Math.random()*0.5, 8]} />
+          <meshStandardMaterial color={0x2d4a2d} roughness={0.8} />
+        </mesh>
+        {Array.from({ length: 3 }).map((_, j) => (
+          <mesh key={j} position={[Math.cos(i)*0.5, 1.8 + Math.random()*0.3, Math.sin(i)*0.5]} scale={[1, 0.1, 0.6]} rotation={[Math.random(), Math.random(), Math.random()]}>
+            <sphereGeometry args={[0.4, 8, 8]} />
+            <meshStandardMaterial color={0x4a8a4a} roughness={0.8} side={THREE.DoubleSide} />
+          </mesh>
+        ))}
+      </group>
+    ))}
+  </group>
+);
+
+const LutFurniture = ({ z, scale }: { z: number, scale: number }) => (
+  <group position={[0, 0, z]} scale={scale}>
+    <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[18, 16]} />
+      <meshStandardMaterial color={0x2D1818} roughness={0.95} side={THREE.DoubleSide} />
+    </mesh>
+    <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[8.8, 9.0, 96]} />
+      <meshBasicMaterial color={PALETTE.BRASS_POLISHED} transparent opacity={0.8} side={THREE.DoubleSide} />
+    </mesh>
+    <Sofa position={[0, 0, -5]} color={PALETTE.LUT} />
+    <Table position={[0, 0, -1]} isGlass />
+    <CoffeeTableTray />
+    <Chair position={[-3, 0, 2]} color={PALETTE.LUT} rotation={[0, Math.PI * 25 / 180, 0]} />
+    <Chair position={[3, 0, 2]} color={PALETTE.LUT} rotation={[0, -Math.PI * 25 / 180, 0]} />
+    <Chair position={[-5.5, 0, -1]} color={PALETTE.IVORY_LACQUER} rotation={[0, Math.PI / 2, 0]} />
+    <Chair position={[5.5, 0, -1]} color={PALETTE.IVORY_LACQUER} rotation={[0, -Math.PI / 2, 0]} />
+    <Table position={[-5.5, 0, -3]} />
+    <mesh position={[-5.5, 1.35, -3]} castShadow>
+      <cylinderGeometry args={[0.4, 0.3, 0.6, 32]} />
+      <BrassMaterial />
+    </mesh>
+    {Array.from({ length: 8 }).map((_, i) => (
+      <mesh key={i} position={[-5.5 + (Math.random()-0.5)*0.4, 1.6 + (Math.random()-0.5)*0.1, -3 + (Math.random()-0.5)*0.4]} rotation={[Math.random(), Math.random(), Math.random()]}>
+        <boxGeometry args={[0.12, 0.12, 0.12]} />
+        <GlassMaterial />
+      </mesh>
+    ))}
+    <Table position={[5.5, 0, -3]} />
+    <Lamp position={[5.5, 0, -3]} />
+    <Plant />
+  </group>
+);
+
+// ═════════════════════════════════════════════════════════════════
+// LIGHTING STANDS & PARTY ELEMENTS
+// ═════════════════════════════════════════════════════════════════
+const LightingStand = ({ position, lightColor }: { position: Vec3, lightColor: number }) => (
+  <group position={position}>
+    {Array.from({ length: 3 }).map((_, i) => {
+      const angle = (i / 3) * Math.PI * 2;
+      return (
+        <mesh key={i} position={[Math.cos(angle) * 0.5, 1.25, Math.sin(angle) * 0.5]} rotation={[Math.cos(angle) * 0.2, 0, -Math.sin(angle) * 0.2]} castShadow>
+          <cylinderGeometry args={[0.04, 0.04, 2.5, 8]} />
+          <DarkMetalMaterial />
+        </mesh>
+      );
+    })}
+    <mesh position={[0, 4.25, 0]} castShadow>
+      <cylinderGeometry args={[0.06, 0.06, 3.5, 16]} />
+      <DarkMetalMaterial />
+    </mesh>
+    <group position={[0, 6.0, 0]} rotation={[Math.PI / 4, 0, 0]}>
+      <mesh castShadow>
+        <cylinderGeometry args={[0.35, 0.4, 0.6, 32]} />
+        <DarkMetalMaterial />
+      </mesh>
+      <mesh position={[0, -0.31, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.3, 32]} />
+        <meshBasicMaterial color={lightColor} />
+      </mesh>
+      <mesh position={[0, 0.4, 0]}>
+        <boxGeometry args={[0.1, 0.8, 0.1]} />
+        <DarkMetalMaterial />
+      </mesh>
+      <mesh position={[0, -3.0, 0]}>
+        <coneGeometry args={[2.5, 6, 32, 1, true]} />
+        <shaderMaterial 
+          uniforms={{ uColor: { value: new THREE.Color(lightColor) } }}
+          vertexShader={`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`}
+          fragmentShader={`uniform vec3 uColor; varying vec2 vUv; void main() { float alpha = pow(1.0 - vUv.y, 2.5) * 0.3; gl_FragColor = vec4(uColor, alpha); }`}
+          transparent blending={THREE.AdditiveBlending} side={THREE.DoubleSide} depthWrite={false}
+        />
+      </mesh>
+    </group>
+    <pointLight position={[0, 5.5, 0]} intensity={1.5} distance={10} decay={2} color={lightColor} />
+  </group>
+);
+
+const NeonHeart = ({ position }: { position: Vec3 }) => {
+  const shape = useMemo(() => {
+    const x = 0, y = 0;
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(x + 0.5, y + 0.5);
+    heartShape.bezierCurveTo(x + 0.5, y + 0.5, x + 0.4, y, x, y);
+    heartShape.bezierCurveTo(x - 0.6, y, x - 0.6, y + 0.7, x - 0.6, y + 0.7);
+    heartShape.bezierCurveTo(x - 0.6, y + 1.1, x - 0.3, y + 1.54, x + 0.5, y + 1.9);
+    heartShape.bezierCurveTo(x + 1.2, y + 1.54, x + 1.6, y + 1.1, x + 1.6, y + 0.7);
+    heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
+    heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
+    return heartShape;
+  }, []);
   return (
-    <group position={position} rotation={rotation}>
-      {/* Seat — velvet */}
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <boxGeometry args={[1.2, 0.15, 1.2]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.9}
-          metalness={0}
-          sheen={1.0}
-          sheenRoughness={0.5}
-          sheenColor={sheenColor}
-          clearcoat={0.1}
-        />
+    <group position={position}>
+      <mesh position={[0, 1.5, 0]} scale={[0.6, -0.6, 0.6]}>
+        <extrudeGeometry args={[shape, { depth: 0.1, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 }]} />
+        <meshStandardMaterial color={PALETTE.NEON_MAGENTA} emissive={PALETTE.NEON_MAGENTA} emissiveIntensity={2.0} />
       </mesh>
-      {/* Backrest — velvet */}
-      <mesh position={[0, 1.1, -0.5]} castShadow>
-        <boxGeometry args={[1.2, 1.2, 0.15]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.9}
-          metalness={0}
-          sheen={1.0}
-          sheenRoughness={0.5}
-          sheenColor={sheenColor}
-          clearcoat={0.1}
-        />
-      </mesh>
-      {/* Brass legs — polished gold (metalness 1.0) */}
-      {(
-        [
-          [-0.5, -0.5],
-          [0.5, -0.5],
-          [-0.5, 0.5],
-          [0.5, 0.5],
-        ] as Array<[number, number]>
-      ).map(([x, z], i) => (
-        <mesh key={i} position={[x, 0, z]} castShadow>
-          <cylinderGeometry args={[0.05, 0.04, 1, 12]} />
-          <meshPhysicalMaterial
-            color={PALETTE.BRASS_POLISHED}
-            metalness={1.0}
-            roughness={0.1}
-            clearcoat={1.0}
-            clearcoatRoughness={0.05}
+      <pointLight position={[0, 1.5, 1]} intensity={2.0} distance={10} decay={2} color={PALETTE.NEON_MAGENTA} />
+    </group>
+  );
+};
+
+const LEDDanceFloor = ({ position }: { position: Vec3 }) => {
+  const tiles = useMemo(() => {
+    const colors = [PALETTE.NEON_CYAN, PALETTE.NEON_MAGENTA, PALETTE.NEON_YELLOW, 0x000000];
+    return Array.from({ length: 16 }).map((_, i) => {
+      const size = 4;
+      const x = (i % size) - size/2 + 0.5;
+      const z = Math.floor(i / size) - size/2 + 0.5;
+      const c = colors[Math.floor(Math.random()*colors.length)];
+      return { x, z, c };
+    });
+  }, []);
+
+  const tilesRef = useRef<THREE.Mesh[]>([]);
+  useFrame(() => {
+    tilesRef.current.forEach((tile) => {
+      if (tile && Math.random() > 0.95) {
+        const mat = tile.material as THREE.MeshStandardMaterial;
+        mat.emissiveIntensity = Math.random() * 1.5;
+      }
+    });
+  });
+
+  return (
+    <group position={position}>
+      {tiles.map((tile, i) => (
+        <mesh 
+          key={i} 
+          ref={el => { if (el) tilesRef.current[i] = el; }} 
+          position={[tile.x, 0.05, tile.z]}
+        >
+          <boxGeometry args={[0.9, 0.1, 0.9]} />
+          <meshStandardMaterial 
+            color={0x111111} 
+            emissive={tile.c} 
+            emissiveIntensity={tile.c === 0x000000 ? 0 : 0.8} 
+            metalness={0.5} 
+            roughness={0.2} 
           />
         </mesh>
       ))}
     </group>
-  )
-}
+  );
+};
 
-function FurnitureTable({ position }: { position: Vec3 }) {
-  return (
-    <group position={position}>
-      {/* Ivory top — lacquered (clearcoat 1.0) */}
-      <mesh position={[0, 1, 0]} castShadow>
-        <cylinderGeometry args={[1.5, 1.5, 0.1, 48]} />
-        <meshPhysicalMaterial
-          color={PALETTE.IVORY_LACQUER}
-          roughness={0.05}
-          metalness={0.3}
-          clearcoat={1.0}
-          clearcoatRoughness={0.02}
-        />
-      </mesh>
-      {/* Wood stem */}
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.1, 0.12, 1, 16]} />
-        <meshPhysicalMaterial
-          color={PALETTE.VELVET_GOLD}
-          roughness={0.4}
-          metalness={0.1}
-        />
-      </mesh>
-      {/* Wood base */}
-      <mesh position={[0, 0.05, 0]} castShadow>
-        <cylinderGeometry args={[0.9, 0.9, 0.1, 48]} />
-        <meshPhysicalMaterial
-          color={PALETTE.VELVET_GOLD}
-          roughness={0.4}
-          metalness={0.1}
-        />
-      </mesh>
-      {/* Brass ring around top edge */}
-      <mesh position={[0, 1.06, 0]}>
-        <torusGeometry args={[1.55, 0.025, 8, 64]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.1}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-        />
-      </mesh>
-    </group>
-  )
-}
+const PartySpeaker = ({ position, ringColor }: { position: Vec3, ringColor: number }) => (
+  <group position={position}>
+    {Array.from({ length: 3 }).map((_, i) => {
+      const angle = (i / 3) * Math.PI * 2;
+      return (
+        <mesh key={i} position={[Math.cos(angle) * 0.5, 1.25, Math.sin(angle) * 0.5]} rotation={[Math.cos(angle) * 0.2, 0, -Math.sin(angle) * 0.2]} castShadow>
+          <cylinderGeometry args={[0.04, 0.04, 2.5, 8]} />
+          <DarkMetalMaterial />
+        </mesh>
+      );
+    })}
+    <mesh position={[0, 2.5, 0]}>
+      <cylinderGeometry args={[0.05, 0.05, 2.5, 12]} />
+      <DarkMetalMaterial />
+    </mesh>
+    <mesh position={[0, 4.5, 0]} castShadow>
+      <boxGeometry args={[1.0, 1.5, 0.8]} />
+      <BlackLacquerMaterial />
+    </mesh>
+    <mesh position={[0, 4.3, 0.41]} rotation={[Math.PI/2, 0, 0]}>
+      <cylinderGeometry args={[0.35, 0.35, 0.05, 32]} />
+      <meshStandardMaterial color={0x111111} roughness={0.8} />
+    </mesh>
+    <mesh position={[0, 5.1, 0.41]} rotation={[Math.PI/2, 0, 0]}>
+      <cylinderGeometry args={[0.12, 0.12, 0.05, 16]} />
+      <meshStandardMaterial color={0x111111} roughness={0.8} />
+    </mesh>
+    <mesh position={[0, 4.3, 0.42]}>
+      <torusGeometry args={[0.35, 0.02, 8, 32]} />
+      <meshBasicMaterial color={ringColor} />
+    </mesh>
+  </group>
+);
 
-function FurnitureSofa({
-  position,
-  color,
-}: {
-  position: Vec3
-  color: string
-}) {
-  const sheenColor = useMemo(
-    () => new THREE.Color(color).multiplyScalar(1.3),
-    [color],
-  )
-  return (
-    <group position={position}>
-      {/* Base — velvet */}
-      <mesh position={[0, 0.4, 0]} castShadow>
-        <boxGeometry args={[3, 0.6, 1.2]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.9}
-          metalness={0}
-          sheen={1.0}
-          sheenRoughness={0.5}
-          sheenColor={sheenColor}
-          clearcoat={0.1}
-        />
-      </mesh>
-      {/* Back — velvet */}
-      <mesh position={[0, 1, -0.5]} castShadow>
-        <boxGeometry args={[3, 0.8, 0.2]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.9}
-          metalness={0}
-          sheen={1.0}
-          sheenRoughness={0.5}
-          sheenColor={sheenColor}
-          clearcoat={0.1}
-        />
-      </mesh>
-      {/* Arms — velvet */}
-      <mesh position={[-1.5, 0.6, 0]} castShadow>
-        <boxGeometry args={[0.3, 0.8, 1.2]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.9}
-          metalness={0}
-          sheen={1.0}
-          sheenRoughness={0.5}
-          sheenColor={sheenColor}
-          clearcoat={0.1}
-        />
-      </mesh>
-      <mesh position={[1.5, 0.6, 0]} castShadow>
-        <boxGeometry args={[0.3, 0.8, 1.2]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.9}
-          metalness={0}
-          sheen={1.0}
-          sheenRoughness={0.5}
-          sheenColor={sheenColor}
-          clearcoat={0.1}
-        />
-      </mesh>
-    </group>
-  )
-}
+const DJBooth = ({ position }: { position: Vec3 }) => (
+  <group position={position}>
+    <mesh position={[0, 0.6, 0]} castShadow>
+      <boxGeometry args={[3.5, 1.2, 1.2]} />
+      <BlackLacquerMaterial />
+    </mesh>
+    <mesh position={[0, 0.8, 0.61]}>
+      <boxGeometry args={[3.4, 0.08, 0.02]} />
+      <meshBasicMaterial color={PALETTE.NEON_YELLOW} />
+    </mesh>
+    <mesh position={[-1.0, 1.25, 0]}>
+      <cylinderGeometry args={[0.35, 0.35, 0.05, 32]} />
+      <DarkMetalMaterial />
+    </mesh>
+    <mesh position={[1.0, 1.25, 0]}>
+      <cylinderGeometry args={[0.35, 0.35, 0.05, 32]} />
+      <DarkMetalMaterial />
+    </mesh>
+    <mesh position={[0, 1.26, 0]}>
+      <boxGeometry args={[0.8, 0.08, 0.6]} />
+      <DarkMetalMaterial />
+    </mesh>
+    {Array.from({ length: 3 }).map((_, i) => (
+      <group key={i}>
+        <mesh position={[(i-1) * 0.2, 1.32, -0.1]}>
+          <cylinderGeometry args={[0.05, 0.05, 0.04, 16]} />
+          <BrassMaterial />
+        </mesh>
+        <mesh position={[(i-1) * 0.2, 1.32, 0.1]}>
+          <cylinderGeometry args={[0.05, 0.05, 0.04, 16]} />
+          <BrassMaterial />
+        </mesh>
+      </group>
+    ))}
+  </group>
+);
 
-function FloorLamp({ position }: { position: Vec3 }) {
-  return (
-    <group position={position}>
-      {/* Brass base */}
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <cylinderGeometry args={[0.35, 0.45, 0.2, 24]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.1}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-        />
-      </mesh>
-      {/* Brass stem */}
-      <mesh position={[0, 1.5, 0]}>
-        <cylinderGeometry args={[0.035, 0.035, 2.8, 12]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.1}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-        />
-      </mesh>
-      {/* Ivory shade — emissive warm glow */}
-      <mesh position={[0, 2.9, 0]}>
-        <coneGeometry args={[0.45, 0.6, 24, 1, true]} />
-        <meshPhysicalMaterial
-          color={PALETTE.IVORY_LACQUER}
-          roughness={0.6}
-          emissive="#FFE4B5"
-          emissiveIntensity={0.4}
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.9}
-        />
-      </mesh>
-      {/* Bulb — basic emissive sphere */}
-      <mesh position={[0, 2.7, 0]}>
-        <sphereGeometry args={[0.15, 16, 16]} />
-        <meshBasicMaterial color="#FFF8E7" transparent opacity={0.8} />
-      </mesh>
-      {/* Warm point light inside the shade */}
-      <pointLight position={[0, 2.7, 0]} intensity={0.6} color="#FFE4B5" distance={8} decay={2} />
-    </group>
-  )
-}
+const MicStand = ({ position }: { position: Vec3 }) => (
+  <group position={position}>
+    <mesh position={[0, 1.25, 0]}>
+      <cylinderGeometry args={[0.03, 0.03, 2.5, 8]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 0.05, 0]} castShadow>
+      <cylinderGeometry args={[0.4, 0.5, 0.1, 16]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 2.7, 0]}>
+      <cylinderGeometry args={[0.1, 0.12, 0.35, 16]} />
+      <meshStandardMaterial color={0x222222} metalness={0.8} roughness={0.4} />
+    </mesh>
+    <mesh position={[0, 2.95, 0]}>
+      <sphereGeometry args={[0.13, 16, 16]} />
+      <meshStandardMaterial color={0x888888} metalness={1} roughness={0.3} wireframe />
+    </mesh>
+  </group>
+);
 
-function LutFurniture({ z, scale }: { z: number; scale: number }) {
-  // Group at sectionZs.lut, scaled per viewport (HTML: 0.9 desktop / 0.5 mobile)
-  // Y=0.5 lift so chair-leg bottoms rest ON the blueprint floor.
-  const deg = Math.PI / 180
-  return (
-    <group position={[0, 0.5, z]} scale={scale}>
-      {/* Rug — flat on floor, receiveShadow */}
-      <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[12, 10]} />
-        <meshPhysicalMaterial
-          color="#2D1818"
-          roughness={0.95}
-          metalness={0}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      {/* Sofa — center-back (LUT velvet) */}
-      <FurnitureSofa position={[0, 0, -3]} color={PALETTE.LUT} />
-      {/* Flanking chairs */}
-      <FurnitureChair position={[-3, 0, -1]} color={PALETTE.LUT} rotation={[0, 25 * deg, 0]} />
-      <FurnitureChair position={[3, 0, -1]} color={PALETTE.LUT} rotation={[0, -25 * deg, 0]} />
-      {/* Coffee table — center */}
-      <FurnitureTable position={[0, 0, 0]} />
-      {/* Front chairs facing sofa */}
-      <FurnitureChair position={[-2.5, 0, 2]} color={PALETTE.LUT} rotation={[0, Math.PI, 0]} />
-      <FurnitureChair position={[2.5, 0, 2]} color={PALETTE.LUT} rotation={[0, Math.PI, 0]} />
-      {/* Side chairs — ivory */}
-      <FurnitureChair position={[-4, 0, 1]} color={PALETTE.IVORY_LACQUER} rotation={[0, Math.PI / 2, 0]} />
-      <FurnitureChair position={[4, 0, 1]} color={PALETTE.IVORY_LACQUER} rotation={[0, -Math.PI / 2, 0]} />
-      {/* Side table */}
-      <FurnitureTable position={[-4.5, 0, -2]} />
-      {/* Floor lamp */}
-      <FloorLamp position={[4.5, 0, -2]} />
-    </group>
-  )
-}
-
-// ═════════════════════════════════════════════════════════════════
-// BIRTHDAY PARTY — mylar balloons + cake + gifts + banner + confetti
-// Mirrors HTML's birthGroup (positioned at sectionZs.birthday)
-// ═════════════════════════════════════════════════════════════════
-
-// Mylar balloon material — iridescent physical material (HTML's mylarMat)
-function useMylarMaterial(color: string) {
-  return useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        color,
-        roughness: 0.15,
-        metalness: 0.3,
-        clearcoat: 0.8,
-        clearcoatRoughness: 0.1,
-        iridescence: 1.0,
-        iridescenceIOR: 1.3,
-        iridescenceThicknessRange: [100, 400] as [number, number],
-      }),
-    [color],
-  )
-}
-
-function Balloon({
-  position,
-  color,
-}: {
-  position: Vec3
-  color: string
-}) {
-  const ref = useRef<THREE.Group>(null)
-  const mylarMat = useMylarMaterial(color)
-
-  useEffect(
-    () => () => {
-      mylarMat.dispose()
-    },
-    [mylarMat],
-  )
+const Balloon = ({ position, color }: { position: Vec3, color: number }) => {
+  const ref = useRef<THREE.Group>(null);
+  const baseY = position[1];
+  const baseX = position[0];
+  const baseZ = position[2];
 
   useFrame((state) => {
-    if (!ref.current) return
-    const t = state.clock.elapsedTime
-    // Float animation (HTML: sin(t*0.35 + baseX*0.8)*0.12 + sin(t*0.6 + baseZ)*0.05)
-    ref.current.position.y =
-      position[1] +
-      Math.sin(t * 0.35 + position[0] * 0.8) * 0.12 +
-      Math.sin(t * 0.6 + position[2]) * 0.05
-    ref.current.rotation.z = Math.sin(t * 0.2 + position[2]) * 0.04
-    ref.current.rotation.x = Math.sin(t * 0.15 + position[0]) * 0.03
-  })
+    const t = state.clock.elapsedTime;
+    if (ref.current) {
+      ref.current.position.y = baseY + Math.sin(t * 0.35 + baseX * 0.8) * 0.12 + Math.sin(t * 0.6 + baseZ) * 0.05;
+      ref.current.rotation.z = Math.sin(t * 0.2 + baseZ) * 0.04;
+      ref.current.rotation.x = Math.sin(t * 0.15 + baseX) * 0.03;
+    }
+  });
 
   return (
     <group ref={ref} position={position}>
-      {/* Balloon body — mylar (iridescence) */}
-      <mesh castShadow material={mylarMat}>
+      <mesh scale={[1, 1.15, 1]} castShadow>
         <sphereGeometry args={[0.7, 32, 32]} />
+        <MylarMaterial color={color} />
       </mesh>
-      {/* Knot */}
-      <mesh position={[0, -0.7, 0]} material={mylarMat}>
-        <coneGeometry args={[0.1, 0.2, 12]} />
+      <mesh position={[0, -0.85, 0]}>
+        <coneGeometry args={[0.1, 0.2, 16]} />
+        <MylarMaterial color={color} />
       </mesh>
-      {/* String */}
-      <mesh position={[0, -1.3, 0]}>
-        <cylinderGeometry args={[0.008, 0.008, 1, 4]} />
+      <mesh position={[0, -1.4, 0]}>
+        <cylinderGeometry args={[0.008, 0.008, 1, 8]} />
         <meshBasicMaterial color={PALETTE.IVORY_LACQUER} />
       </mesh>
     </group>
-  )
-}
+  );
+};
 
-function BirthdayCake({ position }: { position: Vec3 }) {
-  // 3-tier cake with gold rings + 3 candles with flickering flames
-  const flameRefs = useRef<THREE.Mesh[]>([])
+const PartyHat = ({ position, color }: { position: Vec3, color: number }) => (
+  <group position={position}>
+    <mesh position={[0, 0.35, 0]} castShadow>
+      <coneGeometry args={[0.3, 0.7, 16]} />
+      <VelvetMaterial color={color} />
+    </mesh>
+    <mesh position={[0, 0.75, 0]}>
+      <sphereGeometry args={[0.08, 16, 16]} />
+      <BrassMaterial />
+    </mesh>
+  </group>
+);
 
+const ChampagneFlute = ({ position }: { position: Vec3 }) => (
+  <group position={position}>
+    <mesh position={[0, 0.2, 0]}>
+      <cylinderGeometry args={[0.12, 0.05, 0.4, 16]} />
+      <GlassMaterial />
+    </mesh>
+    <mesh position={[0, -0.1, 0]}>
+      <cylinderGeometry args={[0.01, 0.01, 0.3, 8]} />
+      <GlassMaterial />
+    </mesh>
+    <mesh position={[0, -0.26, 0]}>
+      <cylinderGeometry args={[0.08, 0.08, 0.02, 16]} />
+      <GlassMaterial />
+    </mesh>
+    <mesh position={[0, 0.25, 0]}>
+      <cylinderGeometry args={[0.11, 0.07, 0.25, 16]} />
+      <meshStandardMaterial color={0xFFD700} transparent opacity={0.8} />
+    </mesh>
+  </group>
+);
+
+const BalloonArch = () => {
+  const archColors = [PALETTE.NEON_MAGENTA, PALETTE.NEON_CYAN, PALETTE.NEON_YELLOW, PALETTE.YOUR_BIRTHDAY, PALETTE.MYLAR_GOLD];
+  const points = useMemo(() => {
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-4, 0, 0),
+      new THREE.Vector3(-3, 3, 0),
+      new THREE.Vector3(0, 4.5, 0),
+      new THREE.Vector3(3, 3, 0),
+      new THREE.Vector3(4, 0, 0)
+    ]);
+    return curve.getPoints(30);
+  }, []);
+
+  return (
+    <group>
+      {points.map((p, i) => {
+        const c = archColors[i % archColors.length];
+        return <Balloon key={i} position={[p.x, p.y, p.z]} color={c} />;
+      })}
+    </group>
+  );
+};
+
+const Bunting = ({ p1, p2 }: { p1: Vec3, p2: Vec3 }) => {
+  const colors = [PALETTE.NEON_MAGENTA, PALETTE.NEON_CYAN, PALETTE.NEON_YELLOW, PALETTE.MYLAR_GOLD, 0x00FF00];
+  const points = useMemo(() => {
+    const pts = [];
+    const segments = 10;
+    for(let i=0; i<=segments; i++) {
+      const t = i/segments;
+      const x = THREE.MathUtils.lerp(p1[0], p2[0], t);
+      const y = THREE.MathUtils.lerp(p1[1], p2[1], t) - Math.sin(t * Math.PI) * 1.0;
+      const z = THREE.MathUtils.lerp(p1[2], p2[2], t);
+      pts.push(new THREE.Vector3(x, y, z));
+    }
+    return pts;
+  }, [p1, p2]);
+
+  const curve = useMemo(() => new THREE.CatmullRomCurve3(points), [points]);
+
+  return (
+    <group>
+      <mesh>
+        <tubeGeometry args={[curve, 20, 0.02, 8, false]} />
+        <meshStandardMaterial color={0xffffff} />
+      </mesh>
+      {points.slice(0, -1).map((p, i) => (
+        <mesh key={i} position={[p.x, p.y - 0.2, p.z]} rotation={[Math.PI, 0, Math.random() * 0.2 - 0.1]}>
+          <coneGeometry args={[0.2, 0.4, 4]} />
+          <meshStandardMaterial color={colors[i % colors.length]} emissive={colors[i % colors.length]} emissiveIntensity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+const Cake = ({ position }: { position: Vec3 }) => {
+  const flamesRef = useRef<THREE.MeshStandardMaterial[]>([]);
   useFrame((state) => {
-    const t = state.clock.elapsedTime
-    flameRefs.current.forEach((mesh, i) => {
-      if (!mesh) return
-      const offset = i * 0.9
-      // HTML: 0.7 + sin(t*9 + offset)*0.25 + sin(t*14 + offset*1.3)*0.18 + sin(t*21 + offset*0.7)*0.1
-      const flicker =
-        0.7 +
-        Math.sin(t * 9 + offset) * 0.25 +
-        Math.sin(t * 14 + offset * 1.3) * 0.18 +
-        Math.sin(t * 21 + offset * 0.7) * 0.1
-      ;(mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = flicker
-    })
-  })
+    const t = state.clock.elapsedTime;
+    flamesRef.current.forEach((mat, i) => {
+      if (mat) {
+        const offset = i * 0.9;
+        mat.emissiveIntensity = 1.5 + Math.sin(t * 9 + offset) * 0.2 + Math.sin(t * 14 + offset * 1.3) * 0.15 + Math.sin(t * 21 + offset * 0.7) * 0.05;
+      }
+    });
+  });
 
   return (
     <group position={position} scale={1.2}>
-      {/* Bottom tier — ivory lacquer */}
       <mesh position={[0, 0.3, 0]} castShadow>
-        <cylinderGeometry args={[1.4, 1.4, 0.6, 48]} />
-        <meshPhysicalMaterial
-          color={PALETTE.IVORY_LACQUER}
-          roughness={0.2}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-        />
+        <cylinderGeometry args={[1.4, 1.4, 0.6, 64]} />
+        <IvoryMaterial />
       </mesh>
-      {/* Middle tier — birthday gold */}
       <mesh position={[0, 0.8, 0]} castShadow>
-        <cylinderGeometry args={[1, 1, 0.5, 48]} />
-        <meshPhysicalMaterial
-          color={PALETTE.YOUR_BIRTHDAY}
-          roughness={0.25}
-          clearcoat={0.8}
-          clearcoatRoughness={0.1}
-        />
+        <cylinderGeometry args={[1, 1, 0.5, 64]} />
+        <meshStandardMaterial color={PALETTE.YOUR_BIRTHDAY} roughness={0.2} />
       </mesh>
-      {/* Top tier — ivory lacquer */}
       <mesh position={[0, 1.2, 0]} castShadow>
-        <cylinderGeometry args={[0.7, 0.7, 0.4, 48]} />
-        <meshPhysicalMaterial
-          color={PALETTE.IVORY_LACQUER}
-          roughness={0.2}
-          clearcoat={1.0}
-          clearcoatRoughness={0.05}
-        />
+        <cylinderGeometry args={[0.7, 0.7, 0.4, 64]} />
+        <IvoryMaterial />
       </mesh>
-      {/* Gold ring 1 — between bottom + middle */}
-      <mesh position={[0, 0.55, 0]}>
-        <torusGeometry args={[1.2, 0.04, 12, 64]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.05}
-          emissive={PALETTE.YOUR_BIRTHDAY}
-          emissiveIntensity={0.4}
-          clearcoat={1.0}
-        />
+      <mesh position={[0, 0.6, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.4, 0.08, 12, 64]} />
+        <IvoryMaterial />
       </mesh>
-      {/* Gold ring 2 — between middle + top */}
-      <mesh position={[0, 1.0, 0]}>
-        <torusGeometry args={[0.85, 0.03, 12, 64]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.05}
-          emissive={PALETTE.YOUR_BIRTHDAY}
-          emissiveIntensity={0.4}
-          clearcoat={1.0}
-        />
+      <mesh position={[0, 1.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.0, 0.06, 12, 64]} />
+        <IvoryMaterial />
       </mesh>
-      {/* 3 candles with flames */}
+      <mesh position={[0, 1.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.7, 0.05, 12, 64]} />
+        <IvoryMaterial />
+      </mesh>
+      <mesh position={[0, 0.55, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.2, 0.03, 16, 96]} />
+        <meshStandardMaterial color={PALETTE.BRASS_POLISHED} metalness={1.0} roughness={0.05} />
+      </mesh>
       {[-0.3, 0, 0.3].map((x, i) => (
-        <group key={i} position={[x, 1.5, 0]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.05, 0.05, 0.3, 12]} />
-            <meshPhysicalMaterial
-              color={i === 1 ? PALETTE.LUT : PALETTE.LA_LOUNGE}
-              roughness={0.3}
-              clearcoat={0.5}
+        <group key={i}>
+          <mesh position={[x, 1.65, 0]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.3, 16]} />
+            <meshStandardMaterial color={i === 1 ? PALETTE.LUT : PALETTE.LA_LOUNGE} roughness={0.3} />
+          </mesh>
+          <mesh position={[x, 1.9, 0]}>
+            <coneGeometry args={[0.06, 0.15, 12]} />
+            <meshStandardMaterial 
+              ref={el => { if (el) flamesRef.current[i] = el; }} 
+              color={PALETTE.YOUR_BIRTHDAY} 
+              emissive={PALETTE.YOUR_BIRTHDAY} 
+              emissiveIntensity={2.0} 
             />
           </mesh>
-          <mesh
-            ref={(m) => {
-              if (m) flameRefs.current[i] = m
-            }}
-            position={[0, 0.28, 0]}
-          >
-            <sphereGeometry args={[0.07, 12, 12]} />
-            <meshStandardMaterial
-              color={PALETTE.YOUR_BIRTHDAY}
-              emissive={PALETTE.YOUR_BIRTHDAY}
-              emissiveIntensity={1}
-            />
-          </mesh>
-          <pointLight position={[0, 0.3, 0]} intensity={0.4} color="#FFD580" distance={3} decay={2} />
+          <pointLight position={[x, 1.9, 0]} intensity={1.0} distance={4} decay={2} color={0xFFD580} />
         </group>
       ))}
     </group>
-  )
-}
+  );
+};
 
-function GiftBox({
-  position,
-  color,
-}: {
-  position: Vec3
-  color: string
-}) {
-  return (
-    <group position={position}>
-      {/* Box */}
-      <mesh position={[0, 0.4, 0]} castShadow>
-        <boxGeometry args={[1, 0.8, 1]} />
-        <meshPhysicalMaterial
-          color={color}
-          roughness={0.4}
-          metalness={0.1}
-          clearcoat={0.6}
-          clearcoatRoughness={0.2}
-        />
-      </mesh>
-      {/* Lid — ivory */}
-      <mesh position={[0, 0.85, 0]} castShadow>
-        <boxGeometry args={[1.1, 0.15, 1.1]} />
-        <meshPhysicalMaterial
-          color={PALETTE.IVORY_LACQUER}
-          roughness={0.2}
-          metalness={0.2}
-          clearcoat={1.0}
-        />
-      </mesh>
-      {/* Ribbon vertical — brass */}
-      <mesh position={[0, 0.4, 0]}>
-        <boxGeometry args={[0.15, 0.8, 1.01]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.05}
-          clearcoat={1.0}
-        />
-      </mesh>
-      {/* Ribbon horizontal — brass */}
-      <mesh position={[0, 0.4, 0]}>
-        <boxGeometry args={[1.01, 0.8, 0.15]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.05}
-          clearcoat={1.0}
-        />
-      </mesh>
-      {/* Bow — brass torus */}
-      <mesh position={[0, 1.0, 0]}>
-        <torusGeometry args={[0.22, 0.07, 12, 24]} />
-        <meshPhysicalMaterial
-          color={PALETTE.BRASS_POLISHED}
-          metalness={1.0}
-          roughness={0.05}
-          clearcoat={1.0}
-        />
-      </mesh>
-    </group>
-  )
-}
-
-function Banner() {
-  // Curved garland tube along a Catmull-Rom spline (HTML: 30 segments)
-  const curve = useMemo(() => {
-    const pts: THREE.Vector3[] = []
-    for (let i = 0; i <= 30; i++) {
-      const t = i / 30
-      pts.push(
-        new THREE.Vector3(
-          -7 + t * 14,
-          3.5 + Math.sin(t * Math.PI) * 2.0 + Math.sin(t * Math.PI * 3) * 0.3,
-          -1 + Math.sin(t * Math.PI * 2) * 0.5,
-        ),
-      )
-    }
-    return new THREE.CatmullRomCurve3(pts)
-  }, [])
-  return (
-    <mesh>
-      <tubeGeometry args={[curve, 80, 0.04, 12, false]} />
-      <meshPhysicalMaterial
-        color={PALETTE.YOUR_BIRTHDAY}
-        emissive={PALETTE.YOUR_BIRTHDAY}
-        emissiveIntensity={0.3}
-        roughness={0.3}
-        metalness={0.2}
-        clearcoat={0.5}
-      />
+const Gift = ({ position, color }: { position: Vec3, color: number }) => (
+  <group position={position}>
+    <mesh position={[0, 0.4, 0]} castShadow>
+      <boxGeometry args={[1, 0.8, 1]} />
+      <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
     </mesh>
-  )
-}
+    <mesh position={[0, 0.85, 0]} castShadow>
+      <boxGeometry args={[1.1, 0.15, 1.1]} />
+      <IvoryMaterial />
+    </mesh>
+    <mesh position={[0, 0.4, 0]}>
+      <boxGeometry args={[0.15, 0.8, 1.01]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 0.4, 0]}>
+      <boxGeometry args={[1.01, 0.8, 0.15]} />
+      <BrassMaterial />
+    </mesh>
+    <mesh position={[0, 1.0, 0]}>
+      <torusGeometry args={[0.22, 0.07, 16, 32]} />
+      <BrassMaterial />
+    </mesh>
+  </group>
+);
 
-function Confetti({ count }: { count: number }) {
-  // 100 colored points with additive blending (HTML: vertexColors + 4-color palette)
-  const { positions, colors } = useMemo(() => {
-    const positions = new Float32Array(count * 3)
-    const colors = new Float32Array(count * 3)
-    const palette = [
-      new THREE.Color(PALETTE.YOUR_BIRTHDAY),
-      new THREE.Color(PALETTE.LA_LOUNGE),
-      new THREE.Color(PALETTE.BRASS_POLISHED),
-      new THREE.Color(PALETTE.MYLAR_PINK),
-    ]
-    for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 24
-      positions[i * 3 + 1] = Math.random() * 6
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 6
-      const c = palette[Math.floor(Math.random() * palette.length)]
-      colors[i * 3] = c.r
-      colors[i * 3 + 1] = c.g
-      colors[i * 3 + 2] = c.b
+const BirthdayParty = ({ z, scale }: { z: number, scale: number }) => {
+  const confetti = useMemo(() => {
+    const pCount = 150;
+    const posArr = new Float32Array(pCount * 3);
+    const colArr = new Float32Array(pCount * 3);
+    const palette = [new THREE.Color(PALETTE.YOUR_BIRTHDAY), new THREE.Color(PALETTE.LA_LOUNGE), new THREE.Color(PALETTE.BRASS_POLISHED), new THREE.Color(PALETTE.MYLAR_PINK), new THREE.Color(PALETTE.NEON_CYAN), new THREE.Color(PALETTE.NEON_MAGENTA), new THREE.Color(PALETTE.NEON_YELLOW)];
+    for (let i = 0; i < pCount; i++) {
+      posArr[i*3] = (Math.random() - 0.5) * 24; posArr[i*3+1] = Math.random() * 6; posArr[i*3+2] = (Math.random() - 0.5) * 6;
+      const c = palette[Math.floor(Math.random() * palette.length)]; colArr[i*3] = c.r; colArr[i*3+1] = c.g; colArr[i*3+2] = c.b;
     }
-    return { positions, colors }
-  }, [count])
+    return { posArr, colArr };
+  }, []);
 
-  const ref = useRef<THREE.Points>(null)
-  useFrame((state) => {
-    if (!ref.current) return
-    const t = state.clock.elapsedTime
-    ref.current.rotation.y = t * 0.015
-    ref.current.rotation.x = Math.sin(t * 0.1) * 0.05
-  })
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry key={count}>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.3}
-        sizeAttenuation
-        transparent
-        opacity={0.8}
-        depthWrite={false}
-        vertexColors
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  )
-}
-
-function BirthdayParty({
-  z,
-  scale,
-}: {
-  z: number
-  scale: number
-}) {
   return (
     <group position={[0, 0, z]} scale={scale}>
-      {/* 6 mylar balloons (HTML: -5, -3, -1, 1, 3, 5 X positions) */}
-      <Balloon position={[-5, 0.5, 0]} color={PALETTE.YOUR_BIRTHDAY} />
-      <Balloon position={[-3, 1, 1]} color={PALETTE.LA_LOUNGE} />
-      <Balloon position={[-1, 0.8, -1]} color={PALETTE.MYLAR_PINK} />
-      <Balloon position={[1, 1.2, 0]} color={PALETTE.MYLAR_GOLD} />
-      <Balloon position={[3, 0.6, 1]} color={PALETTE.YOUR_BIRTHDAY} />
-      <Balloon position={[5, 1, -1]} color={PALETTE.LA_LOUNGE} />
-      {/* Cake — 3-tier with candles */}
-      <BirthdayCake position={[0, 0, 2]} />
-      {/* Gift boxes */}
-      <GiftBox position={[-4, 0, 2]} color={PALETTE.LUT} />
-      <GiftBox position={[4, 0, 2]} color={PALETTE.LA_LOUNGE} />
-      {/* Banner — curved garland */}
-      <Banner />
-      {/* Confetti — 100 colored points */}
-      <Confetti count={100} />
+      <LEDDanceFloor position={[0, 0, 2]} />
+      <Balloon position={[-5, 0.5, 0]} color={PALETTE.NEON_MAGENTA} />
+      <Balloon position={[-3, 1, 1]} color={PALETTE.NEON_CYAN} />
+      <Balloon position={[-1, 0.8, -1]} color={PALETTE.NEON_YELLOW} />
+      <Balloon position={[1, 1.2, 0]} color={PALETTE.YOUR_BIRTHDAY} />
+      <Balloon position={[3, 0.6, 1]} color={PALETTE.NEON_CYAN} />
+      <Balloon position={[5, 1, -1]} color={PALETTE.NEON_MAGENTA} />
+      <BalloonArch />
+      <NeonHeart position={[0, 1.5, -1.5]} />
+      <DJBooth position={[0, 0, -1]} />
+      <PartySpeaker position={[-6.5, 0, -1]} ringColor={PALETTE.NEON_MAGENTA} />
+      <PartySpeaker position={[6.5, 0, -1]} ringColor={PALETTE.NEON_CYAN} />
+      <PartySpeaker position={[0, 0, -5]} ringColor={PALETTE.NEON_YELLOW} />
+      <MicStand position={[3, 0, 2.5]} />
+      <Cake position={[0, 0.1, 2]} />
+      <group position={[-4, 0, 3.5]}>
+        <Gift position={[0,0,0]} color={PALETTE.NEON_CYAN} />
+        <PartyHat position={[0, 0.95, 0]} color={PALETTE.NEON_MAGENTA} />
+      </group>
+      <group position={[4, 0, 3.5]}>
+        <Gift position={[0,0,0]} color={PALETTE.NEON_MAGENTA} />
+        <PartyHat position={[0, 0.95, 0]} color={PALETTE.NEON_CYAN} />
+      </group>
+      <group position={[0, 0, 4.5]}>
+        <Gift position={[0,0,0]} color={PALETTE.NEON_YELLOW} />
+        <PartyHat position={[0, 0.95, 0]} color={PALETTE.YOUR_BIRTHDAY} />
+      </group>
+      <LightingStand position={[-5, 0, 5]} lightColor={PALETTE.NEON_CYAN} />
+      <LightingStand position={[5, 0, 5]} lightColor={PALETTE.NEON_MAGENTA} />
+      <LightingStand position={[0, 0, 6.5]} lightColor={PALETTE.NEON_YELLOW} />
+      <Bunting p1={[-5, 6, 5]} p2={[5, 6, 5]} />
+      <Bunting p1={[-5, 6, 5]} p2={[0, 6, 6.5]} />
+      <Bunting p1={[5, 6, 5]} p2={[0, 6, 6.5]} />
+      <group position={[0, 0, 7.5]} scale={0.7}>
+        <Table position={[0,0,0]} />
+        <ChampagneFlute position={[-0.3, 1, 0]} />
+        <ChampagneFlute position={[0.3, 1, 0]} />
+      </group>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[confetti.posArr, 3]} />
+          <bufferAttribute attach="attributes-color" args={[confetti.colArr, 3]} />
+        </bufferGeometry>
+        <pointsMaterial size={0.3} sizeAttenuation transparent opacity={0.8} depthWrite={false} vertexColors blending={THREE.AdditiveBlending} />
+      </points>
     </group>
-  )
-}
+  );
+};
 
 // ═════════════════════════════════════════════════════════════════
-// CENTER BLUEPRINT BIRTHDAY SCENE — full wireframe party scene
-// Mirrors HTML's centerGroup (positioned at sectionZs.lalounge)
-// All elements use LineBasicMaterial in brand colors
+// CENTER BLUEPRINT SCENE
 // ═════════════════════════════════════════════════════════════════
-
-function BlueprintBalloon({
-  position,
-  mat,
-}: {
-  position: Vec3
-  mat: THREE.LineBasicMaterial
-}) {
-  const ref = useRef<THREE.Group>(null)
-  // String line (2 points)
-  const stringGeo = useMemo(
-    () =>
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, -0.88, 0),
-        new THREE.Vector3(0, -2.2, 0),
-      ]),
-    [],
-  )
-  // G1-A2 #2: memoize the THREE.Line so it's not re-allocated per render
-  // (moved after stringMat definition — see below)
-  // Balloon body — wireframe icosahedron
-  const balloonEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.8, 1)),
-    [],
-  )
-  // Knot — wireframe cone
-  const knotEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.ConeGeometry(0.08, 0.15, 6)),
-    [],
-  )
-  const stringMat = useMemo(
-    () =>
-      new THREE.LineBasicMaterial({
-        color: PALETTE.RING_COLOR,
-        transparent: true,
-        opacity: 0.3,
-      }),
-    [],
-  )
-  // G1-A2 #2: memoize the THREE.Line so it's not re-allocated per render
-  const stringLine = useMemo(
-    () => new THREE.Line(stringGeo, stringMat),
-    [stringGeo, stringMat],
-  )
-
-  useEffect(
-    () => () => {
-      stringGeo.dispose()
-      balloonEdges.dispose()
-      knotEdges.dispose()
-      stringMat.dispose()
-    },
-    [stringGeo, balloonEdges, knotEdges, stringMat],
-  )
+const CenterBlueprints = ({ position }: { position: Vec3 }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const holoMatRef = useRef<THREE.ShaderMaterial>(null);
+  const screenMatRef = useRef<THREE.ShaderMaterial>(null);
 
   useFrame((state) => {
-    if (!ref.current) return
-    const t = state.clock.elapsedTime
-    // HTML: sin(t*0.3 + baseX*0.6)*0.15 + sin(t*0.5 + baseZ*0.8)*0.08
-    ref.current.position.y =
-      position[1] +
-      Math.sin(t * 0.3 + position[0] * 0.6) * 0.15 +
-      Math.sin(t * 0.5 + position[2] * 0.8) * 0.08
-    ref.current.rotation.y = t * 0.1 + position[0]
-    ref.current.rotation.z = Math.sin(t * 0.25 + position[2]) * 0.05
-  })
+    const t = state.clock.elapsedTime;
+    if (holoMatRef.current) holoMatRef.current.uniforms.uTime.value = t;
+    if (screenMatRef.current) screenMatRef.current.uniforms.uTime.value = t;
+    if (groupRef.current) groupRef.current.rotation.y = Math.sin(t * 0.1) * 0.3 + t * 0.05;
+  });
+
+  const bpMatBold = useMemo(() => new THREE.LineBasicMaterial({ color: PALETTE.LA_LOUNGE, transparent: true, opacity: 0.9 }), []);
+  const bpMatMain = useMemo(() => new THREE.LineBasicMaterial({ color: PALETTE.RING_COLOR, transparent: true, opacity: 0.7 }), []);
+  const bpMatSub = useMemo(() => new THREE.LineBasicMaterial({ color: PALETTE.GRID_ACCENT, transparent: true, opacity: 0.5 }), []);
 
   return (
-    <group ref={ref} position={position}>
-      <lineSegments geometry={balloonEdges} material={mat} />
-      <lineSegments position={[0, -0.8, 0]} geometry={knotEdges} material={mat} />
-      <primitive object={stringLine} />
-    </group>
-  )
-}
-
-function BlueprintGift({
-  position,
-  mat,
-  matBold,
-  matSub,
-}: {
-  position: Vec3
-  mat: THREE.LineBasicMaterial
-  matBold: THREE.LineBasicMaterial
-  matSub: THREE.LineBasicMaterial
-}) {
-  // Box + lid + ribbon v + ribbon h + bow (all wireframe)
-  const boxEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(1.1, 0.9, 1.1)),
-    [],
-  )
-  const lidEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(1.2, 0.15, 1.2)),
-    [],
-  )
-  const bowEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.TorusGeometry(0.18, 0.05, 6, 16)),
-    [],
-  )
-  // Ribbon vertical — 2 segments (4 points)
-  const rvGeo = useMemo(
-    () =>
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, -0.45, 0.56),
-        new THREE.Vector3(0, 0.6, 0.56),
-        new THREE.Vector3(0, -0.45, -0.56),
-        new THREE.Vector3(0, 0.6, -0.56),
-      ]),
-    [],
-  )
-  // Ribbon horizontal — 2 segments (4 points)
-  const rhGeo = useMemo(
-    () =>
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0.56, -0.45, 0),
-        new THREE.Vector3(0.56, 0.6, 0),
-        new THREE.Vector3(-0.56, -0.45, 0),
-        new THREE.Vector3(-0.56, 0.6, 0),
-      ]),
-    [],
-  )
-  useEffect(
-    () => () => {
-      boxEdges.dispose()
-      lidEdges.dispose()
-      bowEdges.dispose()
-      rvGeo.dispose()
-      rhGeo.dispose()
-    },
-    [boxEdges, lidEdges, bowEdges, rvGeo, rhGeo],
-  )
-  return (
-    <group position={position}>
-      <lineSegments geometry={boxEdges} material={mat} />
-      <lineSegments position={[0, 0.52, 0]} geometry={lidEdges} material={matSub} />
-      <lineSegments geometry={rvGeo} material={matBold} />
-      <lineSegments geometry={rhGeo} material={matBold} />
-      <lineSegments
-        position={[0, 0.7, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        geometry={bowEdges}
-        material={matBold}
-      />
-    </group>
-  )
-}
-
-function BlueprintChair({
-  position,
-  rotation = [0, 0, 0] as Vec3,
-  matSub,
-  matDim,
-}: {
-  position: Vec3
-  rotation?: Vec3
-  matSub: THREE.LineBasicMaterial
-  matDim: THREE.LineBasicMaterial
-}) {
-  const seatEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(0.7, 0.08, 0.7)),
-    [],
-  )
-  const backEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(0.7, 0.6, 0.06)),
-    [],
-  )
-  const legEdges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 4)),
-    [],
-  )
-  useEffect(
-    () => () => {
-      seatEdges.dispose()
-      backEdges.dispose()
-      legEdges.dispose()
-    },
-    [seatEdges, backEdges, legEdges],
-  )
-  return (
-    <group position={position} rotation={rotation}>
-      <lineSegments geometry={seatEdges} material={matSub} />
-      <lineSegments position={[0, 0.35, -0.32]} geometry={backEdges} material={matSub} />
-      {(
-        [
-          [-0.3, -0.3],
-          [0.3, -0.3],
-          [-0.3, 0.3],
-          [0.3, 0.3],
-        ] as Array<[number, number]>
-      ).map(([lx, lz], i) => (
-        <lineSegments
-          key={i}
-          position={[lx, -0.2, lz]}
-          geometry={legEdges}
-          material={matDim}
-        />
-      ))}
-    </group>
-  )
-}
-
-function BlueprintStar({
-  position,
-  scale,
-  mat,
-}: {
-  position: Vec3
-  scale: number
-  mat: THREE.LineBasicMaterial
-}) {
-  // 5-point star (10-vertex shape)
-  const starEdges = useMemo(() => {
-    const shape = new THREE.Shape()
-    const outerR = 0.3 * scale
-    const innerR = 0.12 * scale
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 === 0 ? outerR : innerR
-      const a = (i / 10) * Math.PI * 2 - Math.PI / 2
-      if (i === 0) shape.moveTo(Math.cos(a) * r, Math.sin(a) * r)
-      else shape.lineTo(Math.cos(a) * r, Math.sin(a) * r)
-    }
-    shape.closePath()
-    return new THREE.EdgesGeometry(new THREE.ShapeGeometry(shape))
-  }, [scale])
-  useEffect(() => () => starEdges.dispose(), [starEdges])
-  return (
-    <lineSegments position={position} rotation={[-Math.PI / 2, 0, 0]} geometry={starEdges} material={mat} />
-  )
-}
-
-function CenterBlueprintScene({
-  z,
-  scale,
-}: {
-  z: number
-  scale: number
-}) {
-  const groupRef = useRef<THREE.Group>(null)
-
-  // Pre-build all elements once via useMemo (matches MasterArchitecture pattern)
-  const { elements, materials, geometries } = useMemo(() => {
-    const items: ReactElement[] = []
-    const geos: THREE.BufferGeometry[] = []
-    const mats: THREE.LineBasicMaterial[] = []
-    const track = <T extends THREE.BufferGeometry>(g: T): T => {
-      geos.push(g)
-      return g
-    }
-    const trackMat = <T extends THREE.LineBasicMaterial>(m: T): T => {
-      mats.push(m)
-      return m
-    }
-
-    // Blueprint materials (HTML: bpMatBold/Main/Sub/Dim)
-    const bpMatBold = trackMat(
-      new THREE.LineBasicMaterial({
-        color: PALETTE.YOUR_BIRTHDAY,
-        transparent: true,
-        opacity: 0.7,
-      }),
-    )
-    const bpMatMain = trackMat(
-      new THREE.LineBasicMaterial({
-        color: PALETTE.LA_LOUNGE,
-        transparent: true,
-        opacity: 0.6,
-      }),
-    )
-    const bpMatSub = trackMat(
-      new THREE.LineBasicMaterial({
-        color: PALETTE.GRID_ACCENT,
-        transparent: true,
-        opacity: 0.4,
-      }),
-    )
-    const bpMatDim = trackMat(
-      new THREE.LineBasicMaterial({
-        color: PALETTE.RING_COLOR,
-        transparent: true,
-        opacity: 0.3,
-      }),
-    )
-
-    // --- Blueprint Cake (3-tier wireframe) ---
-    // Bottom tier
-    const cakeBottomEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.6, 1.6, 0.7, 32)))
-    items.push(
-      <lineSegments key="cake_b" position={[0, 0.35, 0]} geometry={cakeBottomEdges} material={bpMatBold} />,
-    )
-    // Middle tier
-    const cakeMidEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.1, 1.1, 0.55, 32)))
-    items.push(
-      <lineSegments key="cake_m" position={[0, 0.95, 0]} geometry={cakeMidEdges} material={bpMatMain} />,
-    )
-    // Top tier
-    const cakeTopEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.75, 0.75, 0.45, 32)))
-    items.push(
-      <lineSegments key="cake_t" position={[0, 1.45, 0]} geometry={cakeTopEdges} material={bpMatBold} />,
-    )
-    // Plate
-    const plateEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(2.0, 2.0, 0.08, 48)))
-    items.push(
-      <lineSegments key="plate" position={[0, 0.04, 0]} geometry={plateEdges} material={bpMatSub} />,
-    )
-    // Gold ring 1 (between bottom + middle)
-    const ring1Edges = track(new THREE.EdgesGeometry(new THREE.TorusGeometry(1.35, 0.05, 8, 64)))
-    items.push(
-      <lineSegments
-        key="ring1"
-        position={[0, 0.72, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        geometry={ring1Edges}
-        material={bpMatBold}
-      />,
-    )
-    // Gold ring 2 (between middle + top)
-    const ring2Edges = track(new THREE.EdgesGeometry(new THREE.TorusGeometry(0.92, 0.04, 8, 64)))
-    items.push(
-      <lineSegments
-        key="ring2"
-        position={[0, 1.2, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        geometry={ring2Edges}
-        material={bpMatBold}
-      />,
-    )
-    // Candles (3) — wireframe cylinders + flame dots
-    ;[-0.4, 0, 0.4].forEach((x, i) => {
-      const candleEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8)))
-      items.push(
-        <lineSegments
-          key={`candle_${i}`}
-          position={[x, 1.7, 0]}
-          geometry={candleEdges}
-          material={i === 1 ? bpMatBold : bpMatMain}
-        />,
-      )
-      // Flame dot — small emissive sphere
-      items.push(
-        <mesh key={`flame_${i}`} position={[x, 1.95, 0]}>
-          <sphereGeometry args={[0.08, 8, 8]} />
-          <meshBasicMaterial color={PALETTE.YOUR_BIRTHDAY} transparent opacity={0.8} />
-        </mesh>,
-      )
-    })
-
-    // --- Blueprint Balloons (5 — wireframe icosahedrons) ---
-    // (Rendered via BlueprintBalloon component below — not pushed to items here)
-
-    // --- Blueprint Gift Boxes (3) ---
-    // (Rendered via BlueprintGift component below — not pushed to items here)
-
-    // --- Blueprint Banner / Garland (wireframe tube curve) ---
-    const garlandPts: THREE.Vector3[] = []
-    for (let i = 0; i <= 40; i++) {
-      const t = i / 40
-      garlandPts.push(
-        new THREE.Vector3(
-          -5 + t * 10,
-          3.0 + Math.sin(t * Math.PI) * 1.8 + Math.sin(t * Math.PI * 4) * 0.4,
-          -2 + Math.sin(t * Math.PI * 2) * 1.0,
-        ),
-      )
-    }
-    const garlandCurve = new THREE.CatmullRomCurve3(garlandPts)
-    const garlandEdges = track(new THREE.EdgesGeometry(new THREE.TubeGeometry(garlandCurve, 80, 0.03, 8, false)))
-    items.push(<lineSegments key="garland" geometry={garlandEdges} material={bpMatMain} />)
-
-    // Small flags on garland (7 flags)
-    for (let i = 1; i < 8; i++) {
-      const t = i / 8
-      const pt = garlandCurve.getPoint(t)
-      const tan = garlandCurve.getTangent(t)
-      const flagEdges = track(new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.4, 0.25)))
-      // Compute Euler from tangent direction (approximate lookAt)
-      const target = pt.clone().add(tan)
-      const m = new THREE.Matrix4().lookAt(pt, target, new THREE.Vector3(0, 1, 0))
-      const q = new THREE.Quaternion().setFromRotationMatrix(m)
-      const e = new THREE.Euler().setFromQuaternion(q)
-      // After lookAt, rotate Y by π/2 (HTML: flag.rotateY(Math.PI / 2))
-      const finalRot: Vec3 = [e.x, e.y + Math.PI / 2, e.z]
-      items.push(
-        <lineSegments
-          key={`flag_${i}`}
-          position={[pt.x, pt.y, pt.z]}
-          rotation={finalRot}
-          geometry={flagEdges}
-          material={i % 2 === 0 ? bpMatBold : bpMatMain}
-        />,
-      )
-    }
-
-    // --- Blueprint Table (small party table) ---
-    const tableTopEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.8, 1.8, 0.08, 32)))
-    items.push(
-      <lineSegments
-        key="tab_top"
-        position={[0, 0.8, -2.5]}
-        geometry={tableTopEdges}
-        material={bpMatSub}
-      />,
-    )
-    const tableLegEdges = track(new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6)))
-    ;([
-      [-1.2, -0.8],
-      [1.2, -0.8],
-      [-1.2, 0.8],
-      [1.2, 0.8],
-    ] as Array<[number, number]>).forEach(([lx, lz], i) => {
-      items.push(
-        <lineSegments
-          key={`tab_leg_${i}`}
-          position={[lx, 0.4, -2.5 + lz]}
-          geometry={tableLegEdges}
-          material={bpMatDim}
-        />,
-      )
-    })
-
-    // --- Blueprint Confetti (40 floating wireframe triangles/squares) ---
-    for (let i = 0; i < 40; i++) {
-      const size = 0.08 + Math.random() * 0.12
-      const confEdges = track(new THREE.EdgesGeometry(new THREE.PlaneGeometry(size, size)))
-      items.push(
-        <lineSegments
-          key={`bp_conf_${i}`}
-          position={[
-            (Math.random() - 0.5) * 12,
-            0.5 + Math.random() * 4,
-            (Math.random() - 0.5) * 8,
-          ]}
-          rotation={[Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI]}
-          geometry={confEdges}
-          material={Math.random() > 0.5 ? bpMatBold : bpMatMain}
-        />,
-      )
-    }
-
-    // --- Blueprint Party Hat ---
-    const hatEdges = track(new THREE.EdgesGeometry(new THREE.ConeGeometry(0.35, 0.8, 8)))
-    items.push(
-      <lineSegments key="hat" position={[1.5, 0.4, 1.5]} geometry={hatEdges} material={bpMatBold} />,
-    )
-    // Hat pom-pom
-    const pomEdges = track(new THREE.EdgesGeometry(new THREE.SphereGeometry(0.08, 6, 6)))
-    items.push(
-      <lineSegments key="pom" position={[1.5, 0.85, 1.5]} geometry={pomEdges} material={bpMatBold} />,
-    )
-
-    // --- Blueprint Number "1" (wireframe line segments) ---
-    const num1Pts = [
-      new THREE.Vector3(-0.05, 0, 0),
-      new THREE.Vector3(0.05, 0, 0),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0.5, 0),
-      new THREE.Vector3(-0.08, 0.08, 0),
-      new THREE.Vector3(0, 0.15, 0),
-    ]
-    const num1Geo = track(new THREE.BufferGeometry().setFromPoints(num1Pts))
-    items.push(
-      <lineSegments
-        key="num1"
-        position={[0, 2.0, 0.5]}
-        scale={1.5}
-        geometry={num1Geo}
-        material={bpMatBold}
-      />,
-    )
-
-    return {
-      elements: items,
-      materials: { bpMatBold, bpMatMain, bpMatSub, bpMatDim },
-      geometries: geos,
-      mats,
-    }
-  }, [])
-
-  // Cleanup on unmount
-  useEffect(
-    () => () => {
-      materials.bpMatBold.dispose()
-      materials.bpMatMain.dispose()
-      materials.bpMatSub.dispose()
-      materials.bpMatDim.dispose()
-      geometries.forEach((g) => g.dispose())
-    },
-    [materials, geometries],
-  )
-
-  // Gentle rotation — slow blueprint turntable (HTML: sin(t*0.08)*0.15)
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.08) * 0.15
-    }
-  })
-
-  return (
-    <group ref={groupRef} position={[0, 0, z]} scale={scale}>
-      {elements}
-
-      {/* Blueprint balloons (5) */}
-      <BlueprintBalloon position={[-3.5, 2.5, -1]} mat={materials.bpMatBold} />
-      <BlueprintBalloon position={[3.5, 2.8, 1]} mat={materials.bpMatMain} />
-      <BlueprintBalloon position={[-2, 3.5, 1.5]} mat={materials.bpMatMain} />
-      <BlueprintBalloon position={[2, 3.2, -1.5]} mat={materials.bpMatBold} />
-      <BlueprintBalloon position={[0, 4.0, 0]} mat={materials.bpMatBold} />
-
-      {/* Blueprint gifts (3) */}
-      <BlueprintGift position={[-3, 0.45, 2]} mat={materials.bpMatMain} matBold={materials.bpMatBold} matSub={materials.bpMatSub} />
-      <BlueprintGift position={[3, 0.45, -2]} mat={materials.bpMatMain} matBold={materials.bpMatBold} matSub={materials.bpMatSub} />
-      <BlueprintGift position={[0, 0.45, 3]} mat={materials.bpMatBold} matBold={materials.bpMatBold} matSub={materials.bpMatSub} />
-
-      {/* Blueprint chairs (3 around the table) */}
-      <BlueprintChair position={[-2.2, 0.4, -2.5]} rotation={[0, Math.PI / 4, 0]} matSub={materials.bpMatSub} matDim={materials.bpMatDim} />
-      <BlueprintChair position={[2.2, 0.4, -2.5]} rotation={[0, -Math.PI / 4, 0]} matSub={materials.bpMatSub} matDim={materials.bpMatDim} />
-      <BlueprintChair position={[0, 0.4, -4.2]} rotation={[0, 0, 0]} matSub={materials.bpMatSub} matDim={materials.bpMatDim} />
-
-      {/* Blueprint stars (5 floor decals) */}
-      <BlueprintStar position={[-4, 0.05, 0]} scale={1.0} mat={materials.bpMatBold} />
-      <BlueprintStar position={[4, 0.05, 1]} scale={0.8} mat={materials.bpMatMain} />
-      <BlueprintStar position={[0, 0.05, -3]} scale={0.6} mat={materials.bpMatBold} />
-      <BlueprintStar position={[-1.5, 0.05, 1.5]} scale={0.7} mat={materials.bpMatMain} />
-      <BlueprintStar position={[1.5, 0.05, -1]} scale={0.9} mat={materials.bpMatBold} />
-    </group>
-  )
-}
-
-// ═════════════════════════════════════════════════════════════════
-// SHADER GRID — custom animated grid (HTML's gridMesh + gridUniforms)
-// ═════════════════════════════════════════════════════════════════
-function ShaderGrid() {
-  const matRef = useRef<THREE.ShaderMaterial>(null)
-
-  // Build uniforms once (HTML's gridUniforms)
-  const uniforms = useMemo(
-    () => ({
-      uTime: { value: 0 },
-      uColorMain: { value: new THREE.Color(PALETTE.GRID_MAIN) },
-      uColorAccent: { value: new THREE.Color(PALETTE.GRID_ACCENT) },
-      uColorLight: { value: new THREE.Color(PALETTE.GRID_LIGHT) },
-      uColorPulse: { value: new THREE.Color(PALETTE.GRID_PULSE) },
-      uFadeStart: { value: 40.0 },
-      uFadeEnd: { value: 120.0 },
-    }),
-    [],
-  )
-
-  useFrame((state) => {
-    if (matRef.current) {
-      matRef.current.uniforms.uTime.value = state.clock.elapsedTime
-    }
-  })
-
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
-      <planeGeometry args={[300, 300]} />
-      <shaderMaterial
-        ref={matRef}
-        uniforms={uniforms}
-        vertexShader={gridVertexShader}
-        fragmentShader={gridFragmentShader}
-        transparent
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
-  )
-}
-
-// ═════════════════════════════════════════════════════════════════
-// RADIAL RINGS — 8 concentric rings (HTML's ringsGroup)
-// ═════════════════════════════════════════════════════════════════
-function RadialRings() {
-  const groupRef = useRef<THREE.Group>(null)
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.z = state.clock.elapsedTime * 0.08
-    }
-  })
-  return (
-    <group ref={groupRef}>
+    <group ref={groupRef} position={position}>
+      {/* Ceiling Truss */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.TorusGeometry(6, 0.1, 4, 64))} material={bpMatBold} position={[0, 7, 0]} rotation={[Math.PI / 2, 0, 0]} />
       {Array.from({ length: 8 }).map((_, i) => {
-        const radius = 6 + i * 5
+        const angle = (i / 8) * Math.PI * 2;
+        const pts = [new THREE.Vector3(0, 7, 0), new THREE.Vector3(Math.cos(angle) * 6, 7, Math.sin(angle) * 6)];
+        return <lineSegments key={i} geometry={new THREE.BufferGeometry().setFromPoints(pts)} material={bpMatSub} />;
+      })}
+
+      {/* Bistro Lights */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i / 12) * Math.PI * 2;
         return (
-          <mesh key={i} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[radius, radius + 0.08, 128]} />
-            <meshBasicMaterial
-              color={PALETTE.RING_COLOR}
-              transparent
-              opacity={0.12 - i * 0.01}
-              side={THREE.DoubleSide}
+          <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.SphereGeometry(0.1, 4, 4))} material={bpMatSub} position={[Math.cos(angle) * 5.5, 6.5, Math.sin(angle) * 5.5]} />
+        );
+      })}
+
+      {/* Disco Ball */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.8, 1))} material={bpMatBold} position={[0, 5.5, 0]} />
+      <mesh position={[0, 5.5, 0]}>
+        <icosahedronGeometry args={[0.8, 1]} />
+        <shaderMaterial 
+          ref={holoMatRef}
+          uniforms={{ uTime: { value: 0 }, uColor: { value: new THREE.Color(PALETTE.GRID_PULSE) } }}
+          vertexShader={holoVertexShader}
+          fragmentShader={holoFragmentShader}
+          transparent blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Par Cans */}
+      {Array.from({ length: 6 }).map((_, i) => {
+        const angle = (i / 6) * Math.PI * 2;
+        return (
+          <group key={i} position={[Math.cos(angle) * 5.5, 6.8, Math.sin(angle) * 5.5]} rotation={[Math.PI / 2, 0, 0]}>
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.15, 0.15, 0.3, 8))} material={bpMatMain} />
+          </group>
+        );
+      })}
+
+      {/* Holo Screens */}
+      {Array.from({ length: 3 }).map((_, i) => {
+        const angle = (i / 3) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * 2, 1.8, Math.sin(angle) * 2]} rotation={[0, -angle + Math.PI/2, 0]}>
+            <planeGeometry args={[1.5, 1]} />
+            <shaderMaterial 
+              ref={screenMatRef}
+              uniforms={{ uTime: { value: 0 } }}
+              vertexShader={`varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`}
+              fragmentShader={screenFragmentShader}
+              transparent side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending}
             />
           </mesh>
-        )
+        );
       })}
+
+      {/* Pillars */}
+      {Array.from({ length: 6 }).map((_, i) => {
+        const angle = (i / 6) * Math.PI * 2;
+        return (
+          <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.15, 0.15, 7, 8))} material={bpMatMain} position={[Math.cos(angle) * 6, 3.5, Math.sin(angle) * 6]} />
+        );
+      })}
+
+      {/* Dance Floors */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(3.5, 3.5, 0.1, 64))} material={bpMatMain} position={[0, 0.05, 0]} />
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[3.5, 3.5, 0.1, 64]} />
+        <shaderMaterial 
+          uniforms={{ uTime: { value: 0 }, uColor: { value: new THREE.Color(PALETTE.GRID_PULSE) } }}
+          vertexShader={holoVertexShader}
+          fragmentShader={holoFragmentShader}
+          transparent blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(2.5, 2.5, 0.1, 64))} material={bpMatBold} position={[0, 0.15, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.5, 1.5, 0.1, 64))} material={bpMatSub} position={[0, 0.25, 0]} />
+
+      {/* Banquet Table */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.TorusGeometry(4.5, 0.1, 2, 64))} material={bpMatBold} position={[0, 1, 0]} rotation={[Math.PI / 2, 0, 0]} />
+
+      {/* Table Details */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2;
+        const px = Math.cos(angle) * 4.5;
+        const pz = Math.sin(angle) * 4.5;
+        return (
+          <group key={i} position={[px, 0, pz]}>
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.4, 0.4, 0.02, 16))} material={bpMatSub} position={[0, 1.11, 0]} />
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.15, 0.15, 0.02, 8))} material={bpMatMain} position={[0, 1.12, 0]} />
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.02, 0.02, 0.15, 4))} material={bpMatMain} position={[0, 1.21, 0]} />
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI*2, 0, Math.PI/2))} material={bpMatMain} position={[0, 1.3, 0]} />
+          </group>
+        );
+      })}
+
+      {/* Centerpiece */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.8, 1.0, 0.2, 16))} material={bpMatBold} position={[0, 1.1, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.6, 0.8, 0.4, 16))} material={bpMatMain} position={[0, 1.4, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.ConeGeometry(0.5, 0.6, 8))} material={bpMatSub} position={[0, 1.9, 0]} />
+
+      {/* Chairs */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2;
+        const px = Math.cos(angle) * 5.2;
+        const pz = Math.sin(angle) * 5.2;
+        return (
+          <group key={i} position={[px, 0, pz]} rotation={[0, -angle - Math.PI/2, 0]}>
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.6, 0.08, 0.6))} material={bpMatMain} position={[0, 0.5, 0]} />
+            <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.6, 0.6, 0.08))} material={bpMatMain} position={[0, 0.8, -0.3]} />
+          </group>
+        );
+      })}
+
+      {/* DJ Booth */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.8, 1, 1.2, 32))} material={bpMatBold} position={[0, 0.6, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.6, 0.8, 0.4, 32))} material={bpMatMain} position={[0, 1.4, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.5, 0.6, 0.1, 32))} material={bpMatSub} position={[0, 1.65, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.15, 0.15, 0.02, 16))} material={bpMatBold} position={[-0.2, 1.71, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.15, 0.15, 0.02, 16))} material={bpMatBold} position={[0.2, 1.71, 0]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.3, 0.02, 0.2))} material={bpMatMain} position={[0, 1.71, 0.2]} />
+
+      {/* Buffet Station */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(3, 0.1, 1))} material={bpMatBold} position={[-4, 1, 4]} />
+      {([[-1.4, -0.4], [1.4, -0.4], [-1.4, 0.4], [1.4, 0.4]] as [number, number][]).map(([x,z], i) => (
+        <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.1, 1, 0.1))} material={bpMatSub} position={[-4+x, 0.5, 4+z]} />
+      ))}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <group key={i} position={[-4.5 + i*0.5, 0, 4]}>
+          <lineSegments geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.2, 0.2, 0.05, 8))} material={bpMatMain} position={[0, 1.08, 0]} />
+          <lineSegments geometry={new THREE.EdgesGeometry(new THREE.SphereGeometry(0.25, 8, 8, 0, Math.PI*2, 0, Math.PI/2))} material={bpMatBold} position={[0, 1.13, 0]} />
+        </group>
+      ))}
+
+      {/* Gift Table */}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(1.5, 0.1, 1))} material={bpMatBold} position={[4, 1, 4]} />
+      {([[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]] as [number, number][]).map(([x,z], i) => (
+        <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.1, 1, 0.1))} material={bpMatSub} position={[4+x, 0.5, 4+z]} />
+      ))}
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.5, 0.4, 0.5))} material={bpMatMain} position={[3.8, 1.3, 4]} />
+      <lineSegments geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.3, 0.3, 0.3))} material={bpMatSub} position={[4.3, 1.25, 4.1]} />
     </group>
-  )
-}
+  );
+};
 
 // ═════════════════════════════════════════════════════════════════
-// MASTER ARCHITECTURE — wireframe event structures (HTML's archGroup)
-// Platforms + pillars + trusses + tables + elevation markers + zone markers
+// ENVIRONMENT & BACKGROUND
 // ═════════════════════════════════════════════════════════════════
-function MasterArchitecture() {
-  const { elements, materials, geometries } = useMemo(() => {
-    const items: ReactElement[] = []
-    const geos: THREE.BufferGeometry[] = []
-    const track = <T extends THREE.BufferGeometry>(geo: T): T => {
-      geos.push(geo)
-      return geo
+const BackgroundEnv = () => {
+  const gridMatRef = useRef<THREE.ShaderMaterial>(null);
+  const spineMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const ringsRef = useRef<THREE.Group>(null);
+  const motesRef = useRef<THREE.Points>(null);
+
+  const moteData = useMemo(() => {
+    const moteCount = 200;
+    const motesPos = new Float32Array(moteCount * 3);
+    const motesBase = new Float32Array(moteCount * 3);
+    const motesSpeed = new Float32Array(moteCount);
+    for(let i=0; i<moteCount; i++) {
+      motesPos[i*3] = (Math.random()-0.5)*80; motesPos[i*3+1] = (Math.random()-0.5)*50; motesPos[i*3+2] = (Math.random()-0.5)*40;
+      motesBase[i*3] = motesPos[i*3]; motesBase[i*3+1] = motesPos[i*3+1]; motesBase[i*3+2] = motesPos[i*3+2];
+      motesSpeed[i] = 0.5 + Math.random() * 1.5;
     }
-
-    // Materials — muted blueprint ink
-    const matBold = new THREE.LineBasicMaterial({
-      color: PALETTE.LA_LOUNGE,
-      transparent: true,
-      opacity: 0.5,
-    })
-    const matMain = new THREE.LineBasicMaterial({
-      color: PALETTE.RING_COLOR,
-      transparent: true,
-      opacity: 0.4,
-    })
-    const matSub = new THREE.LineBasicMaterial({
-      color: PALETTE.GRID_ACCENT,
-      transparent: true,
-      opacity: 0.3,
-    })
-
-    // --- Platforms (HTML: 3 platforms) ---
-    const platforms: Array<{ w: number; h: number; d: number; x: number; y: number; z: number; mat: THREE.LineBasicMaterial }> = [
-      { w: 14, h: 0.3, d: 7, x: 0, y: 0.15, z: -18, mat: matMain },
-      { w: 10, h: 0.3, d: 5, x: -18, y: 0.15, z: 12, mat: matMain },
-      { w: 8, h: 0.3, d: 4, x: 18, y: 0.15, z: 8, mat: matMain },
-    ]
-    platforms.forEach((p, i) => {
-      const geo = track(new THREE.BoxGeometry(p.w, p.h, p.d))
-      items.push(
-        <lineSegments
-          key={`plat_${i}`}
-          geometry={track(new THREE.EdgesGeometry(geo))}
-          material={p.mat}
-          position={[p.x, p.y, p.z]}
-        />,
-      )
-    })
-
-    // --- Pillars (HTML: 8 pillars at 4 corner positions + 4 mid-edges) ---
-    const pillars: Array<[number, number]> = [
-      [-22, -18],
-      [22, -18],
-      [-22, 18],
-      [22, 18],
-      [-12, -8],
-      [12, -8],
-      [-12, 8],
-      [12, 8],
-    ]
-    pillars.forEach(([x, z], i) => {
-      // Deterministic pseudo-random height (avoid SSR/hydration mismatch)
-      const h = 6 + ((Math.sin(i * 12.9898) * 43758.5453) % 1) * 4
-      const geo = track(new THREE.BoxGeometry(0.4, h, 0.4))
-      items.push(
-        <lineSegments
-          key={`pil_${i}`}
-          geometry={track(new THREE.EdgesGeometry(geo))}
-          material={i < 4 ? matBold : matSub}
-          position={[x, h / 2, z]}
-        />,
-      )
-    })
-
-    // --- Truss connections (HTML: 4 truss beams) ---
-    const trusses: Array<{ w: number; h: number; d: number; x: number; y: number; z: number }> = [
-      { w: 44, h: 0.25, d: 0.25, x: 0, y: 7, z: -18 },
-      { w: 44, h: 0.25, d: 0.25, x: 0, y: 9, z: 18 },
-      { w: 0.25, h: 0.25, d: 36, x: -22, y: 5, z: 0 },
-      { w: 0.25, h: 0.25, d: 36, x: 22, y: 5, z: 0 },
-    ]
-    trusses.forEach((t, i) => {
-      const geo = track(new THREE.BoxGeometry(t.w, t.h, t.d))
-      items.push(
-        <lineSegments
-          key={`truss_${i}`}
-          geometry={track(new THREE.EdgesGeometry(geo))}
-          material={matBold}
-          position={[t.x, t.y, t.z]}
-        />,
-      )
-    })
-
-    // --- Tables (HTML: 5 circular tables) ---
-    const tables: Array<[number, number]> = [
-      [-10, -6],
-      [10, -6],
-      [0, 16],
-      [-16, 0],
-      [16, 0],
-    ]
-    tables.forEach(([x, z], i) => {
-      const geo = track(new THREE.CylinderGeometry(1.2, 1.2, 0.25, 24))
-      items.push(
-        <lineSegments
-          key={`tab_${i}`}
-          geometry={track(new THREE.EdgesGeometry(geo))}
-          material={matSub}
-          position={[x, 0.125, z]}
-        />,
-      )
-    })
-
-    // --- Elevation markers (HTML: 16 random vertical lines) ---
-    for (let k = 0; k < 16; k++) {
-      // Deterministic pseudo-random positions (avoid hydration mismatch)
-      const r1 = ((Math.sin(k * 78.233) * 43758.5453) % 1 + 1) % 1
-      const r2 = ((Math.sin(k * 12.9898) * 43758.5453) % 1 + 1) % 1
-      const r3 = ((Math.sin(k * 39.346) * 43758.5453) % 1 + 1) % 1
-      const px = (r1 - 0.5) * 100
-      const pz = (r2 - 0.5) * 100
-      const py = 2 + r3 * 10
-      const lineGeo = track(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(px, 0, pz),
-          new THREE.Vector3(px, py, pz),
-        ]),
-      )
-      // Create the THREE.Line instance in the useMemo body (consistent with
-      // how BlueprintBalloon / other tracked primitives are constructed) so
-      // the JSX is purely declarative and the instance is reused, not
-      // re-allocated on each render of the memo result. `lineGeo` is already
-      // tracked above for disposal; the Line wrapper itself holds no native
-      // GL resources beyond the tracked geometry/material.
-      const elevLine = new THREE.Line(lineGeo, matSub)
-      items.push(<primitive key={`elev_${k}`} object={elevLine} />)
-    }
-
-    // --- Zone markers (HTML: 4 pink triangular cones at central platform) ---
-    const zonePositions: Array<[number, number]> = [
-      [-8, -4],
-      [8, -4],
-      [-8, 4],
-      [8, 4],
-    ]
-    zonePositions.forEach(([x, z], i) => {
-      items.push(
-        <mesh
-          key={`zone_${i}`}
-          position={[x, 0.08, z]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <coneGeometry args={[0.6, 0.15, 4]} />
-          <meshBasicMaterial color={PALETTE.LA_LOUNGE} transparent opacity={0.5} />
-        </mesh>,
-      )
-    })
-
-    return {
-      elements: items,
-      materials: { matBold, matMain, matSub },
-      geometries: geos,
-    }
-  }, [])
-
-  useEffect(
-    () => () => {
-      materials.matBold.dispose()
-      materials.matMain.dispose()
-      materials.matSub.dispose()
-      geometries.forEach((g) => g.dispose())
-    },
-    [materials, geometries],
-  )
-
-  return <group>{elements}</group>
-}
-
-// ═════════════════════════════════════════════════════════════════
-// GOLD SPINE — pulsing horizontal cylinder (HTML's spine)
-// ═════════════════════════════════════════════════════════════════
-function GoldSpine() {
-  const matRef = useRef<THREE.MeshBasicMaterial>(null)
-  useFrame((state) => {
-    if (matRef.current) {
-      // HTML: 0.5 + sin(t*0.5) * 0.15
-      matRef.current.opacity = 0.5 + Math.sin(state.clock.elapsedTime * 0.5) * 0.15
-    }
-  })
-  return (
-    <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
-      <cylinderGeometry args={[0.08, 0.08, 70, 12]} />
-      <meshBasicMaterial
-        ref={matRef}
-        color={PALETTE.BRASS_POLISHED}
-        transparent
-        opacity={0.5}
-      />
-    </mesh>
-  )
-}
-
-// ═════════════════════════════════════════════════════════════════
-// DUST MOTES — 200 particles drifting (HTML's motes)
-// Each mote oscillates Y by ±0.5 around its base position; group rotates
-// slowly on Y (HTML: motes.rotation.y = t * 0.008)
-// ═════════════════════════════════════════════════════════════════
-function DustMotes({ isMobile }: { isMobile: boolean }) {
-  const count = isMobile ? 100 : 200
-  const pointsRef = useRef<THREE.Points>(null)
-
-  const { positions, basePos, speeds } = useMemo(() => {
-    const positions = new Float32Array(count * 3)
-    const basePos = new Float32Array(count * 3)
-    const speeds = new Float32Array(count)
-    for (let i = 0; i < count; i++) {
-      const x = (Math.random() - 0.5) * 80
-      const y = (Math.random() - 0.5) * 50
-      const z = (Math.random() - 0.5) * 40
-      positions[i * 3] = x
-      positions[i * 3 + 1] = y
-      positions[i * 3 + 2] = z
-      basePos[i * 3] = x
-      basePos[i * 3 + 1] = y
-      basePos[i * 3 + 2] = z
-      speeds[i] = 0.5 + Math.random() * 1.5
-    }
-    return { positions, basePos, speeds }
-  }, [count])
+    return { motesPos, motesBase, motesSpeed, moteCount };
+  }, []);
 
   useFrame((state) => {
-    const t = state.clock.elapsedTime
-    if (!pointsRef.current) return
-    pointsRef.current.rotation.y = t * 0.008
-    const attr = pointsRef.current.geometry.attributes.position as THREE.BufferAttribute
-    for (let i = 0; i < count; i++) {
-      const y = basePos[i * 3 + 1] + Math.sin(t * speeds[i] * 0.2 + i) * 0.5
-      attr.setY(i, y)
-    }
-    attr.needsUpdate = true
-  })
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry key={count}>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        color={PALETTE.BRASS_POLISHED}
-        size={0.15}
-        sizeAttenuation
-        transparent
-        opacity={0.4}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  )
-}
-
-// ═════════════════════════════════════════════════════════════════
-// CAMERA RIG — top-down 60° pitch + mouse parallax (damped)
-// Mirrors HTML's camera setup + mousemove parallax
-// ═════════════════════════════════════════════════════════════════
-function CameraRig({
-  sectionZs,
-  isMobile,
-  mouseRef,
-}: {
-  sectionZs: { lut: number; lalounge: number; birthday: number }
-  isMobile: boolean
-  mouseRef: MouseRef
-}) {
-  useFrame((state) => {
-    const centerZ = (sectionZs.lut + sectionZs.birthday) / 2
-
-    // Top-down pitched camera (~60° from horizontal — same as HTML file)
-    const camDist = isMobile ? 32 : 52
-    const pitch = Math.PI / 3
-    const height = camDist * Math.sin(pitch)
-    const depth = camDist * Math.cos(pitch)
-
-    // Mouse parallax — smooth damping (HTML: mouseX += (target - mouseX) * 0.03)
-    const m = mouseRef.current
-    m.x += (m.targetX - m.x) * 0.03
-    m.y += (m.targetY - m.y) * 0.03
-    const parallaxX = m.x * (isMobile ? 2 : 4)
-    const parallaxY = m.y * (isMobile ? 1 : 2)
-
-    state.camera.position.x = parallaxX
-    state.camera.position.y = height + parallaxY * 0.3
-    state.camera.position.z = centerZ + depth + parallaxY * 0.5
-    state.camera.lookAt(parallaxX * 0.3, parallaxY * 0.1, centerZ)
-
-    // FOV sync — R3F's `camera` prop is initial-only, so the mobile 42°
-    // value never reaches the actual camera without this per-frame guard.
-    const cam = state.camera
-    if (cam instanceof THREE.PerspectiveCamera) {
-      const targetFov = isMobile ? 42 : 50
-      if (Math.abs(cam.fov - targetFov) > 0.1) {
-        cam.fov = targetFov
-        cam.updateProjectionMatrix()
+    const t = state.clock.elapsedTime;
+    if (gridMatRef.current) gridMatRef.current.uniforms.uTime.value = t;
+    if (spineMatRef.current) spineMatRef.current.opacity = 0.4 + Math.sin(t * 0.5) * 0.1;
+    if (ringsRef.current) ringsRef.current.rotation.z = t * 0.08;
+    if (motesRef.current) {
+      motesRef.current.rotation.y = t * 0.008;
+      const posAttr = motesRef.current.geometry.attributes.position as THREE.BufferAttribute;
+      for(let i=0; i<moteData.moteCount; i++) {
+        posAttr.array[i*3+1] = moteData.motesBase[i*3+1] + Math.sin(t * moteData.motesSpeed[i] * 0.2 + i) * 0.5;
       }
+      posAttr.needsUpdate = true;
     }
-  })
-  return null
-}
+  });
+
+  const matBold = useMemo(() => new THREE.LineBasicMaterial({ color: PALETTE.LA_LOUNGE, transparent: true, opacity: 0.6 }), []);
+  const matMain = useMemo(() => new THREE.LineBasicMaterial({ color: PALETTE.RING_COLOR, transparent: true, opacity: 0.5 }), []);
+  const matSub = useMemo(() => new THREE.LineBasicMaterial({ color: PALETTE.GRID_ACCENT, transparent: true, opacity: 0.4 }), []);
+
+  return (
+    <>
+      <color attach="background" args={[PALETTE.DEEP_PLUM]} />
+      
+      {/* Lights */}
+      <ambientLight color={PALETTE.AMBIENT_BASE} intensity={0.4} />
+      <hemisphereLight color={PALETTE.AMBIENT_BASE} groundColor={PALETTE.DEEP_PLUM} intensity={0.6} />
+      <directionalLight color={PALETTE.WARM_KEY} intensity={1.5} position={[10, 40, 10]} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-near={1} shadow-camera-far={150} shadow-camera-left={-50} shadow-camera-right={50} shadow-camera-top={50} shadow-camera-bottom={-50} shadow-bias={-0.0005} />
+      <directionalLight color={PALETTE.COOL_FILL} intensity={0.8} position={[-20, 25, -15]} />
+      <directionalLight color={PALETTE.CRYSTAL_RIM} intensity={0.6} position={[0, 15, -30]} />
+      <spotLight color={PALETTE.BRASS_POLISHED} intensity={60} distance={50} angle={0.7} penumbra={0.8} decay={2} position={[0, 16, -14]} />
+      <spotLight color={PALETTE.YOUR_BIRTHDAY} intensity={50} distance={40} angle={0.7} penumbra={0.8} decay={2} position={[0, 16, 14]} />
+      <pointLight color={PALETTE.BRASS_POLISHED} intensity={15} distance={30} decay={2} position={[0, 6, -14]} />
+      <pointLight color={PALETTE.YOUR_BIRTHDAY} intensity={10} distance={25} decay={2} position={[0, 6, 14]} />
+
+      {/* Architecture */}
+      <group>
+        {[
+          { w: 14, h: 0.3, d: 7, x: 0, y: 0.15, z: -18 },
+          { w: 10, h: 0.3, d: 5, x: -18, y: 0.15, z: 12 },
+          { w: 8, h: 0.3, d: 4, x: 18, y: 0.15, z: 8 }
+        ].map((p, i) => (
+          <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(p.w, p.h, p.d))} material={matMain} position={[p.x, p.y, p.z]} />
+        ))}
+        {([[-22,-18], [22,-18], [-22,18], [22,18], [-12,-8], [12,-8], [-12,8], [12,8]] as [number, number][]).map(([x,z], i) => {
+          const h = 6 + (Math.sin(i * 12.9898) * 43758.5453 % 1) * 4;
+          return <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(0.4, h, 0.4))} material={i < 4 ? matBold : matSub} position={[x, h/2, z]} />;
+        })}
+        {[
+          { w: 44, h: 0.25, d: 0.25, x: 0, y: 7, z: -18 },
+          { w: 44, h: 0.25, d: 0.25, x: 0, y: 9, z: 18 },
+          { w: 0.25, h: 0.25, d: 36, x: -22, y: 5, z: 0 },
+          { w: 0.25, h: 0.25, d: 36, x: 22, y: 5, z: 0 }
+        ].map((t, i) => (
+          <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.BoxGeometry(t.w, t.h, t.d))} material={matBold} position={[t.x, t.y, t.z]} />
+        ))}
+        {([[-10,-6], [10,-6], [0,16], [-16,0], [16,0]] as [number, number][]).map(([x,z], i) => (
+          <lineSegments key={i} geometry={new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.2, 1.2, 0.25, 24))} material={matSub} position={[x, 0.125, z]} />
+        ))}
+      </group>
+
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.08, 0.08, 70, 12]} />
+        <meshBasicMaterial ref={spineMatRef} color={PALETTE.BRASS_POLISHED} transparent opacity={0.5} />
+      </mesh>
+
+      <group ref={ringsRef}>
+        {Array.from({ length: 8 }).map((_, i) => {
+          const radius = 6 + i * 5;
+          return (
+            <mesh key={i} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[radius, radius + 0.08, 128]} />
+              <meshBasicMaterial color={PALETTE.RING_COLOR} transparent opacity={0.2} side={THREE.DoubleSide} />
+            </mesh>
+          );
+        })}
+      </group>
+
+      <points ref={motesRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[moteData.motesPos, 3]} />
+        </bufferGeometry>
+        <pointsMaterial color={PALETTE.BRASS_POLISHED} size={0.1} sizeAttenuation transparent opacity={0.4} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </points>
+
+      {/* Glossy Floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+        <planeGeometry args={[200, 200]} />
+        <meshStandardMaterial color={0x0a0506} roughness={0.15} metalness={0.5} />
+      </mesh>
+
+      {/* Shader Grid */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]}>
+        <planeGeometry args={[300, 300]} />
+        <shaderMaterial 
+          ref={gridMatRef}
+          uniforms={{
+            uTime: { value: 0 },
+            uColorMain: { value: new THREE.Color(PALETTE.GRID_MAIN) },
+            uColorAccent: { value: new THREE.Color(PALETTE.GRID_ACCENT) },
+            uColorLight: { value: new THREE.Color(PALETTE.GRID_LIGHT) },
+            uColorPulse: { value: new THREE.Color(PALETTE.GRID_PULSE) },
+            uFadeStart: { value: 30.0 },
+            uFadeEnd: { value: 100.0 }
+          }}
+          vertexShader={gridVertexShader}
+          fragmentShader={gridFragmentShader}
+          transparent depthWrite={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Shadow Catcher */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[200, 200]} />
+        <shadowMaterial opacity={0.4} />
+      </mesh>
+    </>
+  );
+};
+
+// ═════════════════════════════════════════════════════════════════
+// CAMERA RIG
+// ═════════════════════════════════════════════════════════════════
+const CameraRig = () => {
+  const { pointer } = useThree();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const camDist = isMobile ? 32 : 52;
+  const pitch = Math.PI / 3;
+  const height = camDist * Math.sin(pitch);
+  const depth = camDist * Math.cos(pitch);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const noiseX = Math.sin(t * 0.1) * 1.5;
+    const noiseY = Math.cos(t * 0.15) * 0.5;
+    const pX = pointer.x * (isMobile ? 2 : 4) + noiseX;
+    const pY = pointer.y * (isMobile ? 1 : 2) + noiseY;
+
+    state.camera.position.x = pX;
+    state.camera.position.y = height + pY * 0.3;
+    state.camera.position.z = depth + pY * 0.5;
+    state.camera.lookAt(pX * 0.3, pY * 0.1, 0);
+  });
+
+  return null;
+};
 
 // ═════════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ═════════════════════════════════════════════════════════════════
-export function Hero3DBackground() {
-  const [enabled, setEnabled] = useState(false)
-  const [inView, setInView] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [sectionZs, setSectionZs] = useState({ lut: -10, lalounge: 0, birthday: 10 })
-
-  // Mouse parallax shared ref — populated by window mousemove listener,
-  // consumed by CameraRig's useFrame for smooth damping.
-  const mouseRef = useRef<MouseState>({ x: 0, y: 0, targetX: 0, targetY: 0 })
+export default function Hero3DBackground() {
+  const [enabled, setEnabled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setEnabled(shouldEnable3D())
-  }, [])
+    setEnabled(shouldEnable3D());
+    setIsMobile(window.innerWidth < 768);
+  }, []);
 
-  // Responsive detection — on mobile (<768px) the cards are stacked closer
-  // together, so the 3D furniture (top) and party objects (bottom) need a
-  // smaller scale to avoid bleeding into the middle (La Lounge) section.
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
-
-  // measure() — dynamically compute sectionZs from real card centers
-  // (preserved from v25-fix-F5; cards carry role="button" per ExperienceCard)
-  useEffect(() => {
-    const measure = () => {
-      const cards = document.querySelectorAll('[role=button]')
-      const section = document.querySelector('section')
-      if (!cards.length || !section) return
-      const sectionRect = section.getBoundingClientRect()
-      const sectionH = sectionRect.height
-      if (sectionH === 0) return
-
-      const cardCenters = Array.from(cards).map((c) => {
-        const r = (c as HTMLElement).getBoundingClientRect()
-        return (r.top + r.bottom) / 2 - sectionRect.top
-      })
-
-      // Z mapping: card 1 (top, frac~0.36) → negative Z; card 3 (bottom,
-      // frac~0.74) → positive Z. 0.7 widens the Z range so each object lands
-      // visually behind its card on both desktop and mobile.
-      const camDist = isMobile ? 32 : 52
-      const pitch = Math.PI / 3
-      const visibleZ =
-        (camDist / Math.sin(pitch)) *
-        Math.tan(((isMobile ? 42 : 50) * Math.PI) / 180 / 2)
-      const toZ = (frac: number) => (frac - 0.5) * 2 * visibleZ * 0.7
-
-      if (cardCenters.length >= 3) {
-        setSectionZs({
-          lut: toZ(cardCenters[0] / sectionH),
-          lalounge: toZ(cardCenters[1] / sectionH),
-          birthday: toZ(cardCenters[2] / sectionH),
-        })
-      }
-    }
-
-    measure()
-    window.addEventListener('resize', measure)
-    window.addEventListener('load', measure)
-    const timeoutId = setTimeout(measure, 500)
-    const ro = new ResizeObserver(() => measure())
-    const section = document.querySelector('section')
-    if (section) ro.observe(section)
-    return () => {
-      window.removeEventListener('resize', measure)
-      window.removeEventListener('load', measure)
-      clearTimeout(timeoutId)
-      ro.disconnect()
-    }
-  }, [isMobile])
-
-  // IntersectionObserver — pause render loop when hero is off-screen
-  useEffect(() => {
-    const node = containerRef.current
-    if (!node) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          setInView(entry.isIntersecting)
-        }
-      },
-      { threshold: 0.05 },
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [enabled])
-
-  // Mouse parallax — window-level mousemove listener populates the shared ref
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      mouseRef.current.targetX = (e.clientX / window.innerWidth) * 2 - 1
-      mouseRef.current.targetY = -(e.clientY / window.innerHeight) * 2 + 1
-    }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
-  }, [])
-
-  if (!enabled) return null
+  if (!enabled) return null;
 
   return (
-    <div
-      ref={containerRef}
-      aria-hidden="true"
-      className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
-    >
+    <div style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, left: 0, zIndex: 0, overflow: 'hidden', background: '#0d0609' }}>
       <Canvas
         shadows
-        frameloop={inView ? 'always' : 'never'}
-        camera={{
-          position: [0, isMobile ? 28 : 45, isMobile ? 16 : 26],
-          fov: isMobile ? 42 : 50,
-          near: 0.1,
-          far: 500,
-        }}
-        dpr={[1, 1.5]}
-        gl={{
-          antialias: true,
-          powerPreference: 'high-performance',
-          alpha: true,
-          stencil: false,
-          depth: true,
-        }}
-        onCreated={({ gl }) => {
-          // ACES Filmic tone mapping + exposure 1.1 (HTML's renderer config)
-          gl.toneMapping = THREE.ACESFilmicToneMapping
-          gl.toneMappingExposure = 1.1
-          gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault())
-        }}
+        dpr={[1, isMobile ? 1.5 : 2]}
+        camera={{ position: [0, 45, 26], fov: isMobile ? 48 : 38, near: 0.1, far: 500 }}
+        gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
       >
-        {/* Warm fog (HTML: Fog(WARM_FOG, 50, 160)) */}
-        <fog attach="fog" args={[PALETTE.WARM_FOG, 50, 160]} />
-
-        {/* ═══ CINEMATIC LIGHTING (HTML lighting rig) ═══ */}
-        {/* Ambient base */}
-        <ambientLight color={PALETTE.AMBIENT_BASE} intensity={0.25} />
-        {/* Hemisphere — sky/ground bounce */}
-        <hemisphereLight
-          color={PALETTE.AMBIENT_BASE}
-          groundColor={PALETTE.DEEP_PLUM}
-          intensity={0.4}
-        />
-        {/* Key light — warm directional with shadows (HTML: position [8,35,8]) */}
-        <directionalLight
-          position={[8, 35, 8]}
-          intensity={1.4}
-          color={PALETTE.WARM_KEY}
-          castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-          shadow-camera-near={1}
-          shadow-camera-far={100}
-          shadow-camera-left={-30}
-          shadow-camera-right={30}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
-        />
-        {/* Fill light — cool side */}
-        <directionalLight position={[-18, 22, 12]} intensity={0.5} color={PALETTE.COOL_FILL} />
-        {/* Rim light — crystal pink from behind */}
-        <directionalLight position={[0, 15, -20]} intensity={0.35} color={PALETTE.CRYSTAL_RIM} />
-        {/* Spotlight on LUT section (HTML: spotLUT) */}
-        <spotLight
-          position={[0, 12, sectionZs.lut]}
-          angle={0.5}
-          penumbra={0.8}
-          decay={2}
-          intensity={1.0}
-          color={PALETTE.BRASS_POLISHED}
-          distance={25}
-        />
-        {/* Spotlight on Birthday section (HTML: spotBirth) */}
-        <spotLight
-          position={[0, 12, sectionZs.birthday]}
-          angle={0.5}
-          penumbra={0.8}
-          decay={2}
-          intensity={0.8}
-          color={PALETTE.YOUR_BIRTHDAY}
-          distance={20}
-        />
-        {/* Point accent lights (HTML: pl1, pl2, pl3) */}
-        <pointLight position={[0, 5, sectionZs.lut]} intensity={0.9} color={PALETTE.BRASS_POLISHED} distance={22} decay={2} />
-        <pointLight position={[0, 5, sectionZs.birthday]} intensity={0.7} color={PALETTE.YOUR_BIRTHDAY} distance={18} decay={2} />
-        <pointLight position={[0, 4, 0]} intensity={0.8} color={PALETTE.CRYSTAL_RIM} distance={15} decay={2} />
-
-        <CameraRig sectionZs={sectionZs} isMobile={isMobile} mouseRef={mouseRef} />
-
-        {/* ═══ SCENE ═══ */}
-        {/* Custom shader grid (animated pulse/rings/flow) */}
-        <ShaderGrid />
-
-        {/* Radial rings (8 concentric, rotating slowly) */}
-        <RadialRings />
-
-        {/* Master architecture — wireframe platforms/pillars/trusses/tables/etc */}
-        <MasterArchitecture />
-
-        {/* Shadow-catcher floor — invisible except where shadows fall.
-            Lets the castShadow furniture shadows be visible across the
-            blueprint floor (the shader grid alone can't receive shadows
-            because ShaderMaterial overrides the depth pass). */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-          <planeGeometry args={[200, 200]} />
-          <shadowMaterial transparent opacity={0.25} />
-        </mesh>
-
-        {/* LUT furniture (top, -Z) — velvet + brass + ivory PBR */}
-        <LutFurniture z={sectionZs.lut} scale={isMobile ? 0.5 : 0.9} />
-
-        {/* Center blueprint birthday scene (middle, ~0) — wireframe party */}
-        <CenterBlueprintScene z={sectionZs.lalounge} scale={isMobile ? 0.5 : 0.9} />
-
-        {/* Birthday party (bottom, +Z) — mylar balloons + cake + gifts */}
-        <BirthdayParty z={sectionZs.birthday} scale={isMobile ? 0.5 : 0.9} />
-
-        {/* Gold spine — pulsing horizontal cylinder */}
-        <GoldSpine />
-
-        {/* Atmospheric dust motes — drifting particles */}
-        <DustMotes isMobile={isMobile} />
+        <BackgroundEnv />
+        <LutFurniture z={-14} scale={isMobile ? 0.6 : 1.0} />
+        <CenterBlueprints position={[0, 0.05, 0]} />
+        <BirthdayParty z={14} scale={isMobile ? 0.6 : 1.0} />
+        <CameraRig />
       </Canvas>
+      <div style={{
+        position: 'fixed',
+        top: 0, left: 0, width: '100%', height: '100%',
+        zIndex: 1, pointerEvents: 'none',
+        background: 'radial-gradient(circle at center, transparent 45%, rgba(13, 6, 9, 0.8) 100%)'
+      }} />
     </div>
-  )
+  );
 }

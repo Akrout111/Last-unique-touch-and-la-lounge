@@ -5,7 +5,7 @@ import { useScroll, useTransform, motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ExperienceCard } from './experience-card'
-import { Hero3DBackground } from './hero-3d-background'
+import Hero3DBackground from './hero-3d-background'
 
 export function Hero() {
   const t = useTranslations()
