@@ -126,11 +126,23 @@ export function Navbar() {
     router.replace(pathname, { locale: next })
   }
 
-  const navLinks = [
-    { href: '/' as const, label: t('nav.home') },
-    { href: '/products' as const, label: t('nav.products') },
-    { href: '/about' as const, label: t('nav.about') },
-    { href: '/contact' as const, label: t('nav.contact') },
+  // v36: Brand-aware nav links — contact goes to the brand-specific contact page.
+  // Home goes to the brand landing page (not the main selector page) when on a brand page.
+  const brandHomeHref =
+    brand === 'lalounge' ? '/la-lounge' as const
+    : brand === 'birthday' ? '/your-birthday' as const
+    : '/' as const
+
+  const brandContactHref =
+    brand === 'lalounge' ? '/la-lounge/contact' as const
+    : brand === 'birthday' ? '/your-birthday/contact' as const
+    : '/last-unique-touch/contact' as const
+
+  const navLinks: Array<{ href: string; label: string }> = [
+    { href: brandHomeHref, label: t('nav.home') },
+    { href: '/products', label: t('nav.products') },
+    { href: '/about', label: t('nav.about') },
+    { href: brandContactHref, label: t('nav.contact') },
   ]
 
   // Wordmark content per brand:
@@ -167,7 +179,7 @@ export function Navbar() {
                   show any single brand's name. */}
               {!homePage && (
                 <Link
-                  href="/"
+                  href={brandHomeHref}
                   className="group flex items-baseline gap-2 min-w-0 shrink-0"
                   aria-label={wordmark.main}
                 >
