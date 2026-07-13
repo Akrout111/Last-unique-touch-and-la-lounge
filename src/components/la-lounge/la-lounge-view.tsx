@@ -4,8 +4,6 @@ import dynamic from 'next/dynamic'
 import { ArrowDown, ClipboardList, Armchair, Sparkles, type LucideIcon } from 'lucide-react'
 import { useRouter } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { LaLoungeSunburst } from '@/components/brand/lalounge-sunburst'
-import { LaLoungeLightSweep } from '@/components/brand/lalounge-light-sweep'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 // v31-build-B6: lazy-load the new vanilla-Three.js event-blueprint scene.
@@ -75,14 +73,10 @@ export default function LaLoungeView() {
 
       {/* === Hero section — title centered, 3D blueprint background === */}
       <div className="relative z-10 min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center">
-        {/* La Lounge art-deco sunburst — static decorative halo behind the
-            title. Phase 5 motion cleanup: dimmed from opacity-40 to opacity-20
-            so it reads as a faint halo without competing with the LightSweep
-            (which is the La Lounge signature motion). */}
-        <LaLoungeSunburst className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 z-[2] w-[600px] h-[300px] opacity-20" />
-
-        {/* La Lounge light sweep — subtle diagonal beam above hero content */}
-        <LaLoungeLightSweep />
+        {/* v33: Removed LaLoungeSunburst (circular grid that blurred the 3D
+            blueprint background) and LaLoungeLightSweep (yellow beam that
+            moved from left to center). Both were overlay decorations that
+            conflicted with the new R3F event-blueprint background. */}
 
         {/* FIX-1A / C2: the per-brand "Back" button was removed because the
             shared <Navbar /> rendered by the [locale]/layout.tsx now appears
