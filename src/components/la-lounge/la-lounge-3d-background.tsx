@@ -25,7 +25,7 @@ import { shouldEnable3D } from '@/lib/device-capabilities'
  *  - FOH booth + dancefloor + crowd particles (120 desktop / 60 mobile)
  *  - VIP platforms (2 raised side platforms with sofas + railings)
  *  - Guest tables (rows of round tables with chairs + centerpieces)
- *  - Main bar + catering (bar counter, food trucks, picnic tables, string lights)
+ *  - Main bar + catering (bar counter, food trucks, picnic tables)
  *  - Entrance plaza (gate arch, turnstiles, planters, totems)
  *  - Backstage + generators (containers, generator boxes, cable lines)
  *  - Restrooms (2 portacabin-style boxes)
@@ -495,7 +495,13 @@ export default function LaLounge3DBackground() {
       return g
     }
 
-    /** String lights — a wire between two poles with glowing bulbs. */
+    /**
+     * String lights — a wire between two poles with glowing bulbs.
+     * Retained per spec (all furniture generators must be kept) but no
+     * longer invoked: the user asked to remove the yellow light line
+     * that these string spans produced across the catering zone.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function createStringLights(
       x1: number, z1: number, x2: number, z2: number, height = 5,
     ): THREE.Group {
@@ -731,11 +737,9 @@ export default function LaLounge3DBackground() {
       pt.position.set(2 + i * 4, 0, 55)
       scene.add(pt)
     }
-    // String lights overhead in catering zone
-    createStringLights(-5, 42, 25, 42, 6)
-    createStringLights(-5, 56, 25, 56, 6)
-    createStringLights(-5, 42, -5, 56, 6)
-    createStringLights(25, 42, 25, 56, 6)
+    // String lights removed per user request (the yellow light line
+    // that moved from the side to the center). The createStringLights
+    // generator is retained for completeness but no longer invoked.
 
     // --- ENTRANCE PLAZA (z = 65-80) ---
     // Plaza zone
@@ -897,6 +901,19 @@ export default function LaLounge3DBackground() {
     disposablesRef.current.push(crowdGeo, crowdMat, crowdPoints)
 
     // ============================================================
+    // LA LOUNGE TITLE — emerges at the start of phase 3 (t=8s).
+    // Fades in from opacity 0 → 0.9 and scales up from 0.3 → 1.0 over
+    // the first 2 seconds of the orbit phase (t=8 to t=10), then stays.
+    // ============================================================
+    const laLoungeSprite = createText('LA LOUNGE', 0, 5, 0, C_ACCENT, 4)
+    const laLoungeMat = laLoungeSprite.material as THREE.SpriteMaterial
+    laLoungeMat.opacity = 0 // initially invisible
+    const laLoungeScaleX = laLoungeSprite.scale.x
+    const laLoungeScaleY = laLoungeSprite.scale.y
+    // Start small so the emergence has a visible scale-up motion.
+    laLoungeSprite.scale.set(laLoungeScaleX * 0.3, laLoungeScaleY * 0.3, 1)
+
+    // ============================================================
     // ANIMATION LOOP — crowd bobbing + holo pulse + 3-phase camera
     // ============================================================
     const clock = new THREE.Clock()
@@ -948,6 +965,17 @@ export default function LaLounge3DBackground() {
         node.ringMat.opacity = 0.5 + Math.sin(elapsed * 1.5 + node.phase) * 0.3
         // Sphere gentle hover
         node.sphere.position.y = node.baseY + Math.sin(elapsed * 1.2 + node.phase) * 0.3
+      }
+
+      // --- LA LOUNGE title emergence (phase 3: t=8 → t=10) ---
+      // Fades opacity 0 → 0.9 and scales 0.3 → 1.0 over 2 seconds,
+      // then holds. Before t=8 the sprite stays invisible.
+      if (elapsed >= 8) {
+        const fadeT = Math.min((elapsed - 8) / 2, 1)
+        const eased = easeInOut(fadeT)
+        laLoungeMat.opacity = eased * 0.9
+        const s = 0.3 + eased * 0.7
+        laLoungeSprite.scale.set(laLoungeScaleX * s, laLoungeScaleY * s, 1)
       }
 
       // --- 3-phase cinematic camera ---

@@ -102,8 +102,16 @@ export default function Birthday3DBackground() {
     sceneRef.current = scene
 
     // === CAMERA ===
-    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 1000)
-    camera.position.set(0, 7, 35)
+    // On mobile, a wider FOV + pulled-back camera position lets the full scene
+    // (floor, speakers, balloon arch, LED screen) be visible on a narrow portrait
+    // viewport instead of just the cropped center.
+    const camera = new THREE.PerspectiveCamera(
+      isMobile ? 65 : 55,
+      width / height,
+      0.1,
+      1000,
+    )
+    camera.position.set(0, isMobile ? 10 : 7, isMobile ? 45 : 35)
 
     // === RENDERER ===
     const renderer = new THREE.WebGLRenderer({
@@ -115,7 +123,9 @@ export default function Birthday3DBackground() {
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioCap))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.05
+    // Slightly lower exposure so the scene's lit details aren't washed out by
+    // the bloom + IBL stack.
+    renderer.toneMappingExposure = 0.9
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
@@ -139,7 +149,7 @@ export default function Birthday3DBackground() {
 
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(width, height),
-        0.5, // strength
+        0.35, // strength (reduced from 0.5 so bloom doesn't wash out details)
         0.8, // radius
         0.95, // threshold
       )
@@ -162,24 +172,27 @@ export default function Birthday3DBackground() {
     }
 
     // === LIGHTS ===
-    const ambient = new THREE.AmbientLight(0x4a3a6e, 0.5)
+    // Intensities reduced ~25–30% across the board so the background no longer
+    // hides the scene's finer details (gift boxes, balloons, speaker cones, eq
+    // bars) under a blanket of over-bright lighting + bloom.
+    const ambient = new THREE.AmbientLight(0x4a3a6e, 0.35)
     scene.add(ambient)
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.9)
     keyLight.position.set(5, 20, 15)
     scene.add(keyLight)
 
-    const rimLight = new THREE.DirectionalLight(PURPLE, 1.5)
+    const rimLight = new THREE.DirectionalLight(PURPLE, 1.1)
     rimLight.position.set(-15, 12, -10)
     scene.add(rimLight)
 
-    const purplePL = new THREE.PointLight(PURPLE, 80, 60)
+    const purplePL = new THREE.PointLight(PURPLE, 56, 60)
     purplePL.position.set(-15, 10, 5)
     scene.add(purplePL)
-    const pinkPL = new THREE.PointLight(PINK, 80, 60)
+    const pinkPL = new THREE.PointLight(PINK, 56, 60)
     pinkPL.position.set(15, 8, 5)
     scene.add(pinkPL)
-    const cyanPL = new THREE.PointLight(CYAN, 60, 60)
+    const cyanPL = new THREE.PointLight(CYAN, 42, 60)
     cyanPL.position.set(0, 4, 18)
     scene.add(cyanPL)
     disposablesRef.current.push(ambient, keyLight, rimLight, purplePL, pinkPL, cyanPL)
@@ -308,7 +321,7 @@ export default function Birthday3DBackground() {
       head.position.y = -10.6
       group.add(head)
 
-      const spot = new THREE.SpotLight(lampColors[i], 80, 60, 0.4, 0.5, 1.2)
+      const spot = new THREE.SpotLight(lampColors[i], 56, 60, 0.4, 0.5, 1.2)
       spot.position.set(0, -10.4, 0)
       const targetObj = new THREE.Object3D()
       targetObj.position.set(0, -12, 5)
@@ -659,11 +672,18 @@ export default function Birthday3DBackground() {
       const delta = clock.getDelta()
       const time = clock.elapsedTime
 
-      // Smooth mouse + camera parallax
+      // Smooth mouse + camera parallax (desktop only). On mobile the camera
+      // stays at its initial pulled-back position so the full scene remains in
+      // frame on the narrow portrait viewport.
       mouse.x += (targetMouse.x - mouse.x) * 0.05
       mouse.y += (targetMouse.y - mouse.y) * 0.05
-      camera.position.x = mouse.x * 4
-      camera.position.y = 7 + mouse.y * 2
+      if (isMobile) {
+        camera.position.x = 0
+        camera.position.y = 10
+      } else {
+        camera.position.x = mouse.x * 4
+        camera.position.y = 7 + mouse.y * 2
+      }
       camera.lookAt(0, 0, -15)
 
       // LED screen color cycle
@@ -681,7 +701,7 @@ export default function Birthday3DBackground() {
         lamp.target.position.x = baseX + Math.sin(time * 0.8 + i) * 12
         lamp.target.position.z = baseZ + Math.cos(time * 0.8 + i) * 8
         lamp.target.position.y = -12
-        lamp.spot.intensity = 60 + Math.sin(time * 4 + i) * 30
+        lamp.spot.intensity = 42 + Math.sin(time * 4 + i) * 21
       })
 
       // Speakers pulse + LED rings/strips flicker
@@ -738,10 +758,11 @@ export default function Birthday3DBackground() {
       particles.rotation.y = time * 0.03
       particles.rotation.x = time * 0.01
 
-      // Pulse point lights
-      purplePL.intensity = 60 + Math.sin(time * 2) * 20
-      pinkPL.intensity = 60 + Math.sin(time * 2 + 1) * 20
-      cyanPL.intensity = 50 + Math.sin(time * 2 + 2) * 15
+      // Pulse point lights (intensities reduced 30% to match the lower
+      // overall lighting budget — see light setup above).
+      purplePL.intensity = 42 + Math.sin(time * 2) * 14
+      pinkPL.intensity = 42 + Math.sin(time * 2 + 1) * 14
+      cyanPL.intensity = 35 + Math.sin(time * 2 + 2) * 10.5
 
       // Render
       if (composer) {
