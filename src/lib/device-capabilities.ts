@@ -36,7 +36,7 @@ export function shouldEnable3D(): boolean {
   const nav = navigator as Navigator & { deviceMemory?: number }
   const mem = nav.deviceMemory ?? 4
   const cores = nav.hardwareConcurrency ?? 4
-  if (mem < 2 || cores < 2) return false
+  if (mem < 4 || cores < 4) return false
 
   return true
 }

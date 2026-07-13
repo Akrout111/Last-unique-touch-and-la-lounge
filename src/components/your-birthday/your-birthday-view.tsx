@@ -20,10 +20,12 @@ import {
 import { TextScramble } from './text-scramble'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
-// V10 Fix #5: Lazy-load BirthdayVisualizer so Three.js (~150KB) stays out
+// v30-build-B5: Lazy-load Birthday3DBackground so Three.js (~150KB) stays out
 // of the initial JS bundle. ssr:false because WebGL only exists in browsers.
-const BirthdayVisualizer = dynamic(
-  () => import('./birthday-visualizer').then((m) => m.BirthdayVisualizer),
+// The background is `fixed inset-0 z-0` so it sits behind all content; the
+// page's sections use `relative z-10` to render above it.
+const Birthday3DBackground = dynamic(
+  () => import('./birthday-3d-background'),
   { ssr: false, loading: () => null },
 )
 
@@ -228,12 +230,17 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
             switcher + theme toggle. The custom back button, language toggle,
             and scroll-to-top button are no longer needed. */}
 
+        {/* v30-build-B5: Full-screen fixed 3D background (club-style scene:
+            reflective floor, LED screen, DJ booth, fog, lamps, speakers,
+            gift boxes, equalizer bars, vinyls, lasers, balloon arch,
+            particles + Bloom/FXAA post-processing). Rendered as a fixed
+            layer behind all content — sections below use `relative z-10`. */}
+        <ErrorBoundary>
+          <Birthday3DBackground />
+        </ErrorBoundary>
+
         {/* === HERO SECTION === */}
-        <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
-          {/* 3D Background */}
-          <ErrorBoundary>
-            <BirthdayVisualizer />
-          </ErrorBoundary>
+        <section className="relative z-10 min-h-[100dvh] flex items-center justify-center overflow-hidden">
 
           {/* Gradient overlay */}
           <div className="absolute inset-0 z-1 bg-gradient-to-t from-[var(--c-birthday-bg)] via-transparent to-[var(--c-birthday-bg)]/50 pointer-events-none" />
