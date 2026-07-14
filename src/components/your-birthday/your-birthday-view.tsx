@@ -215,7 +215,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
   return (
     <>
       <div
-        className="min-h-[100dvh] bg-[var(--c-birthday-bg)] text-white overflow-x-hidden"
+        className="min-h-[100dvh] bg-transparent text-white overflow-x-hidden"
         style={{
           fontFamily: isRTL
             ? 'var(--font-birthday-arabic), Cairo, sans-serif'

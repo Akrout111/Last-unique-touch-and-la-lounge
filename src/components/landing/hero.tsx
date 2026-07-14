@@ -23,7 +23,7 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative min-h-[100dvh] w-full overflow-hidden bg-ink flex flex-col"
+      className="relative min-h-[100dvh] w-full overflow-hidden bg-transparent flex flex-col"
     >
       {/* CSS fallback background (always rendered — visible when 3D is disabled
           or before WebGL initializes). Kept behind the 3D canvas. */}

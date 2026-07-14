@@ -29,7 +29,7 @@ export default function LastUniqueTouchView() {
   ]
 
   return (
-    <section className="relative w-full bg-ink">
+    <section className="relative w-full bg-transparent">
       {/* C4: Full-screen fixed cinematic 3D background — golden helix tunnel
           + procedural luxury furniture, ACES tone mapping, UnrealBloom, and a
           two-phase camera (hyperspace dive → drone sway). Wrapped in
@@ -112,7 +112,7 @@ export default function LastUniqueTouchView() {
       </div>
 
       {/* === Services section — revealed on scroll === */}
-      <div className="relative z-10 py-20 px-4 bg-ink">
+      <div className="relative z-10 py-20 px-4 bg-transparent">
         <div className="max-w-5xl mx-auto">
           {/* LUT arabesque divider — signature ornament between sections */}
           <LutArabesque variant="divider" className="w-full max-w-md mx-auto mb-12" />
@@ -131,7 +131,7 @@ export default function LastUniqueTouchView() {
                   <Check className="w-7 h-7 text-gold" />
                 </div>
                 <h3 className="font-display text-xl text-paper mb-3">{service.title}</h3>
-                {/* Phase 5 contrast: bumped from text-paper/50 → text-paper/70 for WCAG AA on bg-ink charcoal. */}
+                {/* Phase 5 contrast: bumped from text-paper/50 → text-paper/70 for WCAG AA on bg-transparent charcoal. */}
                 <p className="text-sm text-paper/70 leading-relaxed">{service.desc}</p>
               </div>
             ))}

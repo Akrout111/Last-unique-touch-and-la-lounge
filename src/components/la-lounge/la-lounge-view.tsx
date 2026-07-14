@@ -63,7 +63,7 @@ export default function LaLoungeView() {
   }
 
   return (
-    <div className="relative w-full bg-background">
+    <div className="relative w-full bg-transparent">
       {/* === v31-build-B6: Fixed full-screen 3D blueprint background ===
           Sits behind all page content (z-0). Hero + services use z-10 so
           they stack above it. Renders null on incapable devices. */}
