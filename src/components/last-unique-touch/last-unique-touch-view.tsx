@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/routing'
 import { Check, ArrowDown } from 'lucide-react'
 import { LutArabesque } from '@/components/brand/lut-arabesque'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
+import Lut3DBackground from './lut-3d-background'
 
 // Lazy-load the 3D furniture tunnel so the page's initial JS bundle stays
 // small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
@@ -29,6 +30,15 @@ export default function LastUniqueTouchView() {
 
   return (
     <section className="relative w-full bg-ink">
+      {/* C4: Full-screen fixed cinematic 3D background — golden helix tunnel
+          + procedural luxury furniture, ACES tone mapping, UnrealBloom, and a
+          two-phase camera (hyperspace dive → drone sway). Wrapped in
+          ErrorBoundary so a WebGL failure degrades gracefully to nothing
+          instead of unmounting the page. */}
+      <ErrorBoundary>
+        <Lut3DBackground />
+      </ErrorBoundary>
+
       {/* === Hero section — title centered, 3D furniture background === */}
       <div className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center">
         <ErrorBoundary>

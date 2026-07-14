@@ -1,383 +1,654 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-// ============================================
-// COLOR PALETTE
-// ============================================
-const C_DARK        = 0x86198f;
-const C_MEDIUM      = 0xa21caf;
-const C_LIGHT       = 0xc026d3;
-const C_ACCENT      = 0xd946ef;
-const C_HIDDEN      = 0xf0abfc;
-const C_VOLUME      = 0xffffff;
-const C_VOLUME_ACC  = 0xfdf4ff;
-const C_GLASS       = 0xfbcfe8;
-const C_ZONE        = 0xfae8ff;
-const C_RUG         = 0xf5d0fe;
+// ============================================================================
+// LaLounge3DBackground
+// ----------------------------------------------------------------------------
+// Direct conversion of `upload/la lounge 3D background.html` to a React TSX
+// component. All Three.js setup runs inside a single `useEffect` (empty deps)
+// and renders into a fixed full-screen container that sits behind page content
+// (z-index: -1, pointer-events: none). The scene, camera, materials, helpers,
+// furniture generators, build-in animation, cinematic camera spline and orbit
+// are preserved 1:1 from the source HTML.
+// ============================================================================
 
-// ============================================
-// HELPER COMPONENTS (Generating 3D Volumes)
-// ============================================
-const volBox = (w: number, h: number, d: number, x: number, y: number, z: number, matFill: THREE.Material, matEdge: THREE.LineBasicMaterial) => {
-  const group = new THREE.Group();
-  const geo = new THREE.BoxGeometry(w, h, d);
-  const mesh = new THREE.Mesh(geo, matFill);
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), matEdge);
-  group.add(mesh);
-  group.add(edges);
-  group.position.set(x, y, z);
-  return group;
-};
-
-const volCyl = (rt: number, rb: number, h: number, x: number, z: number, matFill: THREE.Material, matEdge: THREE.LineBasicMaterial, y?: number) => {
-  const group = new THREE.Group();
-  const geo = new THREE.CylinderGeometry(rt, rb, h, 24);
-  const mesh = new THREE.Mesh(geo, matFill);
-  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), matEdge);
-  group.add(mesh);
-  group.add(edges);
-  group.position.set(x, y !== undefined ? y : h / 2, z);
-  return group;
-};
-
-const createText = (text: string, x: number, y: number, z: number, size: number = 2) => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512; canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return new THREE.Mesh();
-  ctx.clearRect(0, 0, 512, 128);
-  ctx.font = 'bold 60px Courier New';
-  ctx.fillStyle = '#86198f';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, 256, 64);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.minFilter = THREE.LinearFilter;
-  const m = new THREE.Mesh(
-    new THREE.PlaneGeometry(size * 4, size),
-    new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
-  );
-  m.position.set(x, y, z);
-  m.rotation.x = -Math.PI / 2;
-  return m;
-};
-
-const createTrussSegment = (x: number, y: number, z: number, height: number, mats: Record<string, THREE.Material>) => {
-  const group = new THREE.Group();
-  group.add(volBox(0.5, height, 0.5, x, y + height / 2, z, mats.glass, mats.main as THREE.LineBasicMaterial));
-  for (let i = 0; i < height; i += 2) {
-    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x - 0.3, y + i, z), new THREE.Vector3(x + 0.3, y + i + 2, z)]), mats.sub as THREE.LineBasicMaterial));
-    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x + 0.3, y + i, z), new THREE.Vector3(x - 0.3, y + i + 2, z)]), mats.sub as THREE.LineBasicMaterial));
-  }
-  return group;
-};
-
-// ============================================
-// MAIN 3D SCENE COMPONENT
-// ============================================
-function SceneContents() {
-  const { camera } = useThree();
-
-  // Initialize Materials
-  const mats = useMemo(() => ({
-    struct: new THREE.LineBasicMaterial({ color: C_DARK, transparent: true, opacity: 0.9 }),
-    main: new THREE.LineBasicMaterial({ color: C_MEDIUM, transparent: true, opacity: 0.7 }),
-    sub: new THREE.LineBasicMaterial({ color: C_LIGHT, transparent: true, opacity: 0.5 }),
-    accent: new THREE.LineBasicMaterial({ color: C_ACCENT, transparent: true, opacity: 0.9 }),
-    hidden: new THREE.LineDashedMaterial({ color: C_HIDDEN, dashSize: 0.4, gapSize: 0.2, transparent: true, opacity: 0.6 }),
-    volume: new THREE.MeshPhongMaterial({ color: C_VOLUME, transparent: true, opacity: 0.15, shininess: 100, specular: 0xd946ef, side: THREE.DoubleSide }),
-    volumeAccent: new THREE.MeshPhongMaterial({ color: C_VOLUME_ACC, transparent: true, opacity: 0.25, shininess: 100, specular: 0xd946ef, side: THREE.DoubleSide }),
-    glass: new THREE.MeshPhongMaterial({ color: C_GLASS, transparent: true, opacity: 0.1, shininess: 100, specular: 0xffffff, side: THREE.DoubleSide }),
-    zone: new THREE.MeshBasicMaterial({ color: C_ZONE, transparent: true, opacity: 0.4, side: THREE.DoubleSide }),
-    rug: new THREE.MeshBasicMaterial({ color: C_RUG, transparent: true, opacity: 0.3, side: THREE.DoubleSide }),
-  }), []);
-
-  // 1. Build Base Grid
-  const gridGroup = useMemo(() => {
-    const g = new THREE.Group();
-    const grid = new THREE.GridHelper(200, 50, 0xa21caf, 0xfbcfe8);
-    (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.3;
-    g.add(grid);
-    return g;
-  }, []);
-
-  // 2. Build Architecture & Furniture
-  const archGroup = useMemo(() => {
-    const g = new THREE.Group();
-
-    // STAGE
-    const stageZ = -40, stageW = 40;
-    const stageZone = new THREE.Mesh(new THREE.PlaneGeometry(stageW + 10, 25), mats.zone);
-    stageZone.rotation.x = -Math.PI / 2; stageZone.position.set(0, 0.01, stageZ + 5);
-    g.add(stageZone);
-    g.add(volBox(stageW, 2, 15, 0, 1, stageZ, mats.volumeAccent, mats.struct));
-    g.add(createText("MAIN STAGE", 0, 2.1, stageZ + 8, 3));
-    g.add(volBox(stageW - 4, 12, 0.5, 0, 8, stageZ - 8, mats.volume, mats.struct));
-    g.add(createTrussSegment(-stageW / 2, 2, stageZ - 8, 18, mats));
-    g.add(createTrussSegment(stageW / 2, 2, stageZ - 8, 18, mats));
-    g.add(volBox(stageW, 1, 1, 0, 20, stageZ - 8, mats.glass, mats.struct));
-    g.add(volBox(6, 0.5, 5, 0, 2.25, stageZ + 4, mats.volume, mats.accent));
-    [-4, 4].forEach(mx => g.add(volBox(0.1, 2, 0.1, mx, 3, stageZ + 8, mats.volume, mats.accent)));
-    for (let mb = -15; mb <= 15; mb += 3) g.add(volBox(3, 1.2, 1, mb, 0.6, stageZ + 13, mats.volume, mats.accent));
-
-    // DANCEFLOOR & FOH
-    const danceZ = -20;
-    const danceZone = new THREE.Mesh(new THREE.PlaneGeometry(30, 40), mats.zone);
-    danceZone.rotation.x = -Math.PI / 2; danceZone.position.set(0, 0.01, danceZ + 10);
-    g.add(danceZone);
-    g.add(createText("DANCEFLOOR", 0, 0.1, danceZ + 10, 2.5));
-    g.add(volBox(5, 1.5, 2, 0, 0.75, danceZ + 2, mats.volumeAccent, mats.accent));
-    g.add(createText("DJ", 0, 1.8, danceZ + 2, 1.2));
-    [-15, 15].forEach(dx => {
-      g.add(createTrussSegment(dx, 0, danceZ + 15, 15, mats));
-      g.add(volBox(2, 4, 2, dx, 12, danceZ + 15, mats.volumeAccent, mats.accent));
-    });
-
-    const fohZ = 15;
-    g.add(volBox(8, 3, 5, 0, 1.5, fohZ, mats.volume, mats.main));
-    g.add(createText("FOH CONTROL", 0, 3.2, fohZ, 1.5));
-    g.add(volBox(2, 1, 2, -12, 0.5, fohZ, mats.volume, mats.accent));
-    g.add(volBox(0.2, 8, 0.2, -12, 4.5, fohZ, mats.volume, mats.accent));
-    const fohLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-12, 8, fohZ), new THREE.Vector3(0, 2, fohZ - 10)]), mats.accent);
-    g.add(fohLine);
-    g.add(volBox(1, 1, 1, 0, 1.5, fohZ - 10, mats.volumeAccent, mats.accent));
-
-    // VIP
-    [-1, 1].forEach(side => {
-      const vx = side * 35, vz = -10;
-      const vipZone = new THREE.Mesh(new THREE.PlaneGeometry(14, 18), mats.zone);
-      vipZone.rotation.x = -Math.PI / 2; vipZone.position.set(vx, 0.01, vz);
-      g.add(vipZone);
-      const vipRug = new THREE.Mesh(new THREE.PlaneGeometry(12, 16), mats.rug);
-      vipRug.rotation.x = -Math.PI / 2; vipRug.position.set(vx, 0.02, vz - 1);
-      g.add(vipRug);
-      g.add(volBox(14, 1, 18, vx, 0.5, vz, mats.volumeAccent, mats.main));
-      for (let s = 1; s <= 3; s++) g.add(volBox(3, 0.3, 1, vx, 0.15 * s, vz + 9 + s * 1, mats.volume, mats.sub));
-      
-      // Sofa
-      const sofa = volBox(4, 0.5, 1.5, 0, 0.25, 0, mats.volume, mats.main);
-      sofa.position.set(vx - 4, 1.0, vz - 6);
-      sofa.rotation.y = side === 1 ? Math.PI / 2 : -Math.PI / 2;
-      g.add(sofa);
-
-      g.add(volCyl(1, 1, 0.5, vx, vz, mats.volume, mats.accent, 1.25));
-      g.add(volCyl(0.1, 0.1, 1.5, vx - 4, vz + 5, mats.volume, mats.sub, 1.75));
-      g.add(volCyl(0.8, 0.8, 0.1, vx - 4, vz + 5, mats.glass, mats.accent, 2.5));
-      
-      // Rope Lines
-      for (let r = -3; r <= 3; r += 2) {
-        g.add(volCyl(0.1, 0.1, 1.2, vx + r, vz + 8, mats.volume, mats.accent, 1.6));
-        if (r < 3) {
-          const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(vx + r, 1.6, vz + 8), new THREE.Vector3(vx + r + 2, 1.6, vz + 8)]), mats.hidden);
-          l.computeLineDistances();
-          g.add(l);
-        }
-      }
-      g.add(volBox(14, 0.3, 18, vx, 6, vz, mats.glass, mats.sub));
-      g.add(createText("VIP", vx, 1.2, vz + 8, 2));
-    });
-
-    // GUEST TABLES
-    const tPos = [[-20, 10], [0, 10], [20, 10], [-20, 25], [0, 25], [20, 25]];
-    tPos.forEach(([tx, tz]) => {
-      const tableRug = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), mats.rug);
-      tableRug.rotation.x = -Math.PI / 2; tableRug.position.set(tx, 0.02, tz);
-      g.add(tableRug);
-      g.add(volCyl(2, 2, 1, tx, tz, mats.volume, mats.main));
-      // Centerpiece
-      g.add(volCyl(0.2, 0.3, 1.5, tx, tz, mats.glass, mats.main, 1.75));
-      g.add(volCyl(0.5, 0.2, 0.8, tx, tz, mats.volumeAccent, mats.accent, 2.9));
-      // Chairs
-      for (let ci = 0; ci < 8; ci++) {
-        const ang = (ci / 8) * Math.PI * 2;
-        const cx = tx + Math.cos(ang) * 3.5, cz = tz + Math.sin(ang) * 3.5;
-        const chair = new THREE.Group();
-        chair.add(volBox(0.5, 0.1, 0.5, 0, 0.25, 0, mats.volume, mats.accent));
-        chair.add(volBox(0.5, 0.8, 0.1, 0, 0.7, -0.2, mats.volume, mats.accent));
-        chair.position.set(cx, 0, cz);
-        chair.rotation.y = -ang;
-        g.add(chair);
-      }
-    });
-
-    // BAR & CATERING
-    const barZ = 40;
-    const barZone = new THREE.Mesh(new THREE.PlaneGeometry(30, 12), mats.zone);
-    barZone.rotation.x = -Math.PI / 2; barZone.position.set(20, 0.01, barZ);
-    g.add(barZone);
-    g.add(volBox(20, 1.5, 2, 20, 0.75, barZ, mats.volume, mats.struct));
-    g.add(volBox(20, 4, 1, 20, 3, barZ + 2, mats.glass, mats.main));
-    for (let bx = 12; bx <= 28; bx += 1.5) {
-      g.add(volCyl(0.15, 0.15, 0.4, bx, barZ, mats.glass, mats.accent, 1.7));
-      g.add(volCyl(0.15, 0.15, 1, bx, barZ + 2, mats.volumeAccent, mats.accent));
-      g.add(volCyl(0.3, 0.3, 0.4, bx, barZ + 2, mats.volumeAccent, mats.accent, 4.7));
-    }
-    g.add(createText("MAIN BAR", 20, 2.2, barZ, 2.5));
-
-    // ENTRANCE
-    const entZ = 60;
-    const entZone = new THREE.Mesh(new THREE.PlaneGeometry(40, 15), mats.zone);
-    entZone.rotation.x = -Math.PI / 2; entZone.position.set(0, 0.01, entZ);
-    g.add(entZone);
-    g.add(volBox(25, 10, 1, 0, 5, entZ, mats.volumeAccent, mats.struct));
-    g.add(createText("ENTRANCE", 0, 10.2, entZ, 2.5));
-    g.add(volBox(4, 3, 4, -15, 1.5, entZ - 2, mats.volume, mats.main));
-    g.add(volBox(4, 3, 4, 15, 1.5, entZ - 2, mats.volume, mats.main));
-    g.add(volCyl(0.2, 0.3, 12, -18, entZ - 5, mats.volume, mats.main, 6));
-    g.add(volCyl(0.2, 0.3, 12, 18, entZ - 5, mats.volume, mats.main, 6));
-
-    return g;
-  }, [mats]);
-
-  // 3. Crowd Particles — store geometry separately so useFrame can mutate it
-  // without triggering react-hooks/immutability lint (the Points object is
-  // passed to <primitive> but we mutate the BufferAttribute, not the object ref)
-  const crowdGeo = useMemo(() => {
-    const geo = new THREE.BufferGeometry();
-    const pts: number[] = [];
-    for (let i = 0; i < 120; i++) {
-      pts.push((Math.random() - 0.5) * 28, 0.5, -20 + 10 + (Math.random() - 0.5) * 25);
-    }
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    return geo;
-  }, []);
-  const crowdMat = useMemo(() =>
-    new THREE.PointsMaterial({ color: 0xd946ef, size: 0.8, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending }),
-  []);
-  const crowdGeoRef = useRef(crowdGeo);
-
-  // 4. UI Nodes
-  const nodesGroup = useMemo(() => {
-    const g = new THREE.Group();
-    const nodes = [
-      { x: 0, z: -35, l: "STAGE A" },
-      { x: 0, z: 15, l: "FOH" },
-      { x: 35, z: -10, l: "VIP A" },
-      { x: 20, z: 40, l: "BAR" },
-      { x: 0, z: 60, l: "ENTRY" },
-    ];
-    nodes.forEach(n => {
-      const group = new THREE.Group();
-      const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.7, 32), new THREE.MeshBasicMaterial({ color: 0xd946ef, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
-      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.12; group.add(ring);
-      
-      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.1, 0), new THREE.Vector3(0, 15, 0)]), mats.main);
-      line.computeLineDistances(); group.add(line);
-      
-      const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xd946ef, transparent: true, opacity: 0.9 }));
-      sphere.position.y = 15; group.add(sphere);
-      group.add(createText(n.l, 0, 16, 0, 1.5));
-      
-      group.position.set(n.x, 0, n.z);
-      (group.userData as Record<string, unknown>).basePhase = Math.random() * Math.PI * 2;
-      (group.userData as Record<string, unknown>).sphere = sphere;
-      (group.userData as Record<string, unknown>).ring = ring;
-      g.add(group);
-    });
-    return g;
-  }, [mats]);
-
-  // Animation Loop
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-
-    // Animate Crowd — use a ref to bypass react-hooks/immutability lint
-    const crowdAttr = crowdGeoRef.current?.attributes.position as THREE.BufferAttribute | undefined;
-    if (crowdAttr) {
-      const crowdArr = crowdAttr.array as Float32Array;
-      for (let i = 1; i < crowdArr.length; i += 3) {
-        crowdArr[i] = 0.5 + Math.sin(t * 2 + i) * 0.3;
-      }
-      crowdAttr.needsUpdate = true;
-    }
-
-    // Animate Nodes
-    nodesGroup.children.forEach((n) => {
-      const ud = n.userData as Record<string, THREE.Mesh>;
-      if (ud.sphere) {
-        ud.sphere.position.y = 15 + Math.sin(t * 1.5) * 0.5;
-        ud.ring?.scale.setScalar(1 + Math.sin(t * 2) * 0.2);
-      }
-    });
-
-    // Seamless Cinematic Camera Logic
-    const p = new THREE.Vector3();
-    const look = new THREE.Vector3();
-
-    if (t < 4) {
-      const prog = t / 4;
-      const ease = prog * prog * (3 - 2 * prog);
-      p.set(Math.sin(t * 0.8) * 4, THREE.MathUtils.lerp(40, 45, ease), THREE.MathUtils.lerp(90, -20, ease));
-      look.set(0, 2, THREE.MathUtils.lerp(70, -40, ease));
-    } else if (t < 8) {
-      const prog = (t - 4) / 4;
-      const ease = prog * prog * (3 - 2 * prog);
-      p.set(0, THREE.MathUtils.lerp(45, 75, ease), THREE.MathUtils.lerp(-20, 95, ease));
-      look.set(0, THREE.MathUtils.lerp(2, 0, ease), THREE.MathUtils.lerp(-40, 0, ease));
-    } else {
-      const ot = t - 8;
-      p.set(Math.sin(ot * 0.025) * 95, 75 + Math.sin(ot * 0.04) * 5, Math.cos(ot * 0.025) * 95);
-      look.set(0, 0, 0);
-    }
-
-    camera.position.copy(p);
-    camera.lookAt(look);
-  });
-
-  return (
-    <>
-      <ambientLight intensity={0.6} />
-      <directionalLight color={0xd946ef} intensity={0.8} position={[50, 100, 50]} />
-      <directionalLight color={0xa21caf} intensity={0.4} position={[-50, 50, -50]} />
-      
-      <primitive object={gridGroup} />
-      <primitive object={archGroup} />
-      <points geometry={crowdGeo} material={crowdMat} />
-      <primitive object={nodesGroup} />
-    </>
-  );
-}
-
-// ============================================
-// MAIN EXPORT COMPONENT (With HTML Overlays + WHITE background)
-// ============================================
 export default function LaLounge3DBackground() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // `cleanup` is assigned at the end of the try-block once every resource
+    // that needs tearing down has been created. If setup throws, cleanup stays
+    // undefined and the effect simply returns undefined.
+    let cleanup: (() => void) | undefined;
+
+    try {
+      // ============================================
+      // SCENE SETUP
+      // ============================================
+      const scene = new THREE.Scene();
+
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 15, 90);
+      camera.lookAt(0, 2, 60);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 0);
+      renderer.domElement.style.display = 'block';
+      container.appendChild(renderer.domElement);
+
+      // ============================================
+      // LIGHTING
+      // ============================================
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dirLight = new THREE.DirectionalLight(0xd946ef, 0.8);
+      dirLight.position.set(50, 100, 50);
+      scene.add(dirLight);
+      const dirLight2 = new THREE.DirectionalLight(0xa21caf, 0.4);
+      dirLight2.position.set(-50, 50, -50);
+      scene.add(dirLight2);
+
+      // ============================================
+      // MATERIALS
+      // ============================================
+      const matStruct = new THREE.LineBasicMaterial({ color: 0x86198f, transparent: true, opacity: 0.9 });
+      const matMain = new THREE.LineBasicMaterial({ color: 0xa21caf, transparent: true, opacity: 0.7 });
+      const matSub = new THREE.LineBasicMaterial({ color: 0xc026d3, transparent: true, opacity: 0.5 });
+      const matAccent = new THREE.LineBasicMaterial({ color: 0xd946ef, transparent: true, opacity: 0.9 });
+      const matHidden = new THREE.LineDashedMaterial({ color: 0xf0abfc, dashSize: 0.4, gapSize: 0.2, transparent: true, opacity: 0.6 });
+
+      const matVolume = new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.15, shininess: 100, specular: 0xd946ef, side: THREE.DoubleSide });
+      const matVolumeAccent = new THREE.MeshPhongMaterial({ color: 0xfdf4ff, transparent: true, opacity: 0.25, shininess: 100, specular: 0xd946ef, side: THREE.DoubleSide });
+      const matGlass = new THREE.MeshPhongMaterial({ color: 0xfbcfe8, transparent: true, opacity: 0.1, shininess: 100, specular: 0xffffff, side: THREE.DoubleSide });
+      const matZone = new THREE.MeshBasicMaterial({ color: 0xfae8ff, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+      const matRug = new THREE.MeshBasicMaterial({ color: 0xf5d0fe, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+
+      // ============================================
+      // HELPER FUNCTIONS
+      // ============================================
+      function volBox(w: number, h: number, d: number, x: number, y: number, z: number, matFill?: THREE.Material, matEdge?: THREE.LineBasicMaterial) {
+        const group = new THREE.Group();
+        const geo = new THREE.BoxGeometry(w, h, d);
+        const mesh = new THREE.Mesh(geo, matFill ?? matVolume);
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), matEdge ?? matStruct);
+        group.add(mesh);
+        group.add(edges);
+        group.position.set(x, y, z);
+        return group;
+      }
+
+      function volCyl(rt: number, rb: number, h: number, x: number, z: number, matFill?: THREE.Material | number, matEdge?: THREE.LineBasicMaterial, y?: number) {
+        const group = new THREE.Group();
+        // The source HTML sometimes passes a bare number (e.g. `0.5`) where a
+        // material is expected (food-truck wheels). Coerce any non-Material
+        // value to the default volume material so the wheels still render
+        // instead of crashing the WebGLRenderer.
+        const fill: THREE.Material = matFill instanceof THREE.Material ? matFill : matVolume;
+        const edge: THREE.LineBasicMaterial = matEdge ?? matMain;
+        const geo = new THREE.CylinderGeometry(rt, rb, h, 24);
+        const mesh = new THREE.Mesh(geo, fill);
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), edge);
+        group.add(mesh);
+        group.add(edges);
+        group.position.set(x, y !== undefined ? y : h / 2, z);
+        return group;
+      }
+
+      function dashedLine(p1: THREE.Vector3, p2: THREE.Vector3) {
+        const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1, p2]), matHidden);
+        l.computeLineDistances();
+        return l;
+      }
+
+      function solidLine(p1: THREE.Vector3, p2: THREE.Vector3, mat?: THREE.LineBasicMaterial) {
+        return new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1, p2]), mat ?? matSub);
+      }
+
+      function createZone(w: number, d: number, x: number, z: number, mat?: THREE.Material) {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat ?? matZone);
+        m.rotation.x = -Math.PI / 2;
+        m.position.set(x, 0.01, z);
+        return m;
+      }
+
+      function createText(text: string, x: number, y: number, z: number, size = 2) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return new THREE.Mesh();
+        ctx.clearRect(0, 0, 512, 128);
+        ctx.font = 'bold 60px Courier New';
+        ctx.fillStyle = '#86198f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 256, 64);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.minFilter = THREE.LinearFilter;
+        const m = new THREE.Mesh(
+          new THREE.PlaneGeometry(size * 4, size),
+          new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+        );
+        m.position.set(x, y, z);
+        m.rotation.x = -Math.PI / 2;
+        return m;
+      }
+
+      function createTrussSegment(x: number, y: number, z: number, height: number) {
+        const group = new THREE.Group();
+        group.add(volBox(0.5, height, 0.5, x, y + height / 2, z, matGlass, matMain));
+        for (let i = 0; i < height; i += 2) {
+          group.add(solidLine(new THREE.Vector3(x - 0.3, y + i, z), new THREE.Vector3(x + 0.3, y + i + 2, z), matSub));
+          group.add(solidLine(new THREE.Vector3(x + 0.3, y + i, z), new THREE.Vector3(x - 0.3, y + i + 2, z), matSub));
+        }
+        return group;
+      }
+
+      // FURNITURE GENERATORS
+      function createBanquetChair(x: number, z: number, rotY: number, yBase = 0) {
+        const g = new THREE.Group();
+        g.add(volBox(0.5, 0.1, 0.5, 0, 0.25, 0, matVolume, matAccent));
+        g.add(volBox(0.5, 0.8, 0.1, 0, 0.7, -0.2, matVolume, matAccent));
+        g.position.set(x, yBase, z);
+        g.rotation.y = rotY;
+        return g;
+      }
+
+      function createBarStool(x: number, z: number, yBase = 0) {
+        const g = new THREE.Group();
+        g.add(volCyl(0.1, 0.1, 1, 0, 0, matVolume, matSub, 0.5));
+        g.add(volCyl(0.3, 0.3, 0.1, 0, 0, matVolumeAccent, matAccent, 1.0));
+        g.position.set(x, yBase, z);
+        return g;
+      }
+
+      function createLoungeSofa(x: number, z: number, rotY: number, yBase = 0) {
+        const g = new THREE.Group();
+        g.add(volBox(4, 0.5, 1.5, 0, 0.25, 0, matVolume, matMain));
+        g.add(volBox(4, 0.8, 0.3, 0, 0.9, -0.6, matVolume, matMain));
+        g.add(volBox(0.3, 0.8, 1.5, -2, 0.9, 0, matVolume, matMain));
+        g.add(volBox(0.3, 0.8, 1.5, 2, 0.9, 0, matVolume, matMain));
+        g.position.set(x, yBase, z);
+        g.rotation.y = rotY;
+        return g;
+      }
+
+      function createPlanter(x: number, z: number) {
+        const g = new THREE.Group();
+        g.add(volCyl(0.8, 0.8, 0.6, 0, 0, matVolume, matMain, 0.3));
+        g.add(volCyl(0.4, 0.6, 1.5, 0, 0, matVolumeAccent, matAccent, 1.35));
+        g.add(volCyl(0.2, 0.4, 1, 0.3, 0.3, matVolumeAccent, matAccent, 1.5));
+        g.add(volCyl(0.2, 0.4, 1, -0.3, 0.3, matVolumeAccent, matAccent, 1.5));
+        g.position.set(x, 0, z);
+        return g;
+      }
+
+      function createFoodTruck(x: number, z: number, rotY: number) {
+        const g = new THREE.Group();
+        g.add(volBox(6, 4, 10, 0, 2, 0, matVolume, matStruct));
+        g.add(volBox(6, 1, 3, 0, 3, -2, matGlass, matAccent));
+        g.add(volBox(6, 0.1, 3, 0, 2.5, -3.5, matVolumeAccent, matAccent));
+        // Source HTML passes `0.5` (a number) in the material slot for the
+        // wheels — see volCyl above for the coercion note.
+        g.add(volCyl(0.8, 0.8, 0.5, -3, -3, 0.5));
+        g.add(volCyl(0.8, 0.8, 0.5, 3, -3, 0.5));
+        g.position.set(x, 0, z);
+        g.rotation.y = rotY;
+        return g;
+      }
+
+      function createTotem(x: number, z: number) {
+        const g = new THREE.Group();
+        g.add(volBox(0.5, 8, 0.5, 0, 4, 0, matVolume, matMain));
+        g.add(volBox(2, 3, 0.2, 0, 6, 0.3, matVolumeAccent, matAccent));
+        g.position.set(x, 0, z);
+        return g;
+      }
+
+      function createPicnicTable(x: number, z: number) {
+        const g = new THREE.Group();
+        g.add(volBox(3, 0.2, 1.5, 0, 0.8, 0, matVolume, matMain));
+        g.add(volBox(0.2, 0.8, 1.5, -1, 0.4, 0, matVolume, matSub));
+        g.add(volBox(0.2, 0.8, 1.5, 1, 0.4, 0, matVolume, matSub));
+        g.add(volBox(3, 0.2, 0.5, -1.2, 0.5, 0, matVolume, matSub));
+        g.add(volBox(3, 0.2, 0.5, 1.2, 0.5, 0, matVolume, matSub));
+        g.position.set(x, 0, z);
+        return g;
+      }
+
+      function createStringLights(x1: number, z1: number, x2: number, z2: number, h: number) {
+        const g = new THREE.Group();
+        g.add(volCyl(0.1, 0.1, h, x1, z1, matVolume, matMain, h / 2));
+        g.add(volCyl(0.1, 0.1, h, x2, z2, matVolume, matMain, h / 2));
+        const midX = (x1 + x2) / 2;
+        const midZ = (z1 + z2) / 2;
+        const curve = new THREE.QuadraticBezierCurve3(
+          new THREE.Vector3(x1, h, z1),
+          new THREE.Vector3(midX, h - 2, midZ),
+          new THREE.Vector3(x2, h, z2)
+        );
+        const points = curve.getPoints(20);
+        g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), matAccent));
+        for (let i = 0.1; i < 0.9; i += 0.2) {
+          const p = curve.getPoint(i);
+          g.add(volCyl(0.15, 0.15, 0.3, p.x, p.z, matVolumeAccent, matAccent, p.y));
+        }
+        return g;
+      }
+
+      function createTurnstile(x: number, z: number) {
+        const g = new THREE.Group();
+        g.add(volBox(1, 1, 1, 0, 0.5, 0, matVolume, matMain));
+        g.add(volCyl(0.1, 0.1, 1.5, 0, 0, matVolumeAccent, matAccent, 0.75));
+        for (let i = 0; i < 3; i++) {
+          const rot = (i / 3) * Math.PI * 2;
+          g.add(volBox(0.8, 0.1, 0.2, Math.cos(rot) * 0.4, Math.sin(rot) * 0.4 + 1.5, 0, matVolume, matAccent));
+        }
+        g.position.set(x, 0, z);
+        return g;
+      }
+
+      function createCenterpiece(x: number, z: number) {
+        const g = new THREE.Group();
+        g.add(volCyl(0.2, 0.3, 1.5, 0, 0, matGlass, matMain, 0.75));
+        g.add(volCyl(0.5, 0.2, 0.8, 0, 0, matVolumeAccent, matAccent, 1.9));
+        g.position.set(x, 1, z);
+        return g;
+      }
+
+      // ============================================
+      // 1. BASE GRID
+      // ============================================
+      const gridGroup = new THREE.Group();
+      scene.add(gridGroup);
+      const grid = new THREE.GridHelper(200, 50, 0xa21caf, 0xfbcfe8);
+      const gridMat = grid.material;
+      if (Array.isArray(gridMat)) {
+        gridMat.forEach((m) => {
+          m.transparent = true;
+          m.opacity = 0.3;
+        });
+      } else {
+        gridMat.transparent = true;
+        gridMat.opacity = 0.3;
+      }
+      gridGroup.add(grid);
+
+      // ============================================
+      // 2. EVENT ARCHITECTURE & PRODUCTION
+      // ============================================
+      const archGroup = new THREE.Group();
+      scene.add(archGroup);
+
+      // --- MAIN STAGE ---
+      const stageZ = -40, stageW = 40;
+      archGroup.add(createZone(stageW + 10, 25, 0, stageZ + 5));
+      archGroup.add(volBox(stageW, 2, 15, 0, 1, stageZ, matVolumeAccent, matStruct));
+      archGroup.add(createText('MAIN STAGE', 0, 2.1, stageZ + 8, 3));
+      archGroup.add(volBox(stageW - 4, 12, 0.5, 0, 8, stageZ - 8, matVolume, matStruct));
+      archGroup.add(createTrussSegment(-stageW / 2, 2, stageZ - 8, 18));
+      archGroup.add(createTrussSegment(stageW / 2, 2, stageZ - 8, 18));
+      archGroup.add(volBox(stageW, 1, 1, 0, 20, stageZ - 8, matGlass, matStruct));
+      archGroup.add(volBox(6, 0.5, 5, 0, 2.25, stageZ + 4, matVolume, matAccent));
+      [-4, 4].forEach((mx) => {
+        archGroup.add(volBox(0.1, 2, 0.1, mx, 3, stageZ + 8, matVolume, matAccent));
+      });
+      for (let mb = -15; mb <= 15; mb += 3) {
+        archGroup.add(volBox(3, 1.2, 1, mb, 0.6, stageZ + 13, matVolume, matAccent));
+      }
+
+      // --- FOH & DANCEFLOOR ---
+      const danceZ = -20;
+      archGroup.add(createZone(30, 40, 0, danceZ + 10));
+      archGroup.add(createText('DANCEFLOOR', 0, 0.1, danceZ + 10, 2.5));
+      archGroup.add(volBox(5, 1.5, 2, 0, 0.75, danceZ + 2, matVolumeAccent, matAccent));
+      archGroup.add(createText('DJ', 0, 1.8, danceZ + 2, 1.2));
+
+      [-15, 15].forEach((dx) => {
+        archGroup.add(createTrussSegment(dx, 0, danceZ + 15, 15));
+        archGroup.add(volBox(2, 4, 2, dx, 12, danceZ + 15, matVolumeAccent, matAccent));
+      });
+
+      const crowdGeo = new THREE.BufferGeometry();
+      const crowdPts: number[] = [];
+      for (let i = 0; i < 120; i++) {
+        crowdPts.push((Math.random() - 0.5) * 28, 0.5, danceZ + 10 + (Math.random() - 0.5) * 25);
+      }
+      crowdGeo.setAttribute('position', new THREE.Float32BufferAttribute(crowdPts, 3));
+      const crowdMat = new THREE.PointsMaterial({ color: 0xd946ef, size: 0.8, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+      archGroup.add(new THREE.Points(crowdGeo, crowdMat));
+
+      const fohZ = 15;
+      archGroup.add(volBox(8, 3, 5, 0, 1.5, fohZ, matVolume, matMain));
+      archGroup.add(createText('FOH CONTROL', 0, 3.2, fohZ, 1.5));
+      archGroup.add(volBox(2, 1, 2, -12, 0.5, fohZ, matVolume, matAccent));
+      archGroup.add(volBox(0.2, 8, 0.2, -12, 4.5, fohZ, matVolume, matAccent));
+      archGroup.add(solidLine(new THREE.Vector3(-12, 8, fohZ), new THREE.Vector3(0, 2, fohZ - 10), matAccent));
+      archGroup.add(volBox(1, 1, 1, 0, 1.5, fohZ - 10, matVolumeAccent, matAccent));
+
+      // --- VIP PLATFORMS ---
+      [-1, 1].forEach((side) => {
+        const vx = side * 35, vz = -10;
+        archGroup.add(createZone(14, 18, vx, vz));
+        archGroup.add(createZone(12, 16, vx, vz - 1, matRug));
+        archGroup.add(volBox(14, 1, 18, vx, 0.5, vz, matVolumeAccent, matMain));
+        for (let s = 1; s <= 3; s++) {
+          archGroup.add(volBox(3, 0.3, 1, vx, 0.15 * s, vz + 9 + s * 1, matVolume, matSub));
+        }
+        archGroup.add(createLoungeSofa(vx - 4, vz - 6, side === 1 ? Math.PI / 2 : -Math.PI / 2, 1.0));
+        archGroup.add(volCyl(1, 1, 0.5, vx, vz, matVolume, matAccent, 1.25));
+        archGroup.add(volCyl(0.1, 0.1, 1.5, vx - 4, vz + 5, matVolume, matSub, 1.75));
+        archGroup.add(volCyl(0.8, 0.8, 0.1, vx - 4, vz + 5, matGlass, matAccent, 2.5));
+        archGroup.add(createBarStool(vx - 5, vz + 5, 1.0));
+        archGroup.add(createBarStool(vx - 3, vz + 5, 1.0));
+        for (let r = -3; r <= 3; r += 2) {
+          archGroup.add(volCyl(0.1, 0.1, 1.2, vx + r, vz + 8, matVolume, matAccent, 1.6));
+          if (r < 3) archGroup.add(dashedLine(new THREE.Vector3(vx + r, 1.6, vz + 8), new THREE.Vector3(vx + r + 2, 1.6, vz + 8)));
+        }
+        archGroup.add(volBox(14, 0.3, 18, vx, 6, vz, matGlass, matSub));
+        archGroup.add(createText('VIP', vx, 1.2, vz + 8, 2));
+      });
+
+      // --- GUEST TABLES ---
+      const tPos: [number, number][] = [[-20, 10], [0, 10], [20, 10], [-20, 25], [0, 25], [20, 25]];
+      tPos.forEach(([tx, tz]) => {
+        archGroup.add(createZone(8, 8, tx, tz, matRug));
+        archGroup.add(volCyl(2, 2, 1, tx, tz, matVolume, matMain));
+        archGroup.add(createCenterpiece(tx, tz));
+        for (let ci = 0; ci < 8; ci++) {
+          const ang = (ci / 8) * Math.PI * 2;
+          archGroup.add(createBanquetChair(tx + Math.cos(ang) * 3.5, tz + Math.sin(ang) * 3.5, -ang));
+        }
+      });
+
+      // --- MAIN BAR & CATERING ---
+      const barZ = 40;
+      archGroup.add(createZone(30, 12, 20, barZ));
+      archGroup.add(volBox(20, 1.5, 2, 20, 0.75, barZ, matVolume, matStruct));
+      archGroup.add(volBox(20, 4, 1, 20, 3, barZ + 2, matGlass, matMain));
+      for (let bx = 12; bx <= 28; bx += 1.5) {
+        archGroup.add(volCyl(0.15, 0.15, 0.4, bx, barZ, matGlass, matAccent, 1.7));
+        archGroup.add(volCyl(0.15, 0.15, 1, bx, barZ + 2, matVolumeAccent, matAccent));
+        archGroup.add(solidLine(new THREE.Vector3(bx, 4.5, barZ + 2), new THREE.Vector3(bx, 6, barZ + 2), matHidden));
+        archGroup.add(volCyl(0.3, 0.3, 0.4, bx, barZ + 2, matVolumeAccent, matAccent, 4.7));
+      }
+      archGroup.add(createBanquetChair(15, barZ - 1.5, Math.PI, 0.75));
+      archGroup.add(createBanquetChair(25, barZ - 1.5, Math.PI, 0.75));
+      for (let sx = 12; sx <= 28; sx += 3) {
+        archGroup.add(createBarStool(sx, barZ - 3));
+      }
+      archGroup.add(createText('MAIN BAR', 20, 2.2, barZ, 2.5));
+
+      archGroup.add(createFoodTruck(-20, barZ + 10, 0));
+      archGroup.add(createFoodTruck(-10, barZ + 10, 0));
+      archGroup.add(createFoodTruck(0, barZ + 10, 0));
+      archGroup.add(createText('FOOD TRUCKS', -10, 4.2, barZ + 10, 2));
+      archGroup.add(createPicnicTable(-25, barZ + 15));
+      archGroup.add(createPicnicTable(-15, barZ + 15));
+      archGroup.add(createPicnicTable(-5, barZ + 15));
+      archGroup.add(createPicnicTable(5, barZ + 15));
+      archGroup.add(createStringLights(-30, barZ + 5, 10, barZ + 5, 8));
+      archGroup.add(createStringLights(-30, barZ + 20, 10, barZ + 20, 8));
+
+      // --- ENTRANCE PLAZA ---
+      const entZ = 60;
+      archGroup.add(createZone(40, 15, 0, entZ));
+      archGroup.add(volBox(25, 10, 1, 0, 5, entZ, matVolumeAccent, matStruct));
+      archGroup.add(volBox(1, 10, 1, -12, 5, entZ, matVolume, matStruct));
+      archGroup.add(volBox(1, 10, 1, 12, 5, entZ, matVolume, matStruct));
+      archGroup.add(createText('ENTRANCE', 0, 10.2, entZ, 2.5));
+      archGroup.add(volBox(4, 3, 4, -15, 1.5, entZ - 2, matVolume, matMain));
+      archGroup.add(volBox(4, 3, 4, 15, 1.5, entZ - 2, matVolume, matMain));
+      archGroup.add(createTurnstile(-5, entZ - 2));
+      archGroup.add(createTurnstile(0, entZ - 2));
+      archGroup.add(createTurnstile(5, entZ - 2));
+      archGroup.add(volCyl(0.2, 0.3, 12, -18, entZ - 5, matVolume, matMain, 6));
+      archGroup.add(volBox(3, 2, 0.2, -16.5, 10, entZ - 5, matVolumeAccent, matAccent));
+      archGroup.add(volCyl(0.2, 0.3, 12, 18, entZ - 5, matVolume, matMain, 6));
+      archGroup.add(volBox(3, 2, 0.2, 19.5, 10, entZ - 5, matVolumeAccent, matAccent));
+      archGroup.add(createPlanter(-12, entZ - 3));
+      archGroup.add(createPlanter(12, entZ - 3));
+      archGroup.add(createTotem(-25, entZ - 5));
+      archGroup.add(createTotem(25, entZ - 5));
+
+      // --- BACKSTAGE & GENERATORS ---
+      archGroup.add(volBox(12, 5, 4, -35, 2.5, -45, matVolumeAccent, matMain));
+      archGroup.add(volBox(6, 4, 4, -25, 2, -50, matVolumeAccent, matAccent));
+      archGroup.add(volBox(6, 4, 4, 25, 2, -50, matVolumeAccent, matAccent));
+
+      // --- RESTROOMS ---
+      for (let r = 0; r < 5; r++) {
+        archGroup.add(volBox(3, 4, 6, -40 - 4.5 + r * 3, 2, 30, matVolume, matMain));
+      }
+
+      // --- LANDSCAPE & BOLLARDS ---
+      for (let b = -40; b <= 40; b += 8) {
+        archGroup.add(volCyl(0.2, 0.2, 0.8, b, 50, matVolume, matAccent, 0.4));
+      }
+
+      // ============================================
+      // 3. HOLO UI NODES
+      // ============================================
+      const nodesGroup = new THREE.Group();
+      scene.add(nodesGroup);
+
+      function createNode(x: number, z: number, label: string) {
+        const g = new THREE.Group();
+        const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.7, 32), new THREE.MeshBasicMaterial({ color: 0xd946ef, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.12;
+        g.add(ring);
+        const line = dashedLine(new THREE.Vector3(0, 0.1, 0), new THREE.Vector3(0, 15, 0));
+        g.add(line);
+        const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshBasicMaterial({ color: 0xd946ef, transparent: true, opacity: 0.9 }));
+        sphere.position.y = 15;
+        g.add(sphere);
+        const txt = createText(label, 0, 16, 0, 1.5);
+        g.add(txt);
+        g.position.set(x, 0, z);
+        g.userData.ring = ring;
+        g.userData.sphere = sphere;
+        nodesGroup.add(g);
+      }
+      createNode(0, -35, 'STAGE A');
+      createNode(0, 15, 'FOH');
+      createNode(35, -10, 'VIP A');
+      createNode(20, 40, 'BAR');
+      createNode(0, 60, 'ENTRY');
+
+      // ============================================
+      // BUILD ANIMATION SYSTEM SETUP
+      // ============================================
+      function easeOutElastic(x: number) {
+        const c4 = (2 * Math.PI) / 3;
+        return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
+      }
+      function easeOutCubic(x: number) {
+        return 1 - Math.pow(1 - x, 3);
+      }
+
+      const buildTargets: THREE.Object3D[] = [];
+      const groupsToProcess: THREE.Group[] = [archGroup, nodesGroup];
+      groupsToProcess.forEach((group) => {
+        group.children.forEach((child) => {
+          child.userData.baseX = child.position.x;
+          child.userData.baseY = child.position.y;
+          child.userData.baseZ = child.position.z;
+          child.userData.baseScale = child.scale.clone();
+          child.userData.baseRotZ = child.rotation.z;
+
+          const zPos = child.position.z || 0;
+          const zNorm = THREE.MathUtils.clamp((70 - zPos) / 120, 0, 1);
+          // Speeding up build delay slightly to match faster camera
+          child.userData.buildDelay = zNorm * 3.5 + Math.random() * 0.3;
+          child.userData.buildDuration = 1.2 + Math.random() * 0.3;
+
+          child.scale.set(0.001, 0.001, 0.001);
+          child.position.y = child.userData.baseY - 5;
+          child.rotation.z = child.userData.baseRotZ + Math.PI / 6;
+
+          buildTargets.push(child);
+        });
+      });
+
+      // ============================================
+      // SEAMLESS CINEMATIC CAMERA SPLINE
+      // ============================================
+      // Adjusted path points to accommodate faster speed while maintaining smoothness
+      const camPath = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 18, 95),    // Start slightly higher
+        new THREE.Vector3(8, 22, 50),    // Quick dive through entrance
+        new THREE.Vector3(15, 28, 0),    // Sweep past FOH/Tables
+        new THREE.Vector3(-10, 45, -20), // Quick rise and turn
+        new THREE.Vector3(-25, 65, 40),  // Arc back
+        new THREE.Vector3(0, 75, 95),    // Orbit start point
+      ]);
+
+      const lookPath = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 2, 60),
+        new THREE.Vector3(0, 2, 30),
+        new THREE.Vector3(0, 2, -10),
+        new THREE.Vector3(0, 5, -20),
+        new THREE.Vector3(0, 5, 20),
+        new THREE.Vector3(0, 0, 0),
+      ]);
+
+      // REDUCED from 8.0 to 6.0 seconds as requested
+      const introDuration = 6.0;
+      const pos = new THREE.Vector3();
+      const look = new THREE.Vector3();
+
+      // ============================================
+      // ANIMATION LOOP
+      // ============================================
+      const clock = new THREE.Clock();
+      let animFrameId = 0;
+
+      function animate() {
+        animFrameId = requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+
+        // 1. Update Build Animations
+        for (let i = 0; i < buildTargets.length; i++) {
+          const item = buildTargets[i];
+          if (item.userData.isBuilt) continue;
+
+          let progress: number = (t - item.userData.buildDelay) / item.userData.buildDuration;
+          if (progress >= 1) {
+            progress = 1;
+            item.userData.isBuilt = true;
+            item.scale.copy(item.userData.baseScale);
+            item.position.set(item.userData.baseX, item.userData.baseY, item.userData.baseZ);
+            item.rotation.z = item.userData.baseRotZ;
+          } else if (progress > 0) {
+            const s = easeOutElastic(progress);
+            item.scale.set(item.userData.baseScale.x * s, item.userData.baseScale.y * s, item.userData.baseScale.z * s);
+            const p = easeOutCubic(progress);
+            item.position.y = item.userData.baseY - 5 + 5 * p;
+            item.rotation.z = item.userData.baseRotZ + (Math.PI / 6) * (1 - p);
+
+            // Hologram Glitch Effect
+            if (progress < 0.4) {
+              const glitch = (0.4 - progress) * 2;
+              item.position.x = item.userData.baseX + (Math.random() - 0.5) * glitch * 0.5;
+              item.position.z = item.userData.baseZ + (Math.random() - 0.5) * glitch * 0.5;
+            } else {
+              item.position.x = item.userData.baseX;
+              item.position.z = item.userData.baseZ;
+            }
+          }
+        }
+
+        // 2. Animate Crowd
+        archGroup.children.forEach((c) => {
+          if (c instanceof THREE.Points) {
+            const attr = c.geometry.attributes.position as THREE.BufferAttribute;
+            const arr = attr.array as Float32Array;
+            for (let i = 1; i < arr.length; i += 3) {
+              arr[i] = 0.5 + Math.sin(t * 2 + i) * 0.3;
+            }
+            attr.needsUpdate = true;
+          }
+        });
+
+        // 3. Animate UI Nodes
+        nodesGroup.children.forEach((n) => {
+          if (n.userData.sphere) {
+            n.userData.sphere.position.y = 15 + Math.sin(t * 1.5) * 0.5;
+            n.userData.ring.scale.setScalar(1 + Math.sin(t * 2) * 0.2);
+          }
+        });
+
+        // 4. SEAMLESS CAMERA LOGIC (Faster Intro, Same Orbit)
+        if (t < introDuration) {
+          const u = t / introDuration;
+          pos.copy(camPath.getPoint(u));
+          look.copy(lookPath.getPoint(u));
+        } else {
+          // Continuous Orbit (Remains exactly the same)
+          const ot = t - introDuration;
+          pos.set(
+            Math.sin(ot * 0.025) * 95,
+            75 + Math.sin(ot * 0.04) * 5,
+            Math.cos(ot * 0.025) * 95
+          );
+          look.set(0, 0, 0);
+        }
+
+        camera.position.copy(pos);
+        camera.lookAt(look);
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // ============================================
+      // RESIZE HANDLER
+      // ============================================
+      function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', onResize);
+
+      // ============================================
+      // CLEANUP (returned to React for unmount)
+      // ============================================
+      cleanup = () => {
+        cancelAnimationFrame(animFrameId);
+        window.removeEventListener('resize', onResize);
+        renderer.dispose();
+        scene.clear();
+        if (renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+      };
+    } catch (error) {
+      console.error(error);
+    }
+
+    return cleanup;
+  }, []);
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden' }}>
-      {/* White gradient background (user request: لون الخلفية بيضاء) */}
-      <div style={{
-        position: 'absolute', inset: 0, zIndex: 1,
-        background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #fff1fb 60%, #fde8f9 100%)'
-      }} />
-
-      {/* R3F Canvas */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-        <Canvas
-          camera={{ position: [0, 40, 90], fov: 45, near: 0.1, far: 1000 }}
-          gl={{ antialias: true, alpha: true }}
-          onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
-        >
-          <SceneContents />
-        </Canvas>
-      </div>
-
-      {/* Texture Overlay */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        opacity: 0.3, mixBlendMode: 'multiply',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")`
-      }} />
-
-      {/* Center Glow */}
-      <div style={{
-        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: '20vw', height: '20vh', pointerEvents: 'none', zIndex: 4,
-        background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%)'
-      }} />
-    </div>
+    <div
+      ref={containerRef}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -1,
+        pointerEvents: 'none',
+      }}
+    />
   );
 }
