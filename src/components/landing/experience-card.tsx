@@ -188,16 +188,16 @@ export function ExperienceCard({
             <span style={{ color: brandHex }}>{'//'}</span>
             <span>{index}</span>
           </div>
-          {/* Brand Logo */}
-          <div className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md md:rounded-lg bg-black/60 border border-white/[0.08] group-hover:border-white/20 transition-all duration-700 flex items-center justify-center relative overflow-hidden shadow-inner shrink-0">
+          {/* Brand Logo — enlarged per user request (logos INSIDE the card, not the bezel) */}
+          <div className="w-16 h-16 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-lg md:rounded-xl bg-black/60 border border-white/[0.08] group-hover:border-white/20 transition-all duration-700 flex items-center justify-center relative overflow-hidden shadow-inner shrink-0">
             <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.02] to-transparent" />
             <div className="absolute inset-0.5 rounded-[10px] border border-dashed border-white/10 group-hover:border-white/30 animate-[spin_20s_linear_infinite]" />
             <Image
               src={logoUrl}
               alt={title}
-              width={56}
-              height={56}
-              className="relative w-[60%] h-[60%] object-contain rounded-sm"
+              width={112}
+              height={112}
+              className="relative w-[85%] h-[85%] object-contain rounded-sm"
             />
           </div>
         </div>
