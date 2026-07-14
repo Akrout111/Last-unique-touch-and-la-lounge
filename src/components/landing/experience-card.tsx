@@ -204,10 +204,15 @@ export function ExperienceCard({
 
         {/* Bottom Section */}
         <div className="flex flex-col items-end gap-1.5 md:gap-2 transform transition-transform duration-700 group-hover:-translate-x-1.5 rtl:group-hover:translate-x-1.5 relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="text-[8px] md:text-[10px] lg:text-[11px] font-bold tracking-[0.4em] text-white/50 uppercase">{category}</span>
+          <div className="flex items-center gap-2 max-w-full">
+            <span
+              className="text-[9px] md:text-[11px] lg:text-xs font-semibold tracking-[0.05em] text-right leading-tight max-w-[180px] md:max-w-[260px] lg:max-w-[320px]"
+              style={{ color: brandHex }}
+            >
+              {category}
+            </span>
             <div
-              className="w-1 h-1 rounded-full transition-all duration-500"
+              className="w-1 h-1 rounded-full transition-all duration-500 shrink-0"
               style={{
                 backgroundColor: brandHex,
                 boxShadow: `0 0 8px ${hexToRgba(brandHex, 0.8)}`,
