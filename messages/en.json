@@ -345,7 +345,12 @@
       "invalidTransition": "Cannot change status this way",
       "noActionsAvailable": "No actions available for this booking",
       "view": "View",
-      "terminalState": "This booking is in a final state and cannot be modified"
+      "terminalState": "This booking is in a final state and cannot be modified",
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {current} of {total}"
+      }
     },
     "common": {
       "save": "Save",

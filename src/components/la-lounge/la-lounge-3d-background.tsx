@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { shouldEnable3D } from '@/lib/device-capabilities';
 
 // ============================================================================
 // LaLounge3DBackground
@@ -22,6 +23,11 @@ export default function LaLounge3DBackground() {
     const isMobile = window.innerWidth < 768;
     if (!container) return;
 
+    // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability.
+    // Skips entirely on prefers-reduced-motion / no WebGL / < 4 cores /
+    // < 4 GB so low-end devices get the static gradient fallback instead.
+    if (!shouldEnable3D()) return;
+
     // `cleanup` is assigned at the end of the try-block once every resource
     // that needs tearing down has been created. If setup throws, cleanup stays
     // undefined and the effect simply returns undefined.
@@ -34,12 +40,18 @@ export default function LaLounge3DBackground() {
       const scene = new THREE.Scene();
 
       const camera = new THREE.PerspectiveCamera(isMobile ? 55 : 45, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 15, 90);
+      // v41-g2-F2 Fix #4: mobile uses a wider FOV (55 vs 45) which makes
+      // the lounge interior appear smaller / over-zoomed at the same
+      // distance, causing a cramped "pulled-in" feel on small screens.
+      // Pull the initial camera Z back from 90 → 110 on mobile to
+      // compensate. The animate() loop overwrites this on the first
+      // frame, but it also seeds the camPath/orbit pull-back below.
+      camera.position.set(0, 15, isMobile ? 110 : 90);
       camera.lookAt(0, 2, 60);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2.0 : 2.0));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0));
       renderer.setClearColor(0x000000, 0);
       renderer.domElement.style.display = 'block';
       container.appendChild(renderer.domElement);
@@ -501,14 +513,20 @@ export default function LaLounge3DBackground() {
       // ============================================
       // SEAMLESS CINEMATIC CAMERA SPLINE
       // ============================================
-      // Adjusted path points to accommodate faster speed while maintaining smoothness
+      // Adjusted path points to accommodate faster speed while maintaining smoothness.
+      // v41-g2-F2 Fix #4: scale the horizontal (x/z) camPath coordinates by
+      // a mobile pull-back factor so the cinematic intro also sits further
+      // from the action on small screens (matches the wider mobile FOV).
+      // y values are untouched — vertical height is independent of FOV
+      // pull-back and the existing y arc reads fine on both layouts.
+      const camPullback = isMobile ? 1.15 : 1;
       const camPath = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, 18, 95),    // Start slightly higher
-        new THREE.Vector3(8, 22, 50),    // Quick dive through entrance
-        new THREE.Vector3(15, 28, 0),    // Sweep past FOH/Tables
-        new THREE.Vector3(-10, 45, -20), // Quick rise and turn
-        new THREE.Vector3(-25, 65, 40),  // Arc back
-        new THREE.Vector3(0, 75, 95),    // Orbit start point
+        new THREE.Vector3(0 * camPullback, 18, 95 * camPullback),    // Start slightly higher
+        new THREE.Vector3(8 * camPullback, 22, 50 * camPullback),    // Quick dive through entrance
+        new THREE.Vector3(15 * camPullback, 28, 0),                  // Sweep past FOH/Tables
+        new THREE.Vector3(-10 * camPullback, 45, -20 * camPullback), // Quick rise and turn
+        new THREE.Vector3(-25 * camPullback, 65, 40 * camPullback),  // Arc back
+        new THREE.Vector3(0, 75, 95 * camPullback),                  // Orbit start point
       ]);
 
       const lookPath = new THREE.CatmullRomCurve3([
@@ -587,6 +605,11 @@ export default function LaLounge3DBackground() {
         });
 
         // 4. SEAMLESS CAMERA LOGIC (Faster Intro, Same Orbit)
+        // v41-g2-F2 Fix #4: orbit (phase 3) uses a wider radius on mobile
+        // (110 vs 95) so the continuous loop also benefits from the
+        // pull-back and the wider FOV doesn't crop the lounge edges.
+        // lookAt stays at origin so the lounge remains centered.
+        const orbitRadius = isMobile ? 110 : 95;
         if (t < introDuration) {
           const u = t / introDuration;
           pos.copy(camPath.getPoint(u));
@@ -595,9 +618,9 @@ export default function LaLounge3DBackground() {
           // Continuous Orbit (Remains exactly the same)
           const ot = t - introDuration;
           pos.set(
-            Math.sin(ot * 0.025) * 95,
+            Math.sin(ot * 0.025) * orbitRadius,
             75 + Math.sin(ot * 0.04) * 5,
-            Math.cos(ot * 0.025) * 95
+            Math.cos(ot * 0.025) * orbitRadius
           );
           look.set(0, 0, 0);
         }
@@ -625,6 +648,21 @@ export default function LaLounge3DBackground() {
       cleanup = () => {
         cancelAnimationFrame(animFrameId);
         window.removeEventListener('resize', onResize);
+        // v41-g2-F1 Fix #2: traverse the scene graph to dispose geometries /
+        // materials before tearing down the renderer. scene.clear() only
+        // detaches objects — it does NOT free GPU buffers, so without this
+        // loop the WebGL context leaks memory on every route change / Strict
+        // Mode double-mount.
+        scene.traverse((obj) => {
+          if (obj instanceof THREE.Mesh) {
+            obj.geometry?.dispose();
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((m) => m.dispose());
+            } else {
+              obj.material?.dispose();
+            }
+          }
+        });
         renderer.dispose();
         scene.clear();
         if (renderer.domElement.parentNode) {

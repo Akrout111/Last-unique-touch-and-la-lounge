@@ -365,7 +365,12 @@ export function CheckoutView() {
                 />
                 <label htmlFor="terms" className="text-sm">
                   {t('checkout.form.agreePrefix')}
-                  <Link href="/terms" target="_blank" className="text-primary underline">
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
                     {t('checkout.form.termsLink')}
                   </Link>
                 </label>

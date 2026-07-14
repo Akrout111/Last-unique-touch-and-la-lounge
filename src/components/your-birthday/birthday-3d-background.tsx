@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { shouldEnable3D } from '@/lib/device-capabilities'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
@@ -53,8 +54,13 @@ export default function Birthday3DBackground() {
     const container = containerRef.current
     if (!container) return
 
+    // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability.
+    // Skips entirely on prefers-reduced-motion / no WebGL / < 4 cores /
+    // < 4 GB so low-end devices get the static gradient fallback instead.
+    if (!shouldEnable3D()) return
+
     const isMobile = window.innerWidth < 768
-    const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 2.0 : 2.0)
+    const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0)
 
     // Aesthetic Color Palette
     const bgColor = new THREE.Color('#060B1A')

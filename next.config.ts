@@ -75,12 +75,19 @@ const nextConfig: NextConfig = {
     // a future XSS load attacker-controlled tracking pixels or exfiltrate
     // data via image URLs. Now restricted to `'self' data: blob:` matching
     // actual usage.
+    // v41-g2-F2 Fix #2: drop dead `https://fonts.googleapis.com` from
+    // style-src and `https://fonts.gstatic.com` from font-src. All fonts
+    // are self-hosted via next/font (verified: 0 references to either
+    // host in `src/` — see Grep for `fonts.googleapis.com` /
+    // `fonts.gstatic.com`). Keeping them in the CSP granted a network
+    // allowance that nothing in the app actually uses, which is exactly
+    // the kind of stale entry CSP audits flag.
     const csp = [
       "default-src 'self'",
       scriptSrc,
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data:",
       // In dev, allow HMR websocket + eval-based source maps.
       isDev ? "connect-src 'self' ws: w:" : "connect-src 'self'",
       "frame-ancestors https://*.space-z.ai https://space-z.ai",

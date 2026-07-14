@@ -201,9 +201,7 @@ export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
   //
   // Now an IntersectionObserver flips `inView` to false when the wrapper div
   // leaves the viewport, and `frameloop` switches to 'never' — R3F stops
-  // issuing requestAnimationFrame ticks, freeing the GPU/CPU. The same
-  // pattern is used by hero-3d-background.tsx (lines ~1741-1755),
-  // purple-waves-3d.tsx, and background-3d.tsx.
+  // issuing requestAnimationFrame ticks, freeing the GPU/CPU.
   //
   // threshold of 0.05 means as soon as 5% of the canvas is visible we resume
   // rendering — small enough that scrolling back into view restores the

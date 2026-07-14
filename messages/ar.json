@@ -345,7 +345,12 @@
       "invalidTransition": "لا يمكن تغيير الحالة بهذا الشكل",
       "noActionsAvailable": "لا توجد إجراءات متاحة لهذا الحجز",
       "view": "عرض",
-      "terminalState": "هذا الحجز في حالته النهائية ولا يمكن تعديله"
+      "terminalState": "هذا الحجز في حالته النهائية ولا يمكن تعديله",
+      "pagination": {
+        "previous": "السابق",
+        "next": "التالي",
+        "pageOf": "صفحة {current} من {total}"
+      }
     },
     "common": {
       "save": "حفظ",

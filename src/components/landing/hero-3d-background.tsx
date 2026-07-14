@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { shouldEnable3D } from '@/lib/device-capabilities'
 
 // ═════════════════════════════════════════════════════════════════
 // PALETTE & CONFIG
@@ -79,6 +80,11 @@ export default function Hero3DBackground() {
     const container = containerRef.current
     if (!container) return
 
+    // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability. Skips
+    // entirely on prefers-reduced-motion / no WebGL / < 4 cores / < 4 GB so
+    // low-end devices get the static gradient fallback instead.
+    if (!shouldEnable3D()) return
+
     // Cleanup-tracking variables (assigned inside try block)
     let frameId: number | null = null
     let renderer: THREE.WebGLRenderer | null = null
@@ -105,7 +111,7 @@ export default function Hero3DBackground() {
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
       renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2.0 : 2.0))
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
       renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -1758,7 +1764,7 @@ export default function Hero3DBackground() {
       window.addEventListener('resize', onResize)
 
       const clock = new THREE.Clock()
-      const camDist = isMobile ? 52 : 52
+      const camDist = isMobile ? 45 : 52
       const pitch = Math.PI / 3
       const height = camDist * Math.sin(pitch)
       const depth = camDist * Math.cos(pitch)
@@ -1930,6 +1936,23 @@ export default function Hero3DBackground() {
       if (frameId !== null) cancelAnimationFrame(frameId)
       if (onMouseMove) window.removeEventListener('mousemove', onMouseMove)
       if (onResize) window.removeEventListener('resize', onResize)
+      // v41-g2-F1 Fix #2: traverse the scene graph to dispose geometries /
+      // materials before tearing down the renderer. scene.clear() only
+      // detaches objects — it does NOT free GPU buffers, so without this
+      // loop the WebGL context leaks memory on every route change / Strict
+      // Mode double-mount.
+      if (scene) {
+        scene.traverse((obj) => {
+          if (obj instanceof THREE.Mesh) {
+            obj.geometry?.dispose()
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((m) => m.dispose())
+            } else {
+              obj.material?.dispose()
+            }
+          }
+        })
+      }
       if (renderer) {
         renderer.dispose()
         if (renderer.domElement && renderer.domElement.parentNode) {

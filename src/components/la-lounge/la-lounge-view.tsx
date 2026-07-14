@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 // v31-build-B6: lazy-load the new vanilla-Three.js event-blueprint scene.
-// Replaces the previous R3F `PurpleWaves3D` (kept on disk as a fallback).
+// Replaces the previous R3F `PurpleWaves3D` (deleted — no longer on disk).
 // ssr:false because WebGL only exists in the browser; the component itself
 // also gates on `shouldEnable3D()` and returns null on incapable devices.
 const LaLounge3DBackground = dynamic(() => import('./la-lounge-3d-background'), {

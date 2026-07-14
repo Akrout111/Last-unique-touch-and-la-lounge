@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { shouldEnable3D } from '@/lib/device-capabilities'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
@@ -64,6 +65,11 @@ export default function Lut3DBackground() {
     const canvas = containerRef.current
     if (!canvas) return
 
+    // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability.
+    // Skips entirely on prefers-reduced-motion / no WebGL / < 4 cores /
+    // < 4 GB so low-end devices get the static gradient fallback instead.
+    if (!shouldEnable3D()) return
+
     // ============================================
     // CONSTANTS & PALETTE
     // ============================================
@@ -107,7 +113,7 @@ export default function Lut3DBackground() {
       powerPreference: 'high-performance',
     })
     renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.2
     renderer.outputColorSpace = THREE.SRGBColorSpace
