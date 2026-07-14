@@ -69,12 +69,12 @@ export default function Birthday3DBackground() {
     scene.background = bgColor
 
     const camera = new THREE.PerspectiveCamera(
-      55,
+      isMobile ? 65 : 55,
       window.innerWidth / window.innerHeight,
       0.1,
       1000,
     )
-    camera.position.set(0, 7, 35)
+    camera.position.set(0, 7, isMobile ? 50 : 35)
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,

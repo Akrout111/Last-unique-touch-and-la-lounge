@@ -643,31 +643,6 @@
 }
 
 /* ========================================
-   LA LOUNGE LIGHT SWEEP (Phase 4)
-   - Art-deco diagonal beam sweeping across
-     the hero. Deco-gold tint, very subtle.
-   - 6s ease-in-out loop, 2s initial delay.
-   - Hidden under prefers-reduced-motion.
-   ======================================== */
-@keyframes lalounge-sweep {
-  0% { transform: translateX(-100%) skewX(-12deg); }
-  100% { transform: translateX(200%) skewX(-12deg); }
-}
-.lalounge-sweep-beam {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 25%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(201, 162, 75, 0.18), transparent);
-  animation: lalounge-sweep 6s ease-in-out infinite;
-  animation-delay: 2s;
-}
-@media (prefers-reduced-motion: reduce) {
-  .lalounge-sweep-beam { animation: none; display: none; }
-}
-
-/* ========================================
    LUXURY GLASS CARD — Cinematic entrance
    3D perspective reveal like cards being
    dealt onto a table

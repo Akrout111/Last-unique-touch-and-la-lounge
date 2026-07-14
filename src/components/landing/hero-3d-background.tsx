@@ -96,16 +96,16 @@ export default function Hero3DBackground() {
       scene.background = new THREE.Color(PALETTE.DEEP_PLUM)
 
       const camera = new THREE.PerspectiveCamera(
-        isMobile ? 35 : 38,
+        isMobile ? 55 : 38,
         window.innerWidth / window.innerHeight,
         0.1,
         1000,
       )
-      camera.position.set(0, isMobile ? 50 : 70, isMobile ? 30 : 50) // Start high for intro
+      camera.position.set(0, isMobile ? 70 : 70, isMobile ? 55 : 50) // Start high for intro
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
       renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
       renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -1758,7 +1758,7 @@ export default function Hero3DBackground() {
       window.addEventListener('resize', onResize)
 
       const clock = new THREE.Clock()
-      const camDist = isMobile ? 32 : 52
+      const camDist = isMobile ? 52 : 52
       const pitch = Math.PI / 3
       const height = camDist * Math.sin(pitch)
       const depth = camDist * Math.cos(pitch)

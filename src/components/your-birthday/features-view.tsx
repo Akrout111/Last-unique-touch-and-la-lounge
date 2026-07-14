@@ -50,7 +50,7 @@ export default function BirthdayFeaturesView() {
   }))
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[var(--c-birthday-bg)] overflow-hidden">
+    <div className="relative w-full min-h-[100dvh] bg-transparent overflow-hidden">
       {/* 3D Background */}
       <BirthdayVisualizer />
 

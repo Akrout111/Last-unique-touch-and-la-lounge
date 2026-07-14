@@ -124,7 +124,7 @@ export default function LaLoungeView() {
       </div>
 
       {/* === Services section — revealed on scroll === */}
-      <div id="services" className="relative z-10 py-20 px-4 bg-card">
+      <div id="services" className="relative z-10 py-20 px-4 bg-transparent">
         <div className="max-w-5xl mx-auto">
           <h2
             className="font-display text-3xl sm:text-5xl text-primary text-center mb-4"

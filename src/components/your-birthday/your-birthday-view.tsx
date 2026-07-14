@@ -243,7 +243,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
         <section className="relative z-10 min-h-[100dvh] flex items-center justify-center overflow-hidden">
 
           {/* Gradient overlay */}
-          <div className="absolute inset-0 z-1 bg-gradient-to-t from-[var(--c-birthday-bg)] via-transparent to-[var(--c-birthday-bg)]/50 pointer-events-none" />
+          <div className="absolute inset-0 z-1 bg-gradient-to-t from-transparent via-transparent to-transparent pointer-events-none" />
 
           {/* Content */}
           <div className="relative z-10 max-w-4xl mx-auto px-4 text-center pointer-events-none">
@@ -304,7 +304,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
         </section>
 
         {/* === SERVICES SECTION === */}
-        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent via-[#05050a]/90 to-[var(--c-birthday-bg)]">
+        <section className="relative z-10 py-24 bg-transparent">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-16 space-y-4">
@@ -374,7 +374,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
         </section>
 
         {/* === GALLERY SECTION === */}
-        <section className="relative z-10 py-24 bg-gradient-to-b from-[var(--c-birthday-bg)] via-[#05050a]/90 to-[var(--c-birthday-bg)]">
+        <section className="relative z-10 py-24 bg-transparent">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-16 space-y-4">
@@ -426,7 +426,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
         </section>
 
         {/* === TESTIMONIALS SECTION === */}
-        <section className="relative z-10 py-24 bg-[var(--c-birthday-bg)]">
+        <section className="relative z-10 py-24 bg-transparent">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
 
             <div className="text-center mb-16 space-y-4">
@@ -475,7 +475,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
         </section>
 
         {/* === CTA SECTION === */}
-        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent to-[#05050b]">
+        <section className="relative z-10 py-24 bg-gradient-to-b from-transparent to-transparent">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
             <div
               className="p-8 sm:p-14 rounded-lg border border-white/10 backdrop-blur-md relative overflow-hidden shadow-2xl"

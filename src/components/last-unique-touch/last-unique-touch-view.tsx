@@ -6,16 +6,11 @@ import { useRouter } from '@/i18n/routing'
 import { Check, ArrowDown } from 'lucide-react'
 import { LutArabesque } from '@/components/brand/lut-arabesque'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
-import Lut3DBackground from './lut-3d-background'
-
-// Lazy-load the 3D furniture tunnel so the page's initial JS bundle stays
-// small (R3F + Three.js is ~150KB). ssr:false because WebGL only exists in
-// the browser; the component itself guards on `shouldEnable3D()` so on
-// low-power devices nothing renders.
-const Background3D = dynamic(
-  () => import('@/components/hero-3d/background-3d').then((m) => ({ default: m.Background3D })),
-  { ssr: false, loading: () => null },
-)
+// Lazy-load the 3D background so the page's initial JS bundle stays small.
+const Lut3DBackground = dynamic(() => import('./lut-3d-background'), {
+  ssr: false,
+  loading: () => null,
+})
 
 export default function LastUniqueTouchView() {
   const t = useTranslations()
@@ -41,9 +36,6 @@ export default function LastUniqueTouchView() {
 
       {/* === Hero section — title centered, 3D furniture background === */}
       <div className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col items-center justify-center">
-        <ErrorBoundary>
-          <Background3D />
-        </ErrorBoundary>
 
         <div
           className="absolute inset-0 z-[1] pointer-events-none"

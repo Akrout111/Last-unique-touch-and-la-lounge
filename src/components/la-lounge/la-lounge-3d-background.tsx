@@ -18,7 +18,8 @@ export default function LaLounge3DBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
+    const container = containerRef.current
+    const isMobile = window.innerWidth < 768;
     if (!container) return;
 
     // `cleanup` is assigned at the end of the try-block once every resource
@@ -32,13 +33,13 @@ export default function LaLounge3DBackground() {
       // ============================================
       const scene = new THREE.Scene();
 
-      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const camera = new THREE.PerspectiveCamera(isMobile ? 55 : 45, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(0, 15, 90);
       camera.lookAt(0, 2, 60);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
       renderer.setClearColor(0x000000, 0);
       renderer.domElement.style.display = 'block';
       container.appendChild(renderer.domElement);

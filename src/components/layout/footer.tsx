@@ -38,7 +38,7 @@ export function Footer() {
   if (isAdmin) return null
 
   return (
-    <footer className="bg-ink text-paper/60 relative overflow-hidden">
+    <footer className="bg-ink/90 backdrop-blur-sm text-paper/60 relative overflow-hidden">
       {/* Gold hairline at top */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent" />
 
@@ -153,7 +153,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Phase 5 contrast: bumped from text-paper/40 → text-paper/60 for
-              WCAG AA (4.5:1) on the bg-ink charcoal footer. The eyebrow
+              WCAG AA (4.5:1) on the bg-ink/90 backdrop-blur-sm charcoal footer. The eyebrow
               line below stays decorative (text-paper/30, "Crafted in Kuwait"). */}
           <p className="text-xs text-paper/60">
             {homePage
