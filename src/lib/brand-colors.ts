@@ -5,15 +5,15 @@
 // the wrong colors.
 //
 // The values below MUST match the `--primary` values in globals.css:
-//   :root[data-brand="lut"]       { --primary: #E3222B; }
+//   :root[data-brand="lut"]       { --primary: #D4A574; }
 //   :root[data-brand="lalounge"]  { --primary: #E6007E; }
 //   :root[data-brand="birthday"]  { --primary: #F5B914; }
 export const BRAND_COLORS = {
-  LUT: '#E3222B',
+  LUT: '#D4A574',
   LA_LOUNGE: '#E6007E',
   YOUR_BIRTHDAY: '#F5B914',
   // V11 Fix #12: lighter variants for 3D gradients and glows.
-  LUT_LIGHT: '#FF6B6B',
+  LUT_LIGHT: '#E8C887',
   LA_LOUNGE_LIGHT: '#FF6B9D',
   YOUR_BIRTHDAY_LIGHT: '#FFD147',
 } as const

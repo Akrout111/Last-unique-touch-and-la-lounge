@@ -15,17 +15,17 @@
   --c-paper-warm: #FAF6EF;     /* Warm ivory — LUT "paper" tone */
   --c-paper-deep: #E8E8E8;     /* Slightly darker gray for cards */
 
-  /* === Brand Accent (LUT Red — canonical #E3222B) === */
-  --c-gold: #E3222B;           /* LUT brand red */
-  --c-brand: #E3222B;          /* Alias for brand red */
-  --c-gold-soft: #FF3B3B;      /* Lighter red for hover states */
-  --c-brand-soft: #FF3B3B;     /* Alias for brand soft */
-  --c-copper: #990000;         /* Deep dark red */
+  /* === Brand Accent (LUT Gold — canonical #D4A574) === */
+  --c-gold: #D4A574;           /* LUT brand gold */
+  --c-brand: #D4A574;          /* Alias for brand gold */
+  --c-gold-soft: #E8C887;      /* Lighter gold for hover states */
+  --c-brand-soft: #E8C887;     /* Alias for brand soft */
+  --c-copper: #8B6F47;         /* Deep dark gold-brown */
   --c-brass: #A9812E;          /* LUT brass accent for hairlines */
 
   /* === Expressive Accents === */
   --c-wine: #4A0000;           /* Very deep red */
-  --c-lut: #E3222B;            /* LUT brand red */
+  --c-lut: #D4A574;            /* LUT brand gold */
   --c-lalounge: #E6007E;       /* La Lounge — magenta */
   --c-birthday: #F5B914;       /* Your Birthday — gold */
 
@@ -43,31 +43,31 @@
   --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
   --popover-foreground: #0A0A0A;
-  --primary: #E3222B;
+  --primary: #D4A574;
   --primary-foreground: #FFFFFF;
   --secondary: #F5F0E6;
   --secondary-foreground: #0A0A0A;
   --muted: #F0EBE0;
   --muted-foreground: #666666;
-  --accent: #E3222B;
+  --accent: #D4A574;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --border: #E0E0E0;
   --input: #E0E0E0;
-  --ring: #E3222B;
-  --chart-1: #E3222B;
+  --ring: #D4A574;
+  --chart-1: #D4A574;
   --chart-2: #0A0A0A;
   --chart-3: #E6007E;
   --chart-4: #F5B914;
   --chart-5: #999999;
   --sidebar: #F5F0E6;
   --sidebar-foreground: #0A0A0A;
-  --sidebar-primary: #E3222B;
+  --sidebar-primary: #D4A574;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E3222B;
+  --sidebar-accent: #D4A574;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #E0E0E0;
-  --sidebar-ring: #E3222B;
+  --sidebar-ring: #D4A574;
 }
 
 /* ========================================
@@ -85,16 +85,16 @@
 
 :root,
 :root[data-brand="lut"] {
-  --primary: #E3222B;
+  --primary: #D4A574;
   --accent: #A9812E; /* LUT brass — secondary accent for hairlines/details */
-  --ring: #E3222B;
+  --ring: #D4A574;
   /* Brand aliases — LUT is the default identity. */
-  --gold: #E3222B;
-  --lut: #E3222B;
+  --gold: #D4A574;
+  --lut: #D4A574;
   /* Tailwind utility cascade: text-gold / bg-lut / bg-brand must follow. */
-  --color-gold: #E3222B;
-  --color-brand: #E3222B;
-  --color-lut: #E3222B;
+  --color-gold: #D4A574;
+  --color-brand: #D4A574;
+  --color-lut: #D4A574;
   /* LUT identity — warm ivory background + ink foreground (paper tone). */
   --background: #FAF6EF;
   --foreground: #0A0A0A;
@@ -293,10 +293,10 @@
   --color-paper-warm: #FAF6EF;
   --color-brass: #A9812E;
   --color-gold: var(--color-brand);
-  --color-brand: #E3222B;
-  --color-copper: #990000;
+  --color-brand: #D4A574;
+  --color-copper: #8B6F47;
   --color-wine: #4A0000;
-  --color-lut: #E3222B;
+  --color-lut: #D4A574;
   --color-lalounge: #E6007E;
   --color-birthday: #F5B914;
   --color-taupe: #999999;
@@ -434,7 +434,7 @@
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(227, 34, 43, 0.1);
+  border: 1px solid rgba(212, 165, 116, 0.1);
 }
 
 .glass-dark {
@@ -457,9 +457,9 @@
   border-bottom: 1px solid var(--c-line);
 }
 
-/* Red gradient text (replaces gold gradient) */
+/* Gold gradient text (replaces gold gradient) */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #E3222B 0%, #FF3B3B 50%, #E3222B 100%);
+  background: linear-gradient(135deg, #D4A574 0%, #E8C887 50%, #D4A574 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -477,7 +477,7 @@
 }
 
 .shadow-gold {
-  box-shadow: 0 20px 50px -15px rgba(227, 34, 43, 0.35);
+  box-shadow: 0 20px 50px -15px rgba(212, 165, 116, 0.35);
 }
 
 /* Custom scrollbar */
@@ -530,8 +530,8 @@
 }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(227, 34, 43, 0.3); }
-  50% { box-shadow: 0 0 0 8px rgba(227, 34, 43, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 165, 116, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(212, 165, 116, 0); }
 }
 
 .animate-float {

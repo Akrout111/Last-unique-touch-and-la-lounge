@@ -42,16 +42,16 @@
     "subtitle": "Three Brands · One Journey",
     "lut": {
       "name": "Last Unique Touch",
-      "desc": "Furniture & event equipment rental"
+      "desc": "Luxury furniture rental platform"
     },
     "lalounge": {
       "name": "La Lounge",
-      "desc": "Exhibitions, rental & manufacturing",
+      "desc": "Event planning & production specialists",
       "comingSoon": "Coming soon"
     },
     "birthday": {
       "name": "Your Birthday",
-      "desc": "Birthday celebrations",
+      "desc": "Party & birthday celebration experts",
       "comingSoon": "Coming soon"
     },
     "comingSoon": "Coming Soon"
@@ -704,11 +704,9 @@
       "expPrefix": "EXP // 0",
       "items": [
         "Organic Balloon Arch",
-        "Cake Pedestal Styling",
         "Vivid Stage Lighting",
         "Clear Acrylic Pedestals",
         "Transparent Tiffany Seating",
-        "Luxury Dessert Buffet",
         "Custom Neon Signage",
         "Professional Photography"
       ]

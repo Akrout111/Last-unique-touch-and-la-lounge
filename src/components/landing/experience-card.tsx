@@ -21,12 +21,12 @@ interface ExperienceCardProps {
 
 /**
  * Brand hex map for the three experience cards.
- * - heritage  → LUT red (#E3222B)
+ * - heritage  → LUT red (#D4A574)
  * - modern    → La Lounge magenta (#E6007E)
  * - atelier   → Your Birthday gold (#F5B914)
  */
 const BRAND_HEX: Record<'heritage' | 'modern' | 'atelier', string> = {
-  heritage: '#E3222B',
+  heritage: '#D4A574',
   modern: '#E6007E',
   atelier: '#F5B914',
 }
@@ -189,14 +189,14 @@ export function ExperienceCard({
             <span>{index}</span>
           </div>
           {/* Brand Logo */}
-          <div className="w-8 h-8 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-md md:rounded-lg bg-black/60 border border-white/[0.08] group-hover:border-white/20 transition-all duration-700 flex items-center justify-center relative overflow-hidden shadow-inner shrink-0">
+          <div className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md md:rounded-lg bg-black/60 border border-white/[0.08] group-hover:border-white/20 transition-all duration-700 flex items-center justify-center relative overflow-hidden shadow-inner shrink-0">
             <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.02] to-transparent" />
             <div className="absolute inset-0.5 rounded-[10px] border border-dashed border-white/10 group-hover:border-white/30 animate-[spin_20s_linear_infinite]" />
             <Image
               src={logoUrl}
               alt={title}
-              width={40}
-              height={40}
+              width={56}
+              height={56}
               className="relative w-[60%] h-[60%] object-contain rounded-sm"
             />
           </div>

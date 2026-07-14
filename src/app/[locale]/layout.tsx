@@ -52,7 +52,7 @@ export const viewport: Viewport = {
   // `BrandThemeSetter` (it updates <meta name="theme-color"> on every
   // route change). The default declared here is LUT red so SSR / no-JS
   // falls back to the most common brand.
-  themeColor: '#E3222B',
+  themeColor: '#D4A574',
 }
 
 export function generateStaticParams() {

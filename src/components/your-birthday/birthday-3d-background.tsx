@@ -90,7 +90,7 @@ export default function Birthday3DBackground() {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(pixelRatio)
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.25
+    renderer.toneMappingExposure = 0.85
     renderer.outputColorSpace = THREE.SRGBColorSpace
     container.appendChild(renderer.domElement)
 
@@ -108,7 +108,7 @@ export default function Birthday3DBackground() {
     // STRICT BLOOM: High threshold prevents floor reflections from glowing
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.4, // Lower strength
+      0.3, // Lower strength
       0.6, // Tighter radius
       1.0, // Very high threshold (only pure neon materials bloom)
     )
@@ -971,7 +971,7 @@ export default function Birthday3DBackground() {
       cyanLight.intensity = 15 + beat * 10
 
       // Bloom pulse (Subtler)
-      bloomPass.strength = 0.3 + beat * 0.15
+      bloomPass.strength = 0.2 + beat * 0.05
 
       composer.render()
     }

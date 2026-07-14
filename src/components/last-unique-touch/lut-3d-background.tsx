@@ -83,7 +83,7 @@ export default function Lut3DBackground() {
       '#6f4e37',
       '#0d0d0d',
       '#ffffff',
-      '#8e1600',
+      '#8b6f47',
       '#4a148c',
       '#d4af37',
     ]
@@ -115,7 +115,7 @@ export default function Lut3DBackground() {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.2
+    renderer.toneMappingExposure = 0.9
     renderer.outputColorSpace = THREE.SRGBColorSpace
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer)
@@ -129,7 +129,7 @@ export default function Lut3DBackground() {
     composer.addPass(new RenderPass(scene, camera))
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.5,
+      0.25,
       0.5,
       0.95, // High threshold so only gold glows, furniture stays sharp
     )
@@ -504,7 +504,7 @@ export default function Lut3DBackground() {
         helix.position.z -= HELIX_WRAP_LENGTH
 
       helix.material.opacity = introEase
-      helix.material.emissiveIntensity = introEase * 1.5
+      helix.material.emissiveIntensity = introEase * 0.8
       helix.rotation.z += delta * 0.2
 
       // 2. Move Tunnel Items & Build Animation

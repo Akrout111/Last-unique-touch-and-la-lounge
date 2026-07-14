@@ -324,7 +324,6 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { icon: '🎂', title: t('services.item1.title'), desc: t('services.item1.desc'), color: 'var(--c-birthday-purple)', glow: 'rgba(139, 92, 246, 0.15)', examples: [t('services.item1.ex1'), t('services.item1.ex2'), t('services.item1.ex3'), t('services.item1.ex4')] },
                 { icon: '🎈', title: t('services.item2.title'), desc: t('services.item2.desc'), color: 'var(--c-birthday-pink)', glow: 'rgba(236, 72, 153, 0.15)', examples: [t('services.item2.ex1'), t('services.item2.ex2'), t('services.item2.ex3'), t('services.item2.ex4')] },
                 { icon: '🎵', title: t('services.item3.title'), desc: t('services.item3.desc'), color: 'var(--c-birthday-cyan)', glow: 'rgba(0, 243, 255, 0.15)', examples: [t('services.item3.ex1'), t('services.item3.ex2'), t('services.item3.ex3'), t('services.item3.ex4')] },
               ].map((service, i) => (
@@ -392,7 +391,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-cyan)] to-[var(--c-birthday-purple)] mx-auto rounded-full" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {[
                 { n: 1, label: galleryItems[0] ?? '', grad: 'from-[var(--c-birthday-purple)] to-[var(--c-birthday-pink)]' },
                 { n: 2, label: galleryItems[1] ?? '', grad: 'from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)]' },
@@ -400,8 +399,6 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                 { n: 4, label: galleryItems[3] ?? '', grad: 'from-[var(--c-birthday-cyan)] to-[var(--c-birthday-purple)]' },
                 { n: 5, label: galleryItems[4] ?? '', grad: 'from-[var(--c-birthday-purple)] to-[var(--c-birthday-cyan)]' },
                 { n: 6, label: galleryItems[5] ?? '', grad: 'from-[var(--c-birthday-cyan)] to-[var(--c-birthday-pink)]' },
-                { n: 7, label: galleryItems[6] ?? '', grad: 'from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)]' },
-                { n: 8, label: galleryItems[7] ?? '', grad: 'from-[var(--c-birthday-orange)] to-[var(--c-birthday-purple)]' }
               ].map((item) => (
                 <div
                   key={item.n}
@@ -419,55 +416,6 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                   </div>
 
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* === TESTIMONIALS SECTION === */}
-        <section className="relative z-10 py-24 bg-transparent">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6">
-
-            <div className="text-center mb-16 space-y-4">
-              <h2
-                className="text-3xl md:text-5xl font-black uppercase tracking-wider"
-                style={{
-                  fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-headline)',
-                  background: 'linear-gradient(135deg, var(--c-birthday-pink), var(--c-birthday-orange))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {t('testimonials.title')}
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)] mx-auto rounded-full" />
-            </div>
-
-            <div className="space-y-8">
-              {[
-                { num: 1, name: t('testimonials.item1.name'), role: t('testimonials.item1.role'), text: t('testimonials.item1.text'), grad: 'from-[var(--c-birthday-purple)] to-[var(--c-birthday-pink)]' },
-                { num: 2, name: t('testimonials.item2.name'), role: t('testimonials.item2.role'), text: t('testimonials.item2.text'), grad: 'from-[var(--c-birthday-pink)] to-[var(--c-birthday-orange)]' },
-                { num: 3, name: t('testimonials.item3.name'), role: t('testimonials.item3.role'), text: t('testimonials.item3.text'), grad: 'from-[var(--c-birthday-cyan)] to-[var(--c-birthday-purple)]' },
-              ].map((item) => (
-                <div
-                  key={item.num}
-                  className="p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 backdrop-blur-md shadow-lg"
-                >
-                  <p className="text-white/80 text-base md:text-lg mb-6 leading-relaxed italic">
-                    &ldquo;{item.text}&rdquo;
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-full bg-gradient-to-br ${item.grad} flex items-center justify-center text-white text-lg font-bold shadow-md`}
-                    >
-                      {item.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-white text-base">{item.name}</p>
-                      <p className="text-white/40 text-xs mt-0.5">{item.role}</p>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
