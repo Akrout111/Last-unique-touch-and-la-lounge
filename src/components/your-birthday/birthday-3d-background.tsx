@@ -54,7 +54,7 @@ export default function Birthday3DBackground() {
     if (!container) return
 
     const isMobile = window.innerWidth < 768
-    const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2)
+    const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 2.0 : 2.0)
 
     // Aesthetic Color Palette
     const bgColor = new THREE.Color('#060B1A')

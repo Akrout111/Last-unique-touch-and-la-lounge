@@ -83,7 +83,7 @@ export default function Lut3DBackground() {
     ]
 
     const isMobile = window.innerWidth < 768
-    const itemCount = isMobile ? 14 : 30
+    const itemCount = isMobile ? 20 : 30
 
     // ============================================
     // SCENE SETUP
@@ -107,7 +107,7 @@ export default function Lut3DBackground() {
       powerPreference: 'high-performance',
     })
     renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.2
     renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -414,7 +414,7 @@ export default function Lut3DBackground() {
     // ============================================
     // GLOWING DUST PARTICLES
     // ============================================
-    const pCount = isMobile ? 200 : 600
+    const pCount = isMobile ? 350 : 600
     const pGeo = new THREE.BufferGeometry()
     const pPos = new Float32Array(pCount * 3)
     for (let i = 0; i < pCount; i++) {

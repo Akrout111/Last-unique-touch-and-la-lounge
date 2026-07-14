@@ -105,7 +105,7 @@ export default function Hero3DBackground() {
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
       renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2.0 : 2.0))
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
       renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -1587,8 +1587,8 @@ export default function Hero3DBackground() {
       // ═════════════════════════════════════════════════════════════════
       // SCENE ASSEMBLY
       // ═════════════════════════════════════════════════════════════════
-      scene.add(createLutFurniture(sectionZs.lut, isMobile ? 0.6 : 1.0))
-      scene.add(createBirthdayParty(sectionZs.birthday, isMobile ? 0.6 : 1.0))
+      scene.add(createLutFurniture(sectionZs.lut, isMobile ? 0.8 : 1.0))
+      scene.add(createBirthdayParty(sectionZs.birthday, isMobile ? 0.8 : 1.0))
 
       const centerBlueprints = createCenterBlueprints()
       scene.add(centerBlueprints)
@@ -1680,7 +1680,7 @@ export default function Hero3DBackground() {
       goldSpine.rotation.x = Math.PI / 2
       scene.add(goldSpine)
 
-      const moteCount = isMobile ? 100 : 200
+      const moteCount = isMobile ? 150 : 200
       const motesPos = new Float32Array(moteCount * 3)
       const motesBase = new Float32Array(moteCount * 3)
       const motesSpeed = new Float32Array(moteCount)
