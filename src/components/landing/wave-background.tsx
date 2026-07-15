@@ -15,15 +15,19 @@ function WaveLines() {
   const lines = useMemo(() => {
     const lineCount = 24
     const pointsPerLine = 80
-    const spacing = 0.4
-    const width = 24
 
-    const items: { positions: Float32Array; color: THREE.Color; offset: number; speed: number; amplitude: number }[] = []
+    const items: {
+      positions: Float32Array
+      color: THREE.Color
+      offset: number
+      speed: number
+      amplitude: number
+    }[] = []
 
     for (let i = 0; i < lineCount; i++) {
       const positions = new Float32Array(pointsPerLine * 3)
-      const t = i / lineCount
-      const z = (t - 0.5) * lineCount * spacing
+      // Per-line z-axis position is recomputed in the useFrame callback
+      // via `(idx - lines.length / 2) * 0.4` — no need to store it here.
 
       // Alternate red and white
       const isRed = i % 2 === 0
@@ -59,7 +63,8 @@ function WaveLines() {
       for (let j = 0; j < pointsPerLine; j++) {
         const x = (j / (pointsPerLine - 1) - 0.5) * 24
         const wave1 = Math.sin(x * 0.3 + time * line.speed + line.offset) * line.amplitude
-        const wave2 = Math.sin(x * 0.15 + time * line.speed * 0.7 + line.offset * 1.5) * line.amplitude * 0.5
+        const wave2 =
+          Math.sin(x * 0.15 + time * line.speed * 0.7 + line.offset * 1.5) * line.amplitude * 0.5
         const wave3 = Math.cos(x * 0.2 + time * line.speed * 0.5) * line.amplitude * 0.3
 
         positions[j * 3] = x
@@ -84,12 +89,7 @@ function WaveLines() {
               args={[line.positions, 3]}
             />
           </bufferGeometry>
-          <lineBasicMaterial
-            color={line.color}
-            transparent
-            opacity={0.6}
-            linewidth={1}
-          />
+          <lineBasicMaterial color={line.color} transparent opacity={0.6} linewidth={1} />
         </line>
       ))}
     </group>
@@ -131,13 +131,7 @@ function Particles() {
           args={[positions, 3]}
         />
       </bufferGeometry>
-      <pointsMaterial
-        color="#E62129"
-        size={0.08}
-        transparent
-        opacity={0.5}
-        sizeAttenuation
-      />
+      <pointsMaterial color="#E62129" size={0.08} transparent opacity={0.5} sizeAttenuation />
     </points>
   )
 }

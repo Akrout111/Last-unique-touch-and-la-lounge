@@ -52,46 +52,46 @@ export function HeroCanvas({ modelsVisible, cardRefs }: HeroCanvasProps) {
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
-      <directionalLight position={[-5, 3, 5]} intensity={0.4} color="#D4A574" />
+      <directionalLight position={[-5, 3, 5]} intensity={0.4} color="#8B6B3D" />
       <directionalLight position={[0, 2, -5]} intensity={0.6} color="#E62129" />
       <ambientLight intensity={0.3} />
 
       <Environment preset="studio" background={false} />
 
       <Suspense fallback={null}>
-          {/* LUT — chair and table */}
-          <Model3D
-            url="/models/The_chair_and_the_table_compressed.glb"
-            cardRef={cardRefs[0]}
-            rotation={[0, -Math.PI / 6, 0]}
-            scale={1.6}
-            phaseOffset={0}
-            visible={modelsVisible}
-            corner="top-right"
-            isRTL={isRTL}
-          />
-          {/* La Lounge — sofa */}
-          <Model3D
-            url="/models/The_unfinished_sofa_compressed.glb"
-            cardRef={cardRefs[1]}
-            rotation={[0, Math.PI / 6, 0]}
-            scale={1.4}
-            phaseOffset={1}
-            visible={modelsVisible}
-            corner="top-right"
-            isRTL={isRTL}
-          />
-          {/* Your Birthday — dance floor */}
-          <Model3D
-            url="/models/the_dance_floor_and_the_light_holder_compressed.glb"
-            cardRef={cardRefs[2]}
-            rotation={[0, Math.PI / 4, 0]}
-            scale={1.3}
-            phaseOffset={2}
-            visible={modelsVisible}
-            corner="top-right"
-            isRTL={isRTL}
-          />
+        {/* LUT — chair and table */}
+        <Model3D
+          url="/models/The_chair_and_the_table_compressed.glb"
+          cardRef={cardRefs[0]}
+          rotation={[0, -Math.PI / 6, 0]}
+          scale={1.6}
+          phaseOffset={0}
+          visible={modelsVisible}
+          corner="top-right"
+          isRTL={isRTL}
+        />
+        {/* La Lounge — sofa */}
+        <Model3D
+          url="/models/The_unfinished_sofa_compressed.glb"
+          cardRef={cardRefs[1]}
+          rotation={[0, Math.PI / 6, 0]}
+          scale={1.4}
+          phaseOffset={1}
+          visible={modelsVisible}
+          corner="top-right"
+          isRTL={isRTL}
+        />
+        {/* Your Birthday — dance floor */}
+        <Model3D
+          url="/models/the_dance_floor_and_the_light_holder_compressed.glb"
+          cardRef={cardRefs[2]}
+          rotation={[0, Math.PI / 4, 0]}
+          scale={1.3}
+          phaseOffset={2}
+          visible={modelsVisible}
+          corner="top-right"
+          isRTL={isRTL}
+        />
       </Suspense>
 
       <AdaptiveDpr pixelated={false} />

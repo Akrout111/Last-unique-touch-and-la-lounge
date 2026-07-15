@@ -46,7 +46,7 @@ export function BirthdayLoadingScreen({ onComplete, locale }: Props) {
             className="text-4xl md:text-6xl font-black tracking-tighter"
             style={{
               fontFamily: 'var(--font-birthday-headline), Orbitron, sans-serif',
-              background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #00F3FF)',
+              background: 'linear-gradient(135deg, #F5B914, #FFD147, #C9950E)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -61,7 +61,7 @@ export function BirthdayLoadingScreen({ onComplete, locale }: Props) {
               className="h-full transition-all duration-100"
               style={{
                 width: `${progress}%`,
-                background: 'linear-gradient(90deg, #8B5CF6, #EC4899, #00F3FF)',
+                background: 'linear-gradient(90deg, #F5B914, #FFD147, #C9950E)',
               }}
             />
           </div>

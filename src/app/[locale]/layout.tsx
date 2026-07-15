@@ -52,7 +52,7 @@ export const viewport: Viewport = {
   // `BrandThemeSetter` (it updates <meta name="theme-color"> on every
   // route change). The default declared here is LUT red so SSR / no-JS
   // falls back to the most common brand.
-  themeColor: '#D4A574',
+  themeColor: '#8B6B3D',
 }
 
 export function generateStaticParams() {
@@ -127,7 +127,12 @@ export default async function LocaleLayout({
         </a>
 
         <MotionConfig reducedMotion="user">
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
             <NextIntlClientProvider>
               <CartProvider>
                 <ToastProvider>

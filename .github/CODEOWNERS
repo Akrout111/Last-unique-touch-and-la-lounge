@@ -1,0 +1,11 @@
+# CODEOWNERS — https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Default owners for everything in the repo.
+# Every PR requires approval from at least one of these owners.
+* @Akrout111
+
+# Admin dashboard components — high-blast-radius, owner-only changes
+/src/components/admin/ @Akrout111
+
+# Prisma schema, migrations, and seed data — data-model changes need owner review
+/prisma/ @Akrout111

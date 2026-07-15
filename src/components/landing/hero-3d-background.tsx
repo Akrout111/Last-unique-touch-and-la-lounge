@@ -81,8 +81,10 @@ export default function Hero3DBackground() {
     if (!container) return
 
     // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability. Skips
-    // entirely on prefers-reduced-motion / no WebGL / < 4 cores / < 4 GB so
-    // low-end devices get the static gradient fallback instead.
+    // entirely on prefers-reduced-motion / no WebGL / < 2 cores / < 2 GB so
+    // low-end devices get the static gradient fallback instead. (Threshold
+    // values live in src/lib/device-capabilities.ts as MIN_CORES_FOR_3D /
+    // MIN_MEMORY_GB_FOR_3D — see Task 2b fix.)
     if (!shouldEnable3D()) return
 
     // Cleanup-tracking variables (assigned inside try block)
@@ -293,12 +295,14 @@ export default function Hero3DBackground() {
         back.position.set(0, 1.1, -0.5)
         back.castShadow = true
         group.add(back)
-        ;([
-          [-0.5, -0.5],
-          [0.5, -0.5],
-          [-0.5, 0.5],
-          [0.5, 0.5],
-        ] as Vec2[]).forEach(([x, z]) => {
+        ;(
+          [
+            [-0.5, -0.5],
+            [0.5, -0.5],
+            [-0.5, 0.5],
+            [0.5, 0.5],
+          ] as Vec2[]
+        ).forEach(([x, z]) => {
           const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 1, 16), brassMat)
           leg.position.set(x, 0, z)
           leg.castShadow = true
@@ -510,7 +514,11 @@ export default function Hero3DBackground() {
         const group = new THREE.Group()
         const rug = new THREE.Mesh(
           new THREE.PlaneGeometry(18, 16),
-          new THREE.MeshStandardMaterial({ color: 0x2d1818, roughness: 0.95, side: THREE.DoubleSide }),
+          new THREE.MeshStandardMaterial({
+            color: 0x2d1818,
+            roughness: 0.95,
+            side: THREE.DoubleSide,
+          }),
         )
         rug.position.set(0, 0.01, 0)
         rug.rotation.x = -Math.PI / 2
@@ -787,16 +795,10 @@ export default function Hero3DBackground() {
         mixer.position.set(0, 1.26, 0)
         group.add(mixer)
         for (let i = -1; i <= 1; i++) {
-          const knob1 = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.05, 0.04, 16),
-            brassMat,
-          )
+          const knob1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.04, 16), brassMat)
           knob1.position.set(i * 0.2, 1.32, -0.1)
           group.add(knob1)
-          const knob2 = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.05, 0.04, 16),
-            brassMat,
-          )
+          const knob2 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.04, 16), brassMat)
           knob2.position.set(i * 0.2, 1.32, 0.1)
           group.add(knob2)
         }
@@ -1529,12 +1531,14 @@ export default function Hero3DBackground() {
         buffetTable.position.set(-4, 1, 4)
         assignReveal(buffetTable, 3.0, -3)
         group.add(buffetTable)
-        ;([
-          [-1.4, -0.4],
-          [1.4, -0.4],
-          [-1.4, 0.4],
-          [1.4, 0.4],
-        ] as Vec2[]).forEach(([x, z]) => {
+        ;(
+          [
+            [-1.4, -0.4],
+            [1.4, -0.4],
+            [-1.4, 0.4],
+            [1.4, 0.4],
+          ] as Vec2[]
+        ).forEach(([x, z]) => {
           const legGeo = new THREE.BoxGeometry(0.1, 1, 0.1)
           const leg = new THREE.LineSegments(new THREE.EdgesGeometry(legGeo), bpMatSub)
           leg.position.set(-4 + x, 0.5, 4 + z)
@@ -1543,10 +1547,7 @@ export default function Hero3DBackground() {
         })
         for (let i = 0; i < 3; i++) {
           const dishBaseGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.05, 8)
-          const dishBase = new THREE.LineSegments(
-            new THREE.EdgesGeometry(dishBaseGeo),
-            bpMatMain,
-          )
+          const dishBase = new THREE.LineSegments(new THREE.EdgesGeometry(dishBaseGeo), bpMatMain)
           dishBase.position.set(-4.5 + i * 0.5, 1.08, 4)
           assignReveal(dishBase, 3.3, -3)
           group.add(dishBase)
@@ -1562,12 +1563,14 @@ export default function Hero3DBackground() {
         giftTable.position.set(4, 1, 4)
         assignReveal(giftTable, 3.5, -3)
         group.add(giftTable)
-        ;([
-          [-0.7, -0.4],
-          [0.7, -0.4],
-          [-0.7, 0.4],
-          [0.7, 0.4],
-        ] as Vec2[]).forEach(([x, z]) => {
+        ;(
+          [
+            [-0.7, -0.4],
+            [0.7, -0.4],
+            [-0.7, 0.4],
+            [0.7, 0.4],
+          ] as Vec2[]
+        ).forEach(([x, z]) => {
           const legGeo = new THREE.BoxGeometry(0.1, 1, 0.1)
           const leg = new THREE.LineSegments(new THREE.EdgesGeometry(legGeo), bpMatSub)
           leg.position.set(4 + x, 0.5, 4 + z)
@@ -1641,7 +1644,7 @@ export default function Hero3DBackground() {
         [12, 8],
       ]
       pillars.forEach(([x, z], i) => {
-        const h = 6 + (((Math.sin(i * 12.9898) * 43758.5453) % 1) + 1) % 1 * 4
+        const h = 6 + ((((Math.sin(i * 12.9898) * 43758.5453) % 1) + 1) % 1) * 4
         const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.4, h, 0.4))
         const line = new THREE.LineSegments(geo, i < 4 ? matBold : matSub)
         line.position.set(x, h / 2, z)
@@ -1757,9 +1760,10 @@ export default function Hero3DBackground() {
       window.addEventListener('mousemove', onMouseMove)
 
       onResize = () => {
+        if (!renderer) return // guard for TS — renderer is assigned in try-block above
         camera.aspect = window.innerWidth / window.innerHeight
         camera.updateProjectionMatrix()
-        renderer!.setSize(window.innerWidth, window.innerHeight)
+        renderer.setSize(window.innerWidth, window.innerHeight)
       }
       window.addEventListener('resize', onResize)
 
@@ -1773,6 +1777,11 @@ export default function Hero3DBackground() {
 
       const animate = () => {
         frameId = requestAnimationFrame(animate)
+        // Guard for TS: scene and renderer are assigned in the outer try-block;
+        // they are non-null at runtime by the time animate() runs, but TS can't
+        // see that across the closure boundary. Bail out (and let the next rAF
+        // tick retry) if they somehow aren't set yet.
+        if (!scene || !renderer) return
         const t = clock.getElapsedTime()
         if (sceneStartTime === 0) sceneStartTime = t
         const localT = t - sceneStartTime
@@ -1821,7 +1830,7 @@ export default function Hero3DBackground() {
         centerBlueprints.rotation.y = Math.sin(t * 0.1) * 0.3 + t * 0.05
 
         // Scene Updates & Reveal Animations
-        scene!.traverse((obj: THREE.Object3D) => {
+        scene.traverse((obj: THREE.Object3D) => {
           if (obj.userData && obj.userData.reveal) {
             const r = obj.userData.reveal as RevealData
             const elapsed = localT - r.delay
@@ -1869,8 +1878,16 @@ export default function Hero3DBackground() {
               const confPoints = obj as THREE.Points
               const confGeo = confPoints.geometry
               const pos = confGeo.attributes.position.array as Float32Array
-              const vel = (confGeo.attributes as any).velocity.array as Float32Array
-              const base = (confGeo.attributes as any).base.array as Float32Array
+              // `velocity` and `base` are custom BufferAttributes we attach to
+              // the confetti geometry (not part of THREE's stock attributes).
+              // Cast via a typed shape so we avoid `any` while still indexing
+              // the dynamic attribute names.
+              const customAttrs = confGeo.attributes as unknown as {
+                velocity: THREE.BufferAttribute
+                base: THREE.BufferAttribute
+              }
+              const vel = customAttrs.velocity.array as Float32Array
+              const base = customAttrs.base.array as Float32Array
 
               for (let i = 0; i < pos.length; i += 3) {
                 if (burstTime < 1.5) {
@@ -1921,7 +1938,7 @@ export default function Hero3DBackground() {
           }
         })
 
-        renderer!.render(scene!, camera)
+        renderer.render(scene, camera)
       }
 
       animate()

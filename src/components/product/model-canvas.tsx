@@ -22,7 +22,10 @@ function FurnitureModel({ productSlug }: { productSlug: string }) {
   const isChair = productSlug.includes('chair')
   const isTable = productSlug.includes('table')
   const isChandelier = productSlug.includes('chandelier')
-  const isLamp = productSlug.includes('lamp') || productSlug.includes('light') || productSlug.includes('uplighter')
+  const isLamp =
+    productSlug.includes('lamp') ||
+    productSlug.includes('light') ||
+    productSlug.includes('uplighter')
   const isLantern = productSlug.includes('lantern')
 
   if (isChair) {
@@ -31,12 +34,12 @@ function FurnitureModel({ productSlug }: { productSlug: string }) {
         {/* Seat */}
         <mesh position={[0, 0.5, 0]} castShadow>
           <boxGeometry args={[1, 0.1, 1]} />
-          <meshStandardMaterial color="#D4A574" roughness={0.4} metalness={0.2} />
+          <meshStandardMaterial color="#8B6B3D" roughness={0.4} metalness={0.2} />
         </mesh>
         {/* Backrest */}
         <mesh position={[0, 1, -0.45]} castShadow>
           <boxGeometry args={[1, 1, 0.1]} />
-          <meshStandardMaterial color="#D4A574" roughness={0.4} metalness={0.2} />
+          <meshStandardMaterial color="#8B6B3D" roughness={0.4} metalness={0.2} />
         </mesh>
         {/* Legs */}
         {[
@@ -82,17 +85,17 @@ function FurnitureModel({ productSlug }: { productSlug: string }) {
         {/* Top ring */}
         <mesh castShadow>
           <torusGeometry args={[0.3, 0.03, 8, 32]} />
-          <meshStandardMaterial color="#D4A574" metalness={0.8} roughness={0.2} />
+          <meshStandardMaterial color="#8B6B3D" metalness={0.8} roughness={0.2} />
         </mesh>
         {/* Middle ring */}
         <mesh position={[0, -0.3, 0]} castShadow>
           <torusGeometry args={[0.5, 0.03, 8, 32]} />
-          <meshStandardMaterial color="#D4A574" metalness={0.8} roughness={0.2} />
+          <meshStandardMaterial color="#8B6B3D" metalness={0.8} roughness={0.2} />
         </mesh>
         {/* Bottom ring */}
         <mesh position={[0, -0.6, 0]} castShadow>
           <torusGeometry args={[0.7, 0.03, 8, 32]} />
-          <meshStandardMaterial color="#D4A574" metalness={0.8} roughness={0.2} />
+          <meshStandardMaterial color="#8B6B3D" metalness={0.8} roughness={0.2} />
         </mesh>
         {/* Crystal drops */}
         {Array.from({ length: 8 }).map((_, i) => {
@@ -151,11 +154,7 @@ function FurnitureModel({ productSlug }: { productSlug: string }) {
         {/* Bulb glow */}
         <mesh position={[0, 0.45, 0]}>
           <sphereGeometry args={[0.1, 8, 8]} />
-          <meshStandardMaterial
-            color="#FFD700"
-            emissive="#FFD700"
-            emissiveIntensity={0.5}
-          />
+          <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.5} />
         </mesh>
       </group>
     )
@@ -166,7 +165,7 @@ function FurnitureModel({ productSlug }: { productSlug: string }) {
     <group ref={groupRef} scale={0.8}>
       <mesh castShadow>
         <icosahedronGeometry args={[0.6, 1]} />
-        <meshStandardMaterial color="#D4A574" metalness={0.6} roughness={0.3} />
+        <meshStandardMaterial color="#8B6B3D" metalness={0.6} roughness={0.3} />
       </mesh>
     </group>
   )
@@ -218,7 +217,7 @@ export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
           setInView(entry.isIntersecting)
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0.05 },
     )
     observer.observe(node)
     return () => observer.disconnect()
@@ -254,7 +253,7 @@ export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
-        <pointLight position={[-3, 2, -3]} intensity={0.3} color="#D4A574" />
+        <pointLight position={[-3, 2, -3]} intensity={0.3} color="#8B6B3D" />
 
         <Suspense fallback={null}>
           <Float speed={2} rotationIntensity={0.3} floatIntensity={0.5}>
@@ -264,13 +263,7 @@ export function ModelCanvas({ modelUrl, productSlug }: ModelCanvasProps) {
               <FurnitureModel productSlug={productSlug} />
             )}
           </Float>
-          <ContactShadows
-            position={[0, -1.2, 0]}
-            opacity={0.4}
-            scale={5}
-            blur={2}
-            far={3}
-          />
+          <ContactShadows position={[0, -1.2, 0]} opacity={0.4} scale={5} blur={2} far={3} />
         </Suspense>
 
         <OrbitControls

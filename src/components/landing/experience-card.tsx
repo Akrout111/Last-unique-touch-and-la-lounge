@@ -21,12 +21,12 @@ interface ExperienceCardProps {
 
 /**
  * Brand hex map for the three experience cards.
- * - heritage  → LUT red (#D4A574)
+ * - heritage  → LUT gold (#8B6B3D, WCAG AA on white — Task 2b)
  * - modern    → La Lounge magenta (#E6007E)
  * - atelier   → Your Birthday gold (#F5B914)
  */
 const BRAND_HEX: Record<'heritage' | 'modern' | 'atelier', string> = {
-  heritage: '#D4A574',
+  heritage: '#8B6B3D',
   modern: '#E6007E',
   atelier: '#F5B914',
 }
@@ -219,13 +219,19 @@ export function ExperienceCard({
               }}
             />
           </div>
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-display text-white tracking-wide font-light">{title}</h2>
-          <div className={cn(
-            'flex items-center gap-2 text-[9px] md:text-[11px] lg:text-[12px] font-bold tracking-[0.25em] uppercase mt-0.5 transition-all duration-700',
-            isComingSoon ? 'text-white/30' : 'text-white/60 group-hover:text-white',
-          )}>
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-display text-white tracking-wide font-light">
+            {title}
+          </h2>
+          <div
+            className={cn(
+              'flex items-center gap-2 text-[9px] md:text-[11px] lg:text-[12px] font-bold tracking-[0.25em] uppercase mt-0.5 transition-all duration-700',
+              isComingSoon ? 'text-white/30' : 'text-white/60 group-hover:text-white',
+            )}
+          >
             <span>{actionText}</span>
-            <span>{isComingSoon ? <Plus className="w-4 h-4" /> : <ArrowIcon className="w-4 h-4" />}</span>
+            <span>
+              {isComingSoon ? <Plus className="w-4 h-4" /> : <ArrowIcon className="w-4 h-4" />}
+            </span>
           </div>
         </div>
       </div>

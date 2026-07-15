@@ -1,0 +1,36 @@
+# Build artifacts
+.next/
+.next
+out/
+dist/
+build/
+
+# Dependencies
+node_modules/
+bun.lock
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Prisma local DB + generated client
+prisma/db/
+prisma/generated/
+
+# Large generated / vendored files
+*.md
+public/
+download/
+upload/
+tool-results/
+
+# Coverage + cache
+coverage/
+.cache/
+.turbo/
+*.log
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/

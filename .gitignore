@@ -56,3 +56,9 @@ prisma/db/*.db
 prisma/db/*.db-journal
 .env
 agent-ctx/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

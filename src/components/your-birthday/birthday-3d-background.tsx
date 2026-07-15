@@ -55,18 +55,25 @@ export default function Birthday3DBackground() {
     if (!container) return
 
     // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability.
-    // Skips entirely on prefers-reduced-motion / no WebGL / < 4 cores /
-    // < 4 GB so low-end devices get the static gradient fallback instead.
+    // Skips entirely on prefers-reduced-motion / no WebGL / < 2 cores /
+    // < 2 GB so low-end devices get the static gradient fallback instead.
+    // (Threshold values live in src/lib/device-capabilities.ts as
+    // MIN_CORES_FOR_3D / MIN_MEMORY_GB_FOR_3D — see Task 2b fix.)
     if (!shouldEnable3D()) return
 
     const isMobile = window.innerWidth < 768
     const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0)
 
     // Aesthetic Color Palette
+    // Task 2b: Replaced the AI-slop neon purple-pink-cyan trio
+    // (#9D4EDD / #FF006E / #00F3FF) with gold-family tones to match the
+    // Your Birthday brand color (#F5B914). Neon effect preserved via
+    // brightness/saturation; the three shades (gold / light gold / amber-gold)
+    // keep visual variety while staying in the yellow family.
     const bgColor = new THREE.Color('#060B1A')
-    const neonPurple = new THREE.Color('#9D4EDD')
-    const neonPink = new THREE.Color('#FF006E')
-    const neonCyan = new THREE.Color('#00F3FF')
+    const neonGold = new THREE.Color('#F5B914') // was #9D4EDD neon-purple
+    const neonGoldLight = new THREE.Color('#FFD147') // was #FF006E neon-pink
+    const neonGoldAmber = new THREE.Color('#FFC107') // was #00F3FF neon-cyan
     const neonOrange = new THREE.Color('#FB5607')
 
     // Scene Setup
@@ -132,19 +139,19 @@ export default function Birthday3DBackground() {
     fillLight.position.set(0, 10, 30)
     scene.add(fillLight)
 
-    const rimLight = new THREE.DirectionalLight(neonPurple.getHex(), 1.5)
+    const rimLight = new THREE.DirectionalLight(neonGold.getHex(), 1.5)
     rimLight.position.set(-15, 20, -30)
     scene.add(rimLight)
 
-    const purpleLight = new THREE.PointLight(neonPurple.getHex(), 80, 150)
+    const purpleLight = new THREE.PointLight(neonGold.getHex(), 80, 150)
     purpleLight.position.set(-20, 15, 5)
     scene.add(purpleLight)
 
-    const pinkLight = new THREE.PointLight(neonPink.getHex(), 60, 150)
+    const pinkLight = new THREE.PointLight(neonGoldLight.getHex(), 60, 150)
     pinkLight.position.set(20, 10, 5)
     scene.add(pinkLight)
 
-    const cyanLight = new THREE.PointLight(neonCyan.getHex(), 30, 120)
+    const cyanLight = new THREE.PointLight(neonGoldAmber.getHex(), 30, 120)
     cyanLight.position.set(0, 0, 20)
     scene.add(cyanLight)
 
@@ -166,7 +173,7 @@ export default function Birthday3DBackground() {
     floor.position.y = -12
     scene.add(floor)
 
-    const gridHelper = new THREE.GridHelper(200, 50, neonPurple, neonPink)
+    const gridHelper = new THREE.GridHelper(200, 50, neonGold, neonGoldLight)
     gridHelper.position.y = -11.98
     const gridMat = gridHelper.material as THREE.Material
     gridMat.transparent = true
@@ -178,11 +185,7 @@ export default function Birthday3DBackground() {
     // ============================================
     function easeOutElastic(x: number): number {
       const c4 = (2 * Math.PI) / 3
-      return x === 0
-        ? 0
-        : x === 1
-          ? 1
-          : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1
+      return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1
     }
     function easeOutCubic(x: number): number {
       return 1 - Math.pow(1 - x, 3)
@@ -191,12 +194,7 @@ export default function Birthday3DBackground() {
     type BuildTarget = THREE.Object3D | THREE.Material
     const buildTargets: BuildTarget[] = []
 
-    function setupBuild(
-      obj: THREE.Object3D,
-      delay: number,
-      duration: number,
-      fromY = 5,
-    ) {
+    function setupBuild(obj: THREE.Object3D, delay: number, duration: number, fromY = 5) {
       obj.userData.basePos = obj.position.clone()
       obj.userData.baseScale = obj.scale.clone()
       obj.userData.baseRot = obj.rotation.clone()
@@ -316,21 +314,15 @@ export default function Birthday3DBackground() {
     const boothBase = new THREE.Mesh(new THREE.BoxGeometry(10, 3, 3), boothMat)
     djBoothGroup.add(boothBase)
 
-    const boothLedMat = new THREE.MeshBasicMaterial({ color: neonCyan })
-    const boothLed1 = new THREE.Mesh(
-      new THREE.BoxGeometry(10.1, 0.2, 0.1),
-      boothLedMat,
-    )
+    const boothLedMat = new THREE.MeshBasicMaterial({ color: neonGoldAmber })
+    const boothLed1 = new THREE.Mesh(new THREE.BoxGeometry(10.1, 0.2, 0.1), boothLedMat)
     boothLed1.position.set(0, 1, 1.51)
     djBoothGroup.add(boothLed1)
-    const boothLed2 = new THREE.Mesh(
-      new THREE.BoxGeometry(10.1, 0.2, 0.1),
-      boothLedMat,
-    )
+    const boothLed2 = new THREE.Mesh(new THREE.BoxGeometry(10.1, 0.2, 0.1), boothLedMat)
     boothLed2.position.set(0, -1, 1.51)
     djBoothGroup.add(boothLed2)
 
-    const screenGlowMat = new THREE.MeshBasicMaterial({ color: neonPink })
+    const screenGlowMat = new THREE.MeshBasicMaterial({ color: neonGoldLight })
     const screen1 = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), screenGlowMat)
     screen1.position.set(-3, 0.5, 1.52)
     djBoothGroup.add(screen1)
@@ -387,7 +379,7 @@ export default function Birthday3DBackground() {
       group: THREE.Group
     }
     const floorLamps: Lamp[] = []
-    const lampColors = [neonPurple, neonPink, neonCyan, neonOrange]
+    const lampColors = [neonGold, neonGoldLight, neonGoldAmber, neonOrange]
     const lampPositions = [
       { x: -18, z: 10 },
       { x: 18, z: 10 },
@@ -403,13 +395,8 @@ export default function Birthday3DBackground() {
         metalness: 0.8,
         roughness: 0.4,
       })
-      group.add(
-        new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.0, 0.5, 16), baseMat),
-      )
-      const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.2, 0.3, 14, 16),
-        baseMat,
-      )
+      group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.0, 0.5, 16), baseMat))
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 14, 16), baseMat)
       pole.position.y = 7.25
       group.add(pole)
 
@@ -419,10 +406,7 @@ export default function Birthday3DBackground() {
         roughness: 0.2,
         clearcoat: 1.0,
       })
-      const head = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.6, 0.9, 1.5, 16),
-        headMat,
-      )
+      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.9, 1.5, 16), headMat)
       head.rotation.x = Math.PI / 2
       head.position.y = 15
       const lens = new THREE.Mesh(
@@ -469,7 +453,7 @@ export default function Birthday3DBackground() {
       })
       speakerGroup.add(new THREE.Mesh(new THREE.BoxGeometry(5, 20, 4), cabMat))
 
-      const ledColor = i === 0 ? neonCyan : neonPink
+      const ledColor = i === 0 ? neonGoldAmber : neonGoldLight
       const ledMat = new THREE.MeshBasicMaterial({ color: ledColor })
       const vLed1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 19, 0.1), ledMat)
       vLed1.position.set(-2.3, 0, 2.05)
@@ -499,7 +483,7 @@ export default function Birthday3DBackground() {
         subwoofers.push(cone)
         const ring = new THREE.Mesh(
           new THREE.TorusGeometry(1.8, 0.15, 8, 32),
-          new THREE.MeshBasicMaterial({ color: neonPurple }),
+          new THREE.MeshBasicMaterial({ color: neonGold }),
         )
         ring.position.set(0, y, 2.15)
         ring.rotation.x = Math.PI / 2
@@ -565,19 +549,19 @@ export default function Birthday3DBackground() {
       return group
     }
 
-    const gift1 = createGiftBox(3, 0x2a1b3e, neonPink)
+    const gift1 = createGiftBox(3, 0x2a1b3e, neonGoldLight)
     gift1.position.set(-22, -10.5, -15)
     gift1.rotation.y = Math.PI / 4
     scene.add(gift1)
     setupBuild(gift1, 2.0, 1.0, 11)
 
-    const gift2 = createGiftBox(2.5, 0x3d1b2a, neonCyan)
+    const gift2 = createGiftBox(2.5, 0x3d1b2a, neonGoldAmber)
     gift2.position.set(22, -10.75, -15)
     gift2.rotation.y = -Math.PI / 4
     scene.add(gift2)
     setupBuild(gift2, 2.2, 1.0, 11)
 
-    const gift3 = createGiftBox(2, 0x2a1b3e, neonPurple)
+    const gift3 = createGiftBox(2, 0x2a1b3e, neonGold)
     gift3.position.set(-10, -11, -20)
     scene.add(gift3)
     setupBuild(gift3, 2.4, 1.0, 11)
@@ -610,7 +594,7 @@ export default function Birthday3DBackground() {
 
     // --- VINYL RECORDS ---
     const vinyls: THREE.Group[] = []
-    const vinylColors = [neonPurple, neonPink, neonCyan, neonOrange]
+    const vinylColors = [neonGold, neonGoldLight, neonGoldAmber, neonOrange]
     const vinylCanvas = document.createElement('canvas')
     vinylCanvas.width = 512
     vinylCanvas.height = 512
@@ -640,9 +624,7 @@ export default function Birthday3DBackground() {
         clearcoat: 1.0,
         envMapIntensity: 1.5,
       })
-      group.add(
-        new THREE.Mesh(new THREE.CylinderGeometry(size, size, 0.15, 64), discMat),
-      )
+      group.add(new THREE.Mesh(new THREE.CylinderGeometry(size, size, 0.15, 64), discMat))
       const labelMat = new THREE.MeshStandardMaterial({
         color,
         emissive: color,
@@ -650,10 +632,7 @@ export default function Birthday3DBackground() {
         roughness: 0.4,
       })
       group.add(
-        new THREE.Mesh(
-          new THREE.CylinderGeometry(size * 0.35, size * 0.35, 0.18, 32),
-          labelMat,
-        ),
+        new THREE.Mesh(new THREE.CylinderGeometry(size * 0.35, size * 0.35, 0.18, 32), labelMat),
       )
       const angle = (i / 5) * Math.PI * 2
       const radius = 12 + Math.random() * 6
@@ -671,7 +650,7 @@ export default function Birthday3DBackground() {
 
     // --- VOLUMETRIC LASER BEAMS ---
     const lasers: THREE.Mesh[] = []
-    const laserColors = [neonCyan, neonPink, neonPurple, neonOrange]
+    const laserColors = [neonGoldAmber, neonGoldLight, neonGold, neonOrange]
     const laserCount = isMobile ? 2 : 4
     for (let i = 0; i < laserCount; i++) {
       const beamGeo = new THREE.CylinderGeometry(0.01, 0.4, 60, 16, 1, true)
@@ -694,9 +673,9 @@ export default function Birthday3DBackground() {
     type Balloon = { mesh: THREE.Group; speed: number; offset: number }
     const balloons: Balloon[] = []
     const balloonColors: (THREE.Color | number)[] = [
-      neonPurple,
-      neonPink,
-      neonCyan,
+      neonGold,
+      neonGoldLight,
+      neonGoldAmber,
       neonOrange,
       0xffd700,
       0xfbbf24,
@@ -735,7 +714,7 @@ export default function Birthday3DBackground() {
     const particleGeo = new THREE.BufferGeometry()
     const positions = new Float32Array(particleCount * 3)
     const particleColors = new Float32Array(particleCount * 3)
-    const pColors = [neonPurple, neonPink, neonCyan, neonOrange]
+    const pColors = [neonGold, neonGoldLight, neonGoldAmber, neonOrange]
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 80
       positions[i * 3 + 1] = Math.random() * 40 - 10
@@ -746,10 +725,7 @@ export default function Birthday3DBackground() {
       particleColors[i * 3 + 2] = c.b
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    particleGeo.setAttribute(
-      'color',
-      new THREE.BufferAttribute(particleColors, 3),
-    )
+    particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3))
 
     const pCanvas = document.createElement('canvas')
     pCanvas.width = 64
@@ -821,8 +797,7 @@ export default function Birthday3DBackground() {
             }
           }
         } else {
-          const p =
-            (time - item.userData.buildDelay) / item.userData.buildDuration
+          const p = (time - item.userData.buildDelay) / item.userData.buildDuration
           if (p > 0) {
             if (p >= 1) {
               item.scale.copy(item.userData.baseScale)
@@ -840,20 +815,15 @@ export default function Birthday3DBackground() {
 
               const py = easeOutCubic(p)
               item.position.y =
-                item.userData.basePos.y -
-                item.userData.fromY +
-                item.userData.fromY * py
+                item.userData.basePos.y - item.userData.fromY + item.userData.fromY * py
 
               if (p < 0.3) {
-                item.position.x =
-                  item.userData.basePos.x +
-                  (Math.random() - 0.5) * (0.3 - p) * 2
+                item.position.x = item.userData.basePos.x + (Math.random() - 0.5) * (0.3 - p) * 2
               } else {
                 item.position.x = item.userData.basePos.x
               }
 
-              item.rotation.z =
-                item.userData.baseRot.z + (Math.PI / 8) * (1 - py)
+              item.rotation.z = item.userData.baseRot.z + (Math.PI / 8) * (1 - py)
             }
           }
         }
@@ -869,8 +839,7 @@ export default function Birthday3DBackground() {
       const shakeX = Math.sin(time * 2.3) * 0.05 + Math.sin(time * 5.1) * 0.03
       const shakeY = Math.cos(time * 3.1) * 0.05 + Math.cos(time * 4.2) * 0.03
       camera.position.x = Math.sin(time * 0.08) * 6 + mouse.x * 5 + shakeX
-      camera.position.y =
-        7 + mouse.y * 3 + Math.cos(time * 0.12) * 1.5 + shakeY
+      camera.position.y = 7 + mouse.y * 3 + Math.cos(time * 0.12) * 1.5 + shakeY
       camera.position.z = 35 + Math.sin(time * 0.04) * 3
       camera.lookAt(0, 0, -15)
 
@@ -905,43 +874,34 @@ export default function Birthday3DBackground() {
       eqBars.forEach((bar, i) => {
         if (!bar.userData.isBuilt) return
         const height =
-          1 +
-          (Math.sin(time * 3.0 + i * 0.5) + 1) * 4 +
-          beat * 5 * Math.abs(Math.sin(i * 0.5))
+          1 + (Math.sin(time * 3.0 + i * 0.5) + 1) * 4 + beat * 5 * Math.abs(Math.sin(i * 0.5))
         bar.scale.y = Math.max(0.5, height)
         bar.position.y = -11.5 + bar.scale.y / 2
-        ;(bar.material as THREE.MeshPhysicalMaterial).emissiveIntensity =
-          0.5 + beat * 0.8
+        ;(bar.material as THREE.MeshPhysicalMaterial).emissiveIntensity = 0.5 + beat * 0.8
       })
 
       if (particleMat.userData.isFaded) {
         particles.rotation.y = time * 0.03
-        const posArray = (
-          particles.geometry.attributes.position as THREE.BufferAttribute
-        ).array as Float32Array
+        const posArray = (particles.geometry.attributes.position as THREE.BufferAttribute)
+          .array as Float32Array
         for (let i = 0; i < particleCount; i++) {
           posArray[i * 3 + 1] += 0.02
           if (posArray[i * 3 + 1] > 30) posArray[i * 3 + 1] = -10
         }
-        ;(
-          particles.geometry.attributes.position as THREE.BufferAttribute
-        ).needsUpdate = true
+        ;(particles.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true
       }
 
       // Low-lying fog drift + Beat Pulse (Subtler)
       if (fogMat.userData.isFaded) {
         lowFog.rotation.y = time * 0.01
         fogMat.opacity = 0.02 + beat * 0.05 // Reduced opacity
-        const fogPosArray = (
-          lowFog.geometry.attributes.position as THREE.BufferAttribute
-        ).array as Float32Array
+        const fogPosArray = (lowFog.geometry.attributes.position as THREE.BufferAttribute)
+          .array as Float32Array
         for (let i = 0; i < fogCount; i++) {
           fogPosArray[i * 3] += Math.sin(time + i) * 0.01
           fogPosArray[i * 3 + 2] += Math.cos(time + i) * 0.01
         }
-        ;(
-          lowFog.geometry.attributes.position as THREE.BufferAttribute
-        ).needsUpdate = true
+        ;(lowFog.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true
       }
 
       lasers.forEach((laser, i) => {
@@ -990,10 +950,7 @@ export default function Birthday3DBackground() {
       renderer.setSize(w, h)
       renderer.setPixelRatio(pixelRatio)
       composer.setSize(w, h)
-      fxaaPass.material.uniforms['resolution'].value.set(
-        1 / (w * pixelRatio),
-        1 / (h * pixelRatio),
-      )
+      fxaaPass.material.uniforms['resolution'].value.set(1 / (w * pixelRatio), 1 / (h * pixelRatio))
     }
     window.addEventListener('resize', onResize)
 

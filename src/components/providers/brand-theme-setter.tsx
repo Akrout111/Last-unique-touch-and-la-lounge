@@ -28,7 +28,7 @@ import { resolveBrandFromPath } from '@/lib/brand'
  * on every navigation.
  */
 const BRAND_THEME_COLORS: Record<'lut' | 'lalounge' | 'birthday', string> = {
-  lut: '#D4A574',
+  lut: '#8B6B3D',
   lalounge: '#E6007E',
   birthday: '#F5B914',
 }

@@ -29,11 +29,7 @@ class InfiniteHelixCurve extends THREE.Curve<THREE.Vector3> {
   getPoint(t: number, target = new THREE.Vector3()): THREE.Vector3 {
     const angle = t * this.turns * Math.PI * 2
     const z = -t * this.length
-    return target.set(
-      Math.cos(angle) * this.radius,
-      Math.sin(angle) * this.radius,
-      z,
-    )
+    return target.set(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius, z)
   }
 }
 
@@ -66,8 +62,10 @@ export default function Lut3DBackground() {
     if (!canvas) return
 
     // v41-g2-F1 Fix #1: gate the heavy 3D scene on device capability.
-    // Skips entirely on prefers-reduced-motion / no WebGL / < 4 cores /
-    // < 4 GB so low-end devices get the static gradient fallback instead.
+    // Skips entirely on prefers-reduced-motion / no WebGL / < 2 cores /
+    // < 2 GB so low-end devices get the static gradient fallback instead.
+    // (Threshold values live in src/lib/device-capabilities.ts as
+    // MIN_CORES_FOR_3D / MIN_MEMORY_GB_FOR_3D — see Task 2b fix.)
     if (!shouldEnable3D()) return
 
     // ============================================
@@ -119,8 +117,7 @@ export default function Lut3DBackground() {
     renderer.outputColorSpace = THREE.SRGBColorSpace
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer)
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04)
-      .texture
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
 
     // ============================================
     // POST PROCESSING
@@ -160,11 +157,7 @@ export default function Lut3DBackground() {
     // ============================================
     // PERFECTLY SMOOTH INFINITE GOLDEN HELIX
     // ============================================
-    const helixCurve = new InfiniteHelixCurve(
-      9,
-      HELIX_GEOMETRY_LENGTH,
-      40,
-    )
+    const helixCurve = new InfiniteHelixCurve(9, HELIX_GEOMETRY_LENGTH, 40)
     // MASSIVELY increased tubular segments (4000) for perfect circular smoothness
     const helixGeo = new THREE.TubeGeometry(helixCurve, 4000, 0.15, 16, false)
     const helixMat = new THREE.MeshStandardMaterial({
@@ -207,10 +200,7 @@ export default function Lut3DBackground() {
       group.add(back)
       ;[-0.4, 0.4].forEach((x) =>
         [-0.4, 0.4].forEach((z) => {
-          const leg = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.04, 0.02, 1, 16),
-            goldMat,
-          )
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 1, 16), goldMat)
           leg.position.set(x, -0.5, z)
           group.add(leg)
         }),
@@ -241,10 +231,7 @@ export default function Lut3DBackground() {
       group.add(armR)
       ;[-1.2, 1.2].forEach((x) =>
         [-0.4, 0.4].forEach((z) => {
-          const leg = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.06, 0.04, 0.2, 16),
-            goldMat,
-          )
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.2, 16), goldMat)
           leg.position.set(x, -0.3, z)
           group.add(leg)
         }),
@@ -254,10 +241,7 @@ export default function Lut3DBackground() {
 
     function createTable(color: string): THREE.Group {
       const group = new THREE.Group()
-      const topColor =
-        color === '#0d0d0d'
-          ? new THREE.Color(0x222222)
-          : new THREE.Color(0xffffff)
+      const topColor = color === '#0d0d0d' ? new THREE.Color(0x222222) : new THREE.Color(0xffffff)
       const top = new THREE.Mesh(
         new THREE.CylinderGeometry(1.2, 1.2, 0.1, 48),
         new THREE.MeshPhysicalMaterial({
@@ -271,16 +255,10 @@ export default function Lut3DBackground() {
       )
       top.position.y = 0.8
       group.add(top)
-      const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.15, 0.1, 0.8, 24),
-        goldMat,
-      )
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.1, 0.8, 24), goldMat)
       stem.position.y = 0.4
       group.add(stem)
-      const base = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.6, 0.6, 0.1, 48),
-        goldMat,
-      )
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.1, 48), goldMat)
       base.position.y = 0.05
       group.add(base)
       return group
@@ -288,15 +266,9 @@ export default function Lut3DBackground() {
 
     function createLamp(color: string): THREE.Group {
       const group = new THREE.Group()
-      const base = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.4, 0.4, 0.05, 24),
-        goldMat,
-      )
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 24), goldMat)
       group.add(base)
-      const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 2.4, 12),
-        goldMat,
-      )
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 12), goldMat)
       stem.position.y = 1.2
       group.add(stem)
       const shadeMat = new THREE.MeshPhysicalMaterial({
@@ -306,10 +278,7 @@ export default function Lut3DBackground() {
         side: THREE.DoubleSide,
         transmission: 0.2,
       })
-      const shade = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.4, 0.6, 24, 1, true),
-        shadeMat,
-      )
+      const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.6, 24, 1, true), shadeMat)
       shade.position.y = 2.2
       group.add(shade)
       const bulb = new THREE.Mesh(
@@ -346,19 +315,13 @@ export default function Lut3DBackground() {
       top.position.y = 1.12
       group.add(top)
       ;[0, -0.8, 0.8].forEach((x) => {
-        const handle = new THREE.Mesh(
-          new THREE.BoxGeometry(0.02, 0.9, 0.02),
-          goldMat,
-        )
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.9, 0.02), goldMat)
         handle.position.set(x, 0.6, 0.41)
         group.add(handle)
       })
       ;[-1.1, 1.1].forEach((x) =>
         [-0.3, 0.3].forEach((z) => {
-          const leg = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.04, 0.02, 0.1, 12),
-            goldMat,
-          )
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.1, 12), goldMat)
           leg.position.set(x, 0.05, z)
           group.add(leg)
         }),
@@ -374,11 +337,7 @@ export default function Lut3DBackground() {
 
     function easeOutElastic(x: number): number {
       const c4 = (2 * Math.PI) / 3
-      return x === 0
-        ? 0
-        : x === 1
-          ? 1
-          : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1
+      return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1
     }
 
     for (let i = 0; i < itemCount; i++) {
@@ -396,11 +355,7 @@ export default function Lut3DBackground() {
 
       mesh.position.set(x, y, z)
       mesh.scale.set(0.001, 0.001, 0.001)
-      mesh.rotation.set(
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-      )
+      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI)
 
       mesh.userData = {
         baseY: y,
@@ -500,8 +455,7 @@ export default function Lut3DBackground() {
 
       // 1. Infinite Golden Helix Update
       helix.position.z += currentSpeed * delta
-      if (helix.position.z >= HELIX_WRAP_LENGTH)
-        helix.position.z -= HELIX_WRAP_LENGTH
+      if (helix.position.z >= HELIX_WRAP_LENGTH) helix.position.z -= HELIX_WRAP_LENGTH
 
       helix.material.opacity = introEase
       helix.material.emissiveIntensity = introEase * 0.8
@@ -629,10 +583,7 @@ export default function Lut3DBackground() {
         if (mesh.geometry) {
           mesh.geometry.dispose()
         }
-        const material = mesh.material as
-          | THREE.Material
-          | THREE.Material[]
-          | undefined
+        const material = mesh.material as THREE.Material | THREE.Material[] | undefined
         if (Array.isArray(material)) {
           material.forEach((m) => m.dispose())
         } else if (material) {
