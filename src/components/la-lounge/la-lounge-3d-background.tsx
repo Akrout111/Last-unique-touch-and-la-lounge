@@ -58,7 +58,7 @@ export default function LaLounge3DBackground() {
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
       renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
       renderer.setClearColor(0x000000, 0)
       renderer.domElement.style.display = 'block'
       container.appendChild(renderer.domElement)

@@ -62,7 +62,7 @@ export default function Birthday3DBackground() {
     if (!shouldEnable3D()) return
 
     const isMobile = window.innerWidth < 768
-    const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0)
+    const pixelRatio = Math.min(window.devicePixelRatio, 2.0)
 
     // Aesthetic Color Palette
     // Task 2b: Replaced the AI-slop neon purple-pink-cyan trio
@@ -568,7 +568,7 @@ export default function Birthday3DBackground() {
 
     // --- EQUALIZER BARS ---
     const eqBars: THREE.Mesh[] = []
-    const barCount = isMobile ? 20 : 50
+    const barCount = 50
     for (let i = 0; i < barCount; i++) {
       const hue = i / barCount
       const color = new THREE.Color().setHSL(hue, 0.9, 0.5)
@@ -611,7 +611,7 @@ export default function Birthday3DBackground() {
     }
     const vinylTexture = new THREE.CanvasTexture(vinylCanvas)
 
-    const vinylCount = isMobile ? 2 : 5
+    const vinylCount = 5
     for (let i = 0; i < vinylCount; i++) {
       const group = new THREE.Group()
       const color = vinylColors[i % vinylColors.length]
@@ -651,7 +651,7 @@ export default function Birthday3DBackground() {
     // --- VOLUMETRIC LASER BEAMS ---
     const lasers: THREE.Mesh[] = []
     const laserColors = [neonGoldAmber, neonGoldLight, neonGold, neonOrange]
-    const laserCount = isMobile ? 2 : 4
+    const laserCount = 4
     for (let i = 0; i < laserCount; i++) {
       const beamGeo = new THREE.CylinderGeometry(0.01, 0.4, 60, 16, 1, true)
       beamGeo.translate(0, 30, 0)
@@ -710,7 +710,7 @@ export default function Birthday3DBackground() {
     }
 
     // --- PARTICLES ---
-    const particleCount = isMobile ? 300 : 1000
+    const particleCount = 1000
     const particleGeo = new THREE.BufferGeometry()
     const positions = new Float32Array(particleCount * 3)
     const particleColors = new Float32Array(particleCount * 3)

@@ -86,8 +86,7 @@ export default function Lut3DBackground() {
       '#d4af37',
     ]
 
-    const isMobile = window.innerWidth < 768
-    const itemCount = isMobile ? 20 : 30
+    const itemCount = 30
 
     // ============================================
     // SCENE SETUP
@@ -111,7 +110,7 @@ export default function Lut3DBackground() {
       powerPreference: 'high-performance',
     })
     renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 0.9
     renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -346,12 +345,12 @@ export default function Lut3DBackground() {
       const mesh = creators[type](color)
 
       const angle = Math.random() * Math.PI * 2
-      const innerRadius = isMobile ? 2.5 : 5.5
-      const radius = innerRadius + Math.random() * (isMobile ? 3.5 : 6)
+      const innerRadius = 5.5
+      const radius = innerRadius + Math.random() * 6
       const x = Math.cos(angle) * radius
       const y = Math.sin(angle) * radius
       const z = -(Math.random() * TUNNEL_LENGTH)
-      const scale = (0.4 + Math.random() * 0.6) * (isMobile ? 0.8 : 1)
+      const scale = 0.4 + Math.random() * 0.6
 
       mesh.position.set(x, y, z)
       mesh.scale.set(0.001, 0.001, 0.001)
@@ -375,7 +374,7 @@ export default function Lut3DBackground() {
     // ============================================
     // GLOWING DUST PARTICLES
     // ============================================
-    const pCount = isMobile ? 350 : 600
+    const pCount = 600
     const pGeo = new THREE.BufferGeometry()
     const pPos = new Float32Array(pCount * 3)
     for (let i = 0; i < pCount; i++) {
