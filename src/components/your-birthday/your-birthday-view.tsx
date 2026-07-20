@@ -272,7 +272,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                 >
                   <span
                     ref={titleRef}
-                    className="bg-gradient-to-r from-white via-[var(--c-birthday-gold-light)]/40 to-[var(--c-birthday-gold)]/40 bg-clip-text text-transparent"
+                    className="text-white"
                   >
                     {t('hero.title1')}
                   </span>
@@ -293,7 +293,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               <div className="flex flex-col gap-4 justify-center items-center">
                 <button
                   onClick={() => router.push('/your-birthday/features')}
-                  className="w-full sm:w-auto px-10 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
+                  className="w-full sm:w-auto px-10 py-4 rounded-full font-bold text-white transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
                   style={{
                     background:
                       'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',
@@ -359,7 +359,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               ].map((service, i) => (
                 <div
                   key={i}
-                  className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
+                  className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-colors duration-500 backdrop-blur-md overflow-hidden"
                   style={{
                     boxShadow: `0 10px 30px -10px rgba(0, 0, 0, 0.7)`,
                   }}
@@ -371,7 +371,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                   />
 
                   <div
-                    className="w-16 h-16 rounded-lg flex items-center justify-center text-3xl mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300"
+                    className="w-16 h-16 rounded-lg flex items-center justify-center text-3xl mb-6 transform group-hover:rotate-6 transition-transform duration-300"
                     style={{
                       background: `color-mix(in srgb, ${service.color} 15%, transparent)`,
                       border: `1px solid color-mix(in srgb, ${service.color} 40%, transparent)`,
@@ -523,7 +523,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               </p>
               <button
                 onClick={() => handleBookingClick(t('booking.bookEvent'))}
-                className="px-10 py-4.5 rounded-full font-bold text-white text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(255,209,71,0.3)]"
+                className="px-10 py-4.5 rounded-full font-bold text-white text-lg transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(255,209,71,0.3)]"
                 style={{
                   background:
                     'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',
@@ -728,7 +728,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                   <button
                     type="submit"
                     disabled={formSubmitting}
-                    className="w-full py-3 rounded-md font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-md font-bold text-white transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                     style={{
                       background:
                         'linear-gradient(135deg, var(--c-birthday-gold-light), var(--c-birthday-gold))',

@@ -64,7 +64,7 @@ export function Footer() {
                 href="https://instagram.com/last.unique.touch"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-11 h-11 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
+                className="w-11 h-11 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-[border-color,color] duration-300"
                 aria-label={t('contact.info.instagram')}
               >
                 <Instagram className="w-4 h-4" strokeWidth={1.3} />
@@ -74,7 +74,7 @@ export function Footer() {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-all duration-300"
+                  className="w-11 h-11 flex items-center justify-center border border-paper/20 hover:border-gold hover:text-gold transition-[border-color,color] duration-300"
                   aria-label={t('contact.info.whatsapp')}
                 >
                   <Phone className="w-4 h-4" strokeWidth={1.3} />
@@ -98,9 +98,10 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    aria-current={pathname === link.href ? 'page' : undefined}
                     className="text-sm hover:text-gold transition-colors duration-300 inline-flex items-center gap-2 group"
                   >
-                    <span className="w-0 h-px bg-gold group-hover:w-3 transition-all duration-300" />
+                    <span className="w-0 h-px bg-gold group-hover:w-3 transition-[width] duration-300" />
                     {link.label}
                   </Link>
                 </li>
@@ -122,9 +123,10 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    aria-current={pathname === link.href ? 'page' : undefined}
                     className="text-sm hover:text-gold transition-colors duration-300 inline-flex items-center gap-2 group"
                   >
-                    <span className="w-0 h-px bg-gold group-hover:w-3 transition-all duration-300" />
+                    <span className="w-0 h-px bg-gold group-hover:w-3 transition-[width] duration-300" />
                     {link.label}
                   </Link>
                 </li>

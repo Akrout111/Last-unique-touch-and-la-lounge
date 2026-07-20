@@ -61,7 +61,7 @@ export default function BirthdayFeaturesView() {
       <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
         <button
           onClick={() => router.push('/your-birthday')}
-          className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all font-medium text-xs cursor-pointer"
+          className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-colors font-medium text-xs cursor-pointer"
         >
           <ArrowIcon className="w-4 h-4" />
           <span>{t('back')}</span>
@@ -105,7 +105,7 @@ export default function BirthdayFeaturesView() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-all duration-500 backdrop-blur-md overflow-hidden"
+                className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-colors duration-500 backdrop-blur-md overflow-hidden"
               >
                 <div
                   className="absolute -top-12 -end-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
@@ -114,7 +114,7 @@ export default function BirthdayFeaturesView() {
                 <div className="relative z-10">
                   {/* Birthday circular frame — signature ornament around each service icon */}
                   <div
-                    className="relative size-20 rounded-full border-4 border-deep-purple bg-gold/10 flex items-center justify-center mx-auto mb-5 shadow-luxury transition-transform duration-500 group-hover:scale-110"
+                    className="relative size-20 rounded-full border-4 border-deep-purple bg-gold/10 flex items-center justify-center mx-auto mb-5 shadow-luxury transition-transform duration-500 group-hover:rotate-3"
                     style={{
                       boxShadow: `0 0 0 1px color-mix(in srgb, ${service.color} 22%, transparent), 0 4px 16px rgba(75, 24, 88, 0.25)`,
                     }}
@@ -155,7 +155,7 @@ export default function BirthdayFeaturesView() {
           >
             <button
               onClick={() => router.push('/contact')}
-              className="px-10 py-4 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
+              className="px-10 py-4 rounded-full font-bold text-white transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
               style={{
                 background:
                   'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',

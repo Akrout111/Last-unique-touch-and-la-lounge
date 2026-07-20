@@ -63,7 +63,7 @@ export function LaLoungeLoadingScreen({ onComplete }: { onComplete: () => void }
         <div className="w-64 mx-auto">
           <div className="h-1 bg-primary/10 rounded-full overflow-hidden">
             <div
-              className="h-full transition-all duration-100"
+              className="h-full transition-[width] duration-100"
               style={{
                 width: `${progress}%`,
                 background: 'linear-gradient(90deg, #7e22ce, #ec4899, #c084fc)',

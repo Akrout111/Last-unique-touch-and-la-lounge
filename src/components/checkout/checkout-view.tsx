@@ -443,7 +443,7 @@ export function CheckoutView() {
                         × {item.quantity}
                       </p>
                     </div>
-                    <p className="text-sm font-medium text-foreground shrink-0">
+                    <p className="text-sm font-medium text-foreground shrink-0 tabular-nums">
                       {/* v28-g2-F2 Fix 4: add currency suffix to match the
                           totals section (lines 449, 457, 467) which all
                           render `{value.toFixed(3)} {t('common.currency')}`.
@@ -462,7 +462,7 @@ export function CheckoutView() {
                 <span className="text-muted-foreground">
                   {t('cart.summary.rental')}
                 </span>
-                <span className="font-medium">
+                <span className="font-medium tabular-nums">
                   {rentalTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
@@ -470,7 +470,7 @@ export function CheckoutView() {
                 <span className="text-muted-foreground">
                   {t('cart.summary.deposit')}
                 </span>
-                <span className="font-medium">
+                <span className="font-medium tabular-nums">
                   {depositTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
@@ -480,7 +480,7 @@ export function CheckoutView() {
               <span className="font-bold text-foreground">
                 {t('checkout.summary.total')}
               </span>
-              <span className="font-display text-xl font-bold text-primary">
+              <span className="font-display text-xl font-bold text-primary tabular-nums">
                 {total.toFixed(3)} {t('common.currency')}
               </span>
             </div>

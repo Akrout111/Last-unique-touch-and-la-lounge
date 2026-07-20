@@ -163,7 +163,7 @@ export function Navbar() {
   return (
     <>
       <nav
-        className={`navbar-slide-in fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
+        className={`navbar-slide-in fixed top-0 inset-x-0 z-50 transition-[background-color,padding,box-shadow] duration-500 ${
           scrolled
             ? 'glass-dark py-3'
             : 'bg-transparent py-5'
@@ -206,6 +206,7 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    aria-current={pathname === link.href ? 'page' : undefined}
                     className={`relative text-sm font-medium tracking-wide transition-colors duration-300 group ${
                       pathname === link.href
                         ? 'text-gold'
@@ -214,7 +215,7 @@ export function Navbar() {
                   >
                     {link.label}
                     <span
-                      className={`absolute -bottom-1.5 start-0 h-px bg-gold transition-all duration-300 ${
+                      className={`absolute -bottom-1.5 start-0 h-px bg-gold transition-[width] duration-300 ${
                         pathname === link.href ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}
                     />
@@ -338,6 +339,7 @@ export function Navbar() {
                       ref={idx === 0 ? firstLinkRef : undefined}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
+                      aria-current={pathname === link.href ? 'page' : undefined}
                       className={`block py-3 text-lg font-display ${
                         pathname === link.href ? 'text-gold' : 'text-paper/70'
                       }`}

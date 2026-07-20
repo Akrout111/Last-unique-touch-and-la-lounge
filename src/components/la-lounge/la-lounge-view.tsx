@@ -109,7 +109,7 @@ export default function LaLoungeView() {
           {/* Services button — scrolls to services section */}
           <button
             onClick={scrollToServices}
-            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] hover:shadow-[0_6px_25px_rgba(230, 0, 126,0.4)] transition-all cursor-pointer border border-primary/30"
+            className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] hover:shadow-[0_6px_25px_rgba(230, 0, 126,0.4)] transition-[background-color,box-shadow] cursor-pointer border border-primary/30"
           >
             {t('laLounge.featuresButton')}
           </button>
@@ -166,7 +166,7 @@ export default function LaLoungeView() {
           <div className="text-center mt-12">
             <button
               onClick={() => router.push('/contact')}
-              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] transition-all cursor-pointer"
+              className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] transition-colors cursor-pointer"
             >
               {t('laLounge.contactButton')}
             </button>

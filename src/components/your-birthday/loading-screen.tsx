@@ -58,7 +58,7 @@ export function BirthdayLoadingScreen({ onComplete, locale }: Props) {
         <div className="w-64 mx-auto">
           <div className="h-1 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full transition-all duration-100"
+              className="h-full transition-[width] duration-100"
               style={{
                 width: `${progress}%`,
                 background: 'linear-gradient(90deg, #F5B914, #FFD147, #C9950E)',

@@ -63,7 +63,7 @@ export function ProductGallery({
               key={idx}
               onClick={() => setSelectedImageIndex(idx)}
               aria-current={selectedImageIndex === idx ? 'true' : undefined}
-              className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+              className={`relative aspect-square rounded-md overflow-hidden border-2 transition-[border-color,opacity] ${
                 selectedImageIndex === idx
                   ? 'border-lut'
                   : 'border-border hover:opacity-80'

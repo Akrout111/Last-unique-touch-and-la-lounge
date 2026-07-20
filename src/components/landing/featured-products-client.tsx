@@ -178,7 +178,7 @@ export function FeaturedProductsClient({ products }: { products: ProductWithImag
                           {productName}
                         </h3>
                         <div className="flex items-center justify-between mt-3">
-                          <div className="w-8 h-px bg-gold group-hover:w-16 transition-all duration-500" />
+                          <div className="w-8 h-px bg-gold group-hover:w-16 transition-[width] duration-500" />
                           <span className="eyebrow text-taupe opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                             {t('featuredProducts.viewDetails')}
                           </span>

@@ -1244,3 +1244,47 @@
     transform: scale(1.15);
   }
 }
+
+/* === v48: Arabic Typography Overrides (per fix brief) === */
+/* Arabic text needs looser line-height and NO letter-spacing
+   (letter-spacing breaks Arabic ligatures and reduces readability). */
+[dir='rtl'] {
+  line-height: 1.8;
+  letter-spacing: 0;
+}
+
+[dir='rtl'] .font-display {
+  letter-spacing: 0;
+}
+
+[dir='rtl'] .eyebrow {
+  letter-spacing: 0.1em; /* reduced from 0.2em+ for Arabic */
+}
+
+/* Tabular numbers for prices (prevents layout shift when digits change) */
+.tabular-nums,
+.price,
+[data-price] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* === v48: Page transition keyframes (CSS fallback / enhancement) === */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced motion: disable transform-based transitions */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe {
+    animation: none !important;
+    transition: none !important;
+  }
+}

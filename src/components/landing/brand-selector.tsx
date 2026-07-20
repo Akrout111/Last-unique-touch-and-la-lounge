@@ -107,8 +107,8 @@ export function BrandSelector() {
                         alt={t(`brandSelector.${brand.key}.name`)}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className={`w-full h-full object-cover transition-transform duration-700 ${
-                          brand.active ? 'group-hover:scale-110' : ''
+                        className={`w-full h-full object-cover transition-opacity duration-700 ${
+                          brand.active ? 'group-hover:opacity-90' : ''
                         }`}
                       />
                       {/* Dark overlay */}
@@ -168,7 +168,7 @@ export function BrandSelector() {
                       </p>
 
                       {brand.active ? (
-                        <div className="flex items-center gap-2 text-paper group-hover:gap-4 transition-all duration-300">
+                        <div className="flex items-center gap-2 text-paper group-hover:gap-4 transition-[gap] duration-300">
                           <span className="eyebrow" style={{ color: brand.accent }}>
                             {t('hero.explore')}
                           </span>

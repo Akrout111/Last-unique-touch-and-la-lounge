@@ -87,7 +87,7 @@ export default function LastUniqueTouchView() {
           {/* Products button */}
           <button
             onClick={() => router.push('/products')}
-            className="animate-hero-up px-10 py-3.5 bg-lut hover:bg-lut/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230,33,41,0.3)] transition-all cursor-pointer"
+            className="animate-hero-up px-10 py-3.5 bg-lut hover:bg-lut/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230,33,41,0.3)] transition-colors cursor-pointer"
             style={{ animationDelay: '0.7s' }}
           >
             {t('lut.productsButton')}

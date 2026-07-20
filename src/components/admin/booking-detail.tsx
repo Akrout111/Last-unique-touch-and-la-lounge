@@ -119,7 +119,7 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('admin.bookings.detail.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-1 font-mono" dir="ltr">#{booking.id}</p>
+          <p className="text-sm text-muted-foreground mt-1 font-mono" dir="ltr"><bdi>#{booking.id}</bdi></p>
         </div>
         <span className={`px-3 py-1.5 rounded-md text-sm font-medium ${
           statusBadgeColors[booking.status] ?? 'bg-muted text-muted-foreground'
@@ -139,11 +139,11 @@ export function BookingDetail({ booking, locale }: BookingDetailProps) {
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.phone')}</dt>
-              <dd className="text-sm font-medium text-foreground" dir="ltr">{booking.customerPhone}</dd>
+              <dd className="text-sm font-medium text-foreground" dir="ltr"><bdi>{booking.customerPhone}</bdi></dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">{t('admin.bookings.detail.email')}</dt>
-              <dd className="text-sm font-medium text-foreground" dir="ltr">{booking.customerEmail}</dd>
+              <dd className="text-sm font-medium text-foreground" dir="ltr"><bdi>{booking.customerEmail}</bdi></dd>
             </div>
           </dl>
         </div>

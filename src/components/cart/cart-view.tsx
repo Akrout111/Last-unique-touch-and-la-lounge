@@ -164,7 +164,7 @@ export function CartView() {
                     })}
                   </p>
 
-                  <p className="text-sm text-primary font-medium mt-1">
+                  <p className="text-sm text-primary font-medium mt-1 tabular-nums">
                     {item.rentalPricePerDay.toFixed(3)} {t('cart.item.perDay')}
                   </p>
 
@@ -192,7 +192,7 @@ export function CartView() {
                     </div>
 
                     {/* Item total */}
-                    <p className="font-bold text-foreground">
+                    <p className="font-bold text-foreground tabular-nums">
                       {item.total.toFixed(3)} {t('common.currency')}
                     </p>
                   </div>
@@ -230,7 +230,7 @@ export function CartView() {
                 <span className="text-muted-foreground">
                   {t('cart.summary.rental')}
                 </span>
-                <span className="font-medium text-foreground">
+                <span className="font-medium text-foreground tabular-nums">
                   {rentalTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
@@ -238,7 +238,7 @@ export function CartView() {
                 <span className="text-muted-foreground">
                   {t('cart.summary.deposit')}
                 </span>
-                <span className="font-medium text-foreground">
+                <span className="font-medium text-foreground tabular-nums">
                   {depositTotal.toFixed(3)} {t('common.currency')}
                 </span>
               </div>
@@ -248,7 +248,7 @@ export function CartView() {
               <span className="font-bold text-foreground">
                 {t('cart.summary.total')}
               </span>
-              <span className="font-display text-xl font-bold text-primary">
+              <span className="font-display text-xl font-bold text-primary tabular-nums">
                 {total.toFixed(3)} {t('common.currency')}
               </span>
             </div>

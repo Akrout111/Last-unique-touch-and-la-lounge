@@ -91,7 +91,7 @@ export function WhyUs() {
                 </p>
 
                 {/* Gold underline that grows on hover */}
-                <div className="w-8 h-px bg-gold mt-6 group-hover:w-full transition-all duration-700" />
+                <div className="w-8 h-px bg-gold mt-6 group-hover:w-full transition-[width] duration-700" />
               </motion.div>
             )
           })}
