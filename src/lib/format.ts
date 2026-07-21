@@ -31,11 +31,7 @@ export function formatNumber(
  * @example formatPrice(12.5, 'ar')  // "12.500 د.ك"
  * @example formatPrice(12.5, 'en')  // "KWD 12.500"
  */
-export function formatPrice(
-  value: number,
-  locale: 'ar' | 'en' = 'en',
-  currency = 'KWD',
-): string {
+export function formatPrice(value: number, locale: 'ar' | 'en' = 'en', currency = 'KWD'): string {
   const symbol = locale === 'ar' ? 'د.ك' : currency
   const formatted = formatNumber(value, locale, {
     minimumFractionDigits: 3,
@@ -49,10 +45,7 @@ export function formatPrice(
  *
  * @example formatQuantity(1234, 'ar')  // "1,234"
  */
-export function formatQuantity(
-  value: number,
-  locale: 'ar' | 'en' = 'en',
-): string {
+export function formatQuantity(value: number, locale: 'ar' | 'en' = 'en'): string {
   return formatNumber(value, locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,

@@ -41,7 +41,8 @@ export function organizationJsonLd() {
     name: 'Last Unique Touch & La Lounge',
     url: 'https://lastuniquetouch.com',
     logo: 'https://lastuniquetouch.com/logo-lut.jpg',
-    description: 'Luxury furniture rental, event planning, and party celebration platform in Kuwait',
+    description:
+      'Luxury furniture rental, event planning, and party celebration platform in Kuwait',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'KW',

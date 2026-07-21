@@ -114,10 +114,10 @@ export default function Hero3DBackground() {
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
       renderer.setSize(window.innerWidth, window.innerHeight)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
-      renderer.shadowMap.enabled = true
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      renderer.shadowMap.enabled = false
       renderer.toneMapping = THREE.ACESFilmicToneMapping
-      renderer.toneMappingExposure = 1.2
+      // v50: reduced exposure 1.2 → 0.85 to dim the busy 3D scene per VLM analysis
+      renderer.toneMappingExposure = 0.85
       container.appendChild(renderer.domElement)
 
       // ═════════════════════════════════════════════════════════════════
