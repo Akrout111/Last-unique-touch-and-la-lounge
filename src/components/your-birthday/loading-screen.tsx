@@ -66,7 +66,7 @@ export function BirthdayLoadingScreen({ onComplete, locale }: Props) {
             />
           </div>
           <p
-            className="text-xs text-white/40 mt-2 tracking-widest uppercase font-mono"
+            className="text-xs text-primary-foreground/40 mt-2 tracking-widest uppercase font-mono"
             style={{ fontFamily: 'var(--font-birthday-sub), Rajdhani, sans-serif' }}
           >
             {loadingText} {progress}%

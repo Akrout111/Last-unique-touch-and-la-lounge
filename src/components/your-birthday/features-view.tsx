@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 
-// V10 Fix #5: Lazy-load BirthdayVisualizer so Three.js (~150KB) stays out
 // of the initial JS bundle. ssr:false because WebGL only exists in browsers.
 const BirthdayVisualizer = dynamic(
   () => import('@/components/your-birthday/birthday-visualizer').then((m) => m.BirthdayVisualizer),
@@ -61,7 +60,7 @@ export default function BirthdayFeaturesView() {
       <div className="absolute top-6 sm:top-10 start-6 sm:start-10 z-20">
         <button
           onClick={() => router.push('/your-birthday')}
-          className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-colors font-medium text-xs cursor-pointer"
+          className="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-primary-foreground/70 hover:text-primary-foreground hover:border-white/30 transition-colors font-medium text-xs cursor-pointer"
         >
           <ArrowIcon className="w-4 h-4" />
           <span>{t('back')}</span>
@@ -93,7 +92,7 @@ export default function BirthdayFeaturesView() {
             >
               {t('title')}
             </h2>
-            <p className="text-sm text-white/50 max-w-xl mx-auto">{t('subtitle')}</p>
+            <p className="text-sm text-primary-foreground/50 max-w-xl mx-auto">{t('subtitle')}</p>
             <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-gold)] via-[var(--c-birthday-gold-light)] to-[var(--c-birthday-gold-dark)] mx-auto rounded-full mt-6" />
           </motion.div>
 
@@ -140,7 +139,7 @@ export default function BirthdayFeaturesView() {
                   >
                     {service.title}
                   </h3>
-                  <p className="text-sm text-white/50 leading-relaxed">{service.desc}</p>
+                  <p className="text-sm text-primary-foreground/50 leading-relaxed">{service.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -155,7 +154,7 @@ export default function BirthdayFeaturesView() {
           >
             <button
               onClick={() => router.push('/contact')}
-              className="px-10 py-4 rounded-full font-bold text-white transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
+              className="px-10 py-4 rounded-full font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
               style={{
                 background:
                   'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',

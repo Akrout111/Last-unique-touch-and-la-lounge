@@ -49,7 +49,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // Fetch all active LUT products for dynamic product URLs.
-  // V9 Fix #2: scope by brand='LUT' so the sitemap only advertises LUT
   // product pages. La Lounge / Your Birthday products are not reachable
   // from the LUT storefront (getProductBySlug now 404s cross-tenant
   // slugs), so listing them here would create broken / leaking URLs.

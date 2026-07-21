@@ -78,7 +78,6 @@ export function Model3D({
     box.getCenter(center)
     // Only recenter if there's a meaningful offset (avoid div-by-zero on empty models)
     if (size.lengthSq() > 0) {
-      // V11 Fix #13: eslint complains "This value cannot be modified" about
       // `clonedScene.position.x -= ...`. Use `.set()` on the position vector
       // instead to satisfy the linter (the result is identical).
       const pos = clonedScene.position

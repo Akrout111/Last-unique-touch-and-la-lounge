@@ -30,7 +30,6 @@ const Birthday3DBackground = dynamic(() => import('./birthday-3d-background'), {
 })
 
 interface YourBirthdayViewProps {
-  // FIX-1A: `onBack` is no longer used — the shared <Navbar /> (rendered
   // by the [locale]/layout.tsx) provides Home / Products / About / Contact
   // links and the wordmark links home. Kept in the interface (optional) so
   // existing callers (`page-client.tsx`) don't break — passing it is a no-op.
@@ -68,7 +67,6 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
   // Ref to the modal container so we can focus its first element on open.
   const bookingModalRef = useRef<HTMLDivElement>(null)
 
-  // FIX-1A: removed the scroll-tracking state + effect that drove the
   // custom <nav>'s glass effect — the shared <Navbar /> (rendered by the
   // [locale]/layout.tsx) has its own scroll handler.
 
@@ -101,7 +99,6 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
     }
   }, [isRTL, t])
 
-  // FIX-1A: removed the `scrollToTop` helper — it was used by the
   // (now-removed) custom <nav>'s brand-title click + scroll-to-top button.
   // The shared <Navbar /> doesn't need it.
 
@@ -139,7 +136,6 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
     return () => cancelAnimationFrame(raf)
   }, [bookingOpen])
 
-  // FIX-1A: removed `BackIcon = isRTL ? ArrowRight : ArrowLeft` and the
   // per-brand back button that used it — the shared <Navbar /> now renders
   // on this page and its wordmark links home.
 
@@ -208,14 +204,13 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
 
   // Pre-fetch gallery items array (raw JSON, not formatted by next-intl).
   const galleryItems = (t.raw('gallery.items') as string[]) ?? []
-  // FIX-1A: `currentYear` was used by the removed custom <footer>'s
   // copyright line; the shared <Footer /> (rendered by the layout) handles
   // the copyright year itself.
 
   return (
     <>
       <div
-        className="min-h-[100dvh] bg-transparent text-white overflow-x-hidden"
+        className="min-h-[100dvh] bg-transparent text-primary-foreground overflow-x-hidden"
         style={{
           fontFamily: isRTL
             ? 'var(--font-birthday-arabic), Cairo, sans-serif'
@@ -272,7 +267,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                 >
                   <span
                     ref={titleRef}
-                    className="text-white"
+                    className="text-primary-foreground"
                   >
                     {t('hero.title1')}
                   </span>
@@ -281,7 +276,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
 
               {/* Subtitle */}
               <p
-                className="text-base sm:text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed"
+                className="text-base sm:text-lg md:text-xl text-primary-foreground/70 mb-10 max-w-2xl mx-auto leading-relaxed"
                 style={{
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
                 }}
@@ -293,7 +288,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               <div className="flex flex-col gap-4 justify-center items-center">
                 <button
                   onClick={() => router.push('/your-birthday/features')}
-                  className="w-full sm:w-auto px-10 py-4 rounded-full font-bold text-white transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
+                  className="w-full sm:w-auto px-10 py-4 rounded-full font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
                   style={{
                     background:
                       'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',
@@ -390,11 +385,11 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                   >
                     {service.title}
                   </h3>
-                  <p className="text-white/60 text-sm leading-relaxed mb-4">{service.desc}</p>
+                  <p className="text-primary-foreground/60 text-sm leading-relaxed mb-4">{service.desc}</p>
                   {/* V10 user request: examples list inside each service card */}
                   <ul className="space-y-2 mt-4 pt-4 border-t border-white/10">
                     {service.examples.map((example, j) => (
-                      <li key={j} className="text-xs text-white/70 flex items-center gap-2">
+                      <li key={j} className="text-xs text-primary-foreground/70 flex items-center gap-2">
                         <span
                           className="w-1 h-1 rounded-full shrink-0"
                           style={{ background: service.color }}
@@ -474,11 +469,11 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
 
                   {/* Geometric outline decoration */}
                   <div className="absolute inset-4 border border-white/10 group-hover:border-white/30 rounded-md transition-colors duration-500 flex flex-col justify-end p-4">
-                    <span className="text-xs font-mono text-white/40 tracking-widest uppercase">
+                    <span className="text-xs font-mono text-primary-foreground/40 tracking-widest uppercase">
                       {t('gallery.expPrefix')}
                       {item.n}
                     </span>
-                    <h4 className="text-base font-bold text-white tracking-wide mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <h4 className="text-base font-bold text-primary-foreground tracking-wide mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                       {item.label}
                     </h4>
                   </div>
@@ -518,12 +513,12 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               >
                 {t('cta.title')}
               </h2>
-              <p className="text-white/60 mb-8 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              <p className="text-primary-foreground/60 mb-8 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
                 {t('cta.subtitle')}
               </p>
               <button
                 onClick={() => handleBookingClick(t('booking.bookEvent'))}
-                className="px-10 py-4.5 rounded-full font-bold text-white text-lg transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(255,209,71,0.3)]"
+                className="px-10 py-4.5 rounded-full font-bold text-primary-foreground text-lg transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_30px_rgba(255,209,71,0.3)]"
                 style={{
                   background:
                     'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',
@@ -573,7 +568,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[var(--c-birthday-card)] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-x-hidden text-white z-10"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg bg-[var(--c-birthday-card)] border border-white/10 p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-x-hidden text-primary-foreground z-10"
               style={{ direction: isRTL ? 'rtl' : 'ltr' }}
             >
               {/* Decorative glows */}
@@ -583,7 +578,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
               <button
                 onClick={() => setBookingOpen(false)}
                 aria-label={t('booking.close')}
-                className="absolute top-4 end-4 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/50 hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 end-4 min-w-[44px] min-h-[44px] flex items-center justify-center text-primary-foreground/50 hover:text-primary-foreground transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -596,7 +591,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                   <h3 id="booking-modal-title" className="text-2xl font-bold tracking-wide">
                     {t('booking.success.title')}
                   </h3>
-                  <p className="text-white/60 text-sm">{t('booking.success.body')}</p>
+                  <p className="text-primary-foreground/60 text-sm">{t('booking.success.body')}</p>
                 </div>
               ) : (
                 <form onSubmit={handleFormSubmit} className="space-y-5">
@@ -609,7 +604,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                       {/* V11 Fix #3: removed selectedPackageLabel — packages section
                           was deleted, so showing "Selected Package: ..." was misleading. */}
                       {selectedPkgName && (
-                        <p className="text-xs text-white/60 font-medium tracking-wide mt-0.5">
+                        <p className="text-xs text-primary-foreground/60 font-medium tracking-wide mt-0.5">
                           {selectedPkgName}
                         </p>
                       )}
@@ -632,7 +627,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                       <label htmlFor="booking-name" className="sr-only">
                         {t('booking.form.name')}
                       </label>
-                      <User className="absolute top-3 w-4 h-4 text-white/40 start-3" />
+                      <User className="absolute top-3 w-4 h-4 text-primary-foreground/40 start-3" />
                       <input
                         id="booking-name"
                         type="text"
@@ -641,7 +636,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.name')}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-primary-foreground placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -649,7 +644,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                       <label htmlFor="booking-phone" className="sr-only">
                         {t('booking.form.phone')}
                       </label>
-                      <Phone className="absolute top-3 w-4 h-4 text-white/40 start-3" />
+                      <Phone className="absolute top-3 w-4 h-4 text-primary-foreground/40 start-3" />
                       <input
                         id="booking-phone"
                         type="tel"
@@ -658,7 +653,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.phone')}
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-primary-foreground placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -666,14 +661,14 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                       <label htmlFor="booking-email" className="sr-only">
                         {t('booking.form.email')}
                       </label>
-                      <Mail className="absolute top-3 w-4 h-4 text-white/40 start-3" />
+                      <Mail className="absolute top-3 w-4 h-4 text-primary-foreground/40 start-3" />
                       <input
                         id="booking-email"
                         type="email"
                         placeholder={t('booking.form.email')}
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-primary-foreground placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -681,7 +676,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                       <label htmlFor="booking-date" className="sr-only">
                         {t('booking.form.eventDate')}
                       </label>
-                      <CalendarDays className="absolute top-3 w-4 h-4 text-white/40 start-3" />
+                      <CalendarDays className="absolute top-3 w-4 h-4 text-primary-foreground/40 start-3" />
                       <input
                         id="booking-date"
                         type="date"
@@ -689,7 +684,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         aria-required="true"
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-primary-foreground placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -697,7 +692,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                       <label htmlFor="booking-location" className="sr-only">
                         {t('booking.form.location')}
                       </label>
-                      <MapPin className="absolute top-3 w-4 h-4 text-white/40 start-3" />
+                      <MapPin className="absolute top-3 w-4 h-4 text-primary-foreground/40 start-3" />
                       <input
                         id="booking-location"
                         type="text"
@@ -706,7 +701,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.location')}
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
+                        className="w-full py-2.5 rounded-md border border-white/10 bg-white/5 text-primary-foreground placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm ps-10 pe-4"
                       />
                     </div>
 
@@ -720,7 +715,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                         placeholder={t('booking.form.notes')}
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full p-3.5 rounded-md border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm"
+                        className="w-full p-3.5 rounded-md border border-white/10 bg-white/5 text-primary-foreground placeholder-white/40 focus:outline-none focus:border-[var(--c-birthday-gold-light)] focus:ring-2 focus:ring-[var(--c-birthday-gold-light)]/50 text-sm"
                       />
                     </div>
                   </div>
@@ -728,7 +723,7 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                   <button
                     type="submit"
                     disabled={formSubmitting}
-                    className="w-full py-3 rounded-md font-bold text-white transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-md font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                     style={{
                       background:
                         'linear-gradient(135deg, var(--c-birthday-gold-light), var(--c-birthday-gold))',

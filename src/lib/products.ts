@@ -239,7 +239,7 @@ export const getProducts = unstable_cache(
 /**
  * Get a single product by slug (for product detail page — Phase 4).
  *
- * `brand` is REQUIRED for the storefront (V9 Fix #2): without it,
+ * `brand` is REQUIRED for the storefront : without it,
  * `getProductBySlug('gold-luxury-sofa')` would return a La Lounge
  * product even on the LUT storefront, leaking cross-tenant data.
  * Admin callers may omit `brand` to look up by slug across tenants.
@@ -261,7 +261,6 @@ export const getProductBySlug = unstable_cache(
         isActive: true,
         // Brand filter — only applied when an explicit brand is provided.
         // Storefront callers MUST pass brand='LUT' (or their tenant) to
-        // prevent cross-tenant access (V9 Fix #2). Admin callers can omit
         // it to look up across tenants.
         ...(brand ? { brand } : {}),
       },
@@ -286,7 +285,7 @@ export const getProductBySlug = unstable_cache(
 /**
  * Check if a product is available for booking in a given date range.
  *
- * V9 Fix #4: stock-aware. Previously this returned `available: false` if
+ * stock-aware. Previously this returned `available: false` if
  * ANY overlapping CONFIRMED/PENDING booking existed — which made products
  * with stock>1 effectively unusable (only one booking per date range was
  * ever allowed, even when the product had 10 in stock). Now we sum the

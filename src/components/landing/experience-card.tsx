@@ -183,7 +183,7 @@ export function ExperienceCard({
       >
         {/* Header */}
         <div className="flex justify-between items-center w-full relative z-10">
-          <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] lg:text-[11px] text-white/40 tracking-[0.2em] font-medium uppercase bg-white/[0.03] border border-white/5 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full">
+          <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] lg:text-[11px] text-primary-foreground/40 tracking-[0.2em] font-medium uppercase bg-white/[0.03] border border-white/5 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full">
             <span>EXP</span>
             <span style={{ color: brandHex }}>{'//'}</span>
             <span>{index}</span>
@@ -219,13 +219,13 @@ export function ExperienceCard({
               }}
             />
           </div>
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-display text-white tracking-wide font-light">
+          <h2 className="text-lg md:text-2xl lg:text-3xl font-display text-primary-foreground tracking-wide font-light">
             {title}
           </h2>
           <div
             className={cn(
               'flex items-center gap-2 text-[9px] md:text-[11px] lg:text-[12px] font-bold tracking-[0.25em] uppercase mt-0.5 transition-colors duration-700',
-              isComingSoon ? 'text-white/30' : 'text-white/60 group-hover:text-white',
+              isComingSoon ? 'text-primary-foreground/30' : 'text-primary-foreground/60 group-hover:text-primary-foreground',
             )}
           >
             <span>{actionText}</span>

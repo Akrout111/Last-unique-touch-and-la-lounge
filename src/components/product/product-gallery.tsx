@@ -47,7 +47,7 @@ export function ProductGallery({
         {model3dUrl && onEnable3D && (
           <button
             onClick={onEnable3D}
-            className="absolute bottom-3 end-3 min-h-[44px] flex items-center gap-2 px-3 py-2 rounded-md bg-gold/90 hover:bg-gold text-white text-xs font-medium transition-colors"
+            className="absolute bottom-3 end-3 min-h-[44px] flex items-center gap-2 px-3 py-2 rounded-md bg-gold/90 hover:bg-gold text-primary-foreground text-xs font-medium transition-colors"
           >
             <Box className="w-4 h-4" />
             {t('product.3d.enable')}

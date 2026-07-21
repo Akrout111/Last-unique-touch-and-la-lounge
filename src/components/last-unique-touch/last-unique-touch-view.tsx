@@ -16,7 +16,6 @@ export default function LastUniqueTouchView() {
   const t = useTranslations()
   const router = useRouter()
 
-  // V10 Fix #3: services array now uses i18n keys instead of inline ternaries.
   const services = [
     { title: t('lut.services.rental.title'), desc: t('lut.services.rental.desc') },
     { title: t('lut.services.delivery.title'), desc: t('lut.services.delivery.desc') },
@@ -87,7 +86,7 @@ export default function LastUniqueTouchView() {
           {/* Products button */}
           <button
             onClick={() => router.push('/products')}
-            className="animate-hero-up px-10 py-3.5 bg-lut hover:bg-lut/90 text-white rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230,33,41,0.3)] transition-colors cursor-pointer"
+            className="animate-hero-up px-10 py-3.5 bg-lut hover:bg-lut/90 text-primary-foreground rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230,33,41,0.3)] transition-colors cursor-pointer"
             style={{ animationDelay: '0.7s' }}
           >
             {t('lut.productsButton')}

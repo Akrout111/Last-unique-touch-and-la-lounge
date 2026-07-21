@@ -116,7 +116,7 @@ export default function Loading() {
 
       {/* Wordmark */}
       <div className="pointer-events-none absolute bottom-[16%] left-1/2 -translate-x-1/2 text-center">
-        <div className="text-[0.62rem] font-medium uppercase tracking-[0.45em] text-white/35">
+        <div className="text-[0.62rem] font-medium uppercase tracking-[0.45em] text-primary-foreground/35">
           Curated · Celebrated · Cherished
         </div>
       </div>

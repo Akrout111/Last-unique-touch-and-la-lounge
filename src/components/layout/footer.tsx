@@ -10,11 +10,9 @@ export function Footer() {
   const t = useTranslations()
   const pathname = usePathname()
   const brand = resolveBrandFromPath(pathname)
-  // V11 Fix #7: use `usePathname()` directly (no `mounted` flag) to avoid
   // SSR hydration flash.
   const homePage = isHomePage(pathname)
 
-  // FIX-1A: hide the storefront footer inside /admin/* routes. The admin
   // area renders its own AdminShell chrome and doesn't need the storefront
   // footer (legal links, social, etc.). next-intl strips the locale prefix
   // from usePathname() so /en/admin/* and /ar/admin/* both match.

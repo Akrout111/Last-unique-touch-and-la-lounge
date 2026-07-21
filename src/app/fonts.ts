@@ -60,7 +60,6 @@ const lutArabic = Cairo({
 })
 
 // --- La Lounge: Poiret One (display) + Questrial (body) + IBM Plex Sans Arabic ---
-// FIX-1A / H1: `preload: false` on La Lounge + Your Birthday fonts so
 // next/font does NOT emit `<link rel="preload">` for these woff2 files on
 // every route. Only the LUT fonts preload (LUT is the default brand and the
 // most-visited storefront). La Lounge / Birthday fonts are fetched on
@@ -97,7 +96,6 @@ const laLoungeArabic = IBM_Plex_Sans_Arabic({
 // `--font-birthday-arabic` is intentionally the same variable name that
 // legacy code referenced, so existing `var(--font-birthday-arabic)`
 // references in your-birthday-view.tsx now resolve to Lalezar.
-// FIX-1A / H1: `preload: false` (see note above La Lounge block).
 const birthdayDisplay = Luckiest_Guy({
   subsets: ['latin'],
   weight: ['400'],

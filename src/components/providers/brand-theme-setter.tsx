@@ -40,7 +40,6 @@ export function BrandThemeSetter() {
     const brand = resolveBrandFromPath(pathname)
     document.documentElement.setAttribute('data-brand', brand)
 
-    // FIX-1A / C6: update the mobile-browser-chrome theme color to match
     // the active brand. The `<meta name="theme-color">` element is emitted
     // by Next.js from the static `viewport` export in layout.tsx (default
     // LUT red). We rewrite its `content` here on every navigation so the

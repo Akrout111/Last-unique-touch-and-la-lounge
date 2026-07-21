@@ -1,4 +1,3 @@
-// V10 Fix #2: Synced BRAND_COLORS with globals.css.
 // Previously these were stale (LUT=#E62129, LA_LOUNGE=#FF1493, YOUR_BIRTHDAY=#8B5CF6)
 // which didn't match the canonical brand colors in globals.css. Admin badges
 // and any JS-side color usage (e.g. Three.js backgrounds) were rendering with
@@ -18,7 +17,6 @@ export const BRAND_COLORS = {
   LUT: '#8B6B3D',
   LA_LOUNGE: '#E6007E',
   YOUR_BIRTHDAY: '#F5B914',
-  // V11 Fix #12: lighter variants for 3D gradients and glows.
   LUT_LIGHT: '#B8915A',
   LA_LOUNGE_LIGHT: '#FF6B9D',
   YOUR_BIRTHDAY_LIGHT: '#FFD147',

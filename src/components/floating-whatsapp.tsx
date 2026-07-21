@@ -3,7 +3,6 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { buildWhatsappUrl } from '@/lib/contact-info'
 
-// V10 Fix #4: locale-aware default messages. Previously the Arabic message
 // was always used even for English-speaking users.
 const MESSAGES = {
   ar: 'مرحباً، أريد الاستفسار عن خدماتكم',
