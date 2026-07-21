@@ -112,12 +112,12 @@ export default function Birthday3DBackground() {
     composer.setSize(window.innerWidth, window.innerHeight)
     composer.addPass(new RenderPass(scene, camera))
 
-    // STRICT BLOOM: High threshold prevents floor reflections from glowing
+    // v50: reduced bloom strength 0.3 → 0.15 (VLM: central glow overexposed)
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.3, // Lower strength
-      0.6, // Tighter radius
-      1.0, // Very high threshold (only pure neon materials bloom)
+      0.15, // v50: lower strength (was 0.3)
+      0.5, // v50: tighter radius (was 0.6)
+      1.2, // v50: higher threshold (was 1.0) — only pure neon blooms
     )
     composer.addPass(bloomPass)
 
@@ -255,8 +255,9 @@ export default function Birthday3DBackground() {
         void main() {
           vec2 uv = vUv;
           vec3 bgCol = vec3(0.01, 0.02, 0.05);
-          float hue = uTime * 0.05 + uv.y * 0.2;
-          vec3 barCol = hsv2rgb(vec3(hue, 0.9, 1.0));
+          // v50: replaced rainbow hue with gold-family color (brand identity)
+          float goldShift = 0.08 + sin(uTime * 0.5 + uv.y * 2.0) * 0.03;
+          vec3 barCol = hsv2rgb(vec3(goldShift, 0.85, 1.0));
 
           float spec = 0.0;
           for(float i=0.0; i<12.0; i++) {
@@ -569,9 +570,10 @@ export default function Birthday3DBackground() {
     // --- EQUALIZER BARS ---
     const eqBars: THREE.Mesh[] = []
     const barCount = 50
+    // v50: gold-family palette (replaces rainbow hue) — 3 shades cycling
+    const goldShades = [neonGold, neonGoldLight, neonGoldAmber]
     for (let i = 0; i < barCount; i++) {
-      const hue = i / barCount
-      const color = new THREE.Color().setHSL(hue, 0.9, 0.5)
+      const color = goldShades[i % goldShades.length]
       const mat = new THREE.MeshPhysicalMaterial({
         color: 0x222222,
         emissive: color,
@@ -859,9 +861,11 @@ export default function Birthday3DBackground() {
       })
 
       if (djBoothGroup.userData.isBuilt) {
-        const screenHue = (time * 0.05) % 1
-        boothLedMat.color.setHSL((screenHue + 0.3) % 1, 1, 0.5)
-        screenGlowMat.color.setHSL((screenHue + 0.6) % 1, 1, 0.5)
+        // v50: gold-family cycling (replaces rainbow setHSL) — shifts between
+        // gold (0.08) and amber (0.10) hues only, staying in brand identity
+        const goldHue = 0.08 + Math.sin(time * 0.5) * 0.02
+        boothLedMat.color.setHSL(goldHue, 0.9, 0.55)
+        screenGlowMat.color.setHSL(goldHue + 0.02, 0.85, 0.5)
       }
 
       vinyls.forEach((v, i) => {
