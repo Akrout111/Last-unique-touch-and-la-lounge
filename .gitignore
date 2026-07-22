@@ -62,3 +62,4 @@ agent-ctx/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+src/middleware.ts
