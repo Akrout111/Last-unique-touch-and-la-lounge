@@ -62,7 +62,8 @@ export default function Birthday3DBackground() {
     if (!shouldEnable3D()) return
 
     const isMobile = window.innerWidth < 768
-    const pixelRatio = Math.min(window.devicePixelRatio, 3.0)
+    // v52: lower pixelRatio on mobile to fix lag (3.0 was too heavy for mobile GPUs)
+    const pixelRatio = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0)
 
     // Aesthetic Color Palette
     // Task 2b: Replaced the AI-slop neon purple-pink-cyan trio
@@ -142,19 +143,20 @@ export default function Birthday3DBackground() {
     fillLight.position.set(0, 10, 30)
     scene.add(fillLight)
 
+    // v52: lights now use the 5 logo colors (was all-gold)
     const rimLight = new THREE.DirectionalLight(neonGold.getHex(), 1.5)
     rimLight.position.set(-15, 20, -30)
     scene.add(rimLight)
 
-    const purpleLight = new THREE.PointLight(neonGold.getHex(), 80, 150)
+    const purpleLight = new THREE.PointLight(neonDeep.getHex(), 80, 150)
     purpleLight.position.set(-20, 15, 5)
     scene.add(purpleLight)
 
-    const pinkLight = new THREE.PointLight(neonGoldLight.getHex(), 60, 150)
+    const pinkLight = new THREE.PointLight(neonPink.getHex(), 60, 150)
     pinkLight.position.set(20, 10, 5)
     scene.add(pinkLight)
 
-    const cyanLight = new THREE.PointLight(neonGoldAmber.getHex(), 30, 120)
+    const cyanLight = new THREE.PointLight(neonOrange.getHex(), 30, 120)
     cyanLight.position.set(0, 0, 20)
     scene.add(cyanLight)
 
@@ -771,9 +773,14 @@ export default function Birthday3DBackground() {
     const mouse = { x: 0, y: 0 }
     const targetMouse = { x: 0, y: 0 }
     let animationId = 0
+    // v52: frame skipping on mobile to fix lag (render every 2nd frame)
+    let frameCount = 0
 
     const animate = () => {
       animationId = requestAnimationFrame(animate)
+      frameCount++
+      // On mobile, skip every other frame to halve GPU load
+      if (isMobile && frameCount % 2 !== 0) return
       const delta = clock.getDelta()
       const time = clock.getElapsedTime()
 

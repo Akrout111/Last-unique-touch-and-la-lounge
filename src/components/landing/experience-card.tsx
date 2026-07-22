@@ -203,7 +203,7 @@ export function ExperienceCard({
         </div>
 
         {/* Bottom Section */}
-        <div className="flex flex-col items-end gap-1.5 md:gap-2 transform transition-transform duration-700 group-hover:-translate-x-1.5 rtl:group-hover:translate-x-1.5 relative z-10">
+        <div className="flex flex-col items-end gap-1.5 md:gap-2 transform transition-transform duration-700 group-hover:-translate-x-1.5 rtl:group-hover:translate-x-1.5 relative z-10 w-full">
           <div className="flex items-center gap-2 max-w-full">
             <span
               className="text-[9px] md:text-[11px] lg:text-xs font-semibold tracking-[0.05em] text-right leading-tight max-w-[180px] md:max-w-[260px] lg:max-w-[320px]"
@@ -219,7 +219,7 @@ export function ExperienceCard({
               }}
             />
           </div>
-          <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-display text-primary-foreground tracking-normal sm:tracking-wide font-light break-words leading-tight">
+          <h2 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-display text-primary-foreground tracking-tight sm:tracking-normal font-light break-words leading-tight text-right w-full">
             {title}
           </h2>
           <div
