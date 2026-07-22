@@ -219,7 +219,7 @@ export function ExperienceCard({
               }}
             />
           </div>
-          <h2 className="text-lg md:text-2xl lg:text-3xl font-display text-primary-foreground tracking-wide font-light">
+          <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-display text-primary-foreground tracking-normal sm:tracking-wide font-light break-words leading-tight">
             {title}
           </h2>
           <div
