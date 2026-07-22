@@ -114,7 +114,7 @@ export function ExperienceCard({
         }
       }}
       className={cn(
-        'mobile-card-slide card-scroll-anim relative w-full h-[150px] sm:h-[170px] md:h-[280px] lg:h-[320px] group flex items-center',
+        'mobile-card-slide card-scroll-anim relative w-full h-[180px] sm:h-[200px] md:h-[280px] lg:h-[320px] group flex items-center',
         isComingSoon ? 'cursor-default' : 'cursor-pointer',
         `card-scroll-${animState}`,
       )}
@@ -178,7 +178,7 @@ export function ExperienceCard({
 
       {/* 3. Info Plate */}
       <div
-        className="plate-anim flex-1 h-full bg-[#050505]/60 hover:bg-[#070707]/70 backdrop-blur-lg rounded-lg md:rounded-lg lg:rounded-lg border border-white/[0.08] group-hover:border-white/[0.2] transition-[background-color,border-color,box-shadow] duration-700 overflow-hidden flex flex-col justify-between p-4 md:p-7 lg:p-8 relative shadow-2xl group-hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] z-20"
+        className="plate-anim flex-1 h-full bg-[#050505]/60 hover:bg-[#070707]/70 backdrop-blur-lg rounded-lg md:rounded-lg lg:rounded-lg border border-white/[0.08] group-hover:border-white/[0.2] transition-[background-color,border-color,box-shadow] duration-700 flex flex-col justify-between p-3 sm:p-4 md:p-7 lg:p-8 relative shadow-2xl group-hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] z-20"
         style={{ animationDelay: `${delay + 0.15}s` }}
       >
         {/* Header */}
