@@ -63,3 +63,4 @@ agent-ctx/
 /blob-report/
 /playwright/.cache/
 src/middleware.ts
+prisma/prisma/
