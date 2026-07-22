@@ -102,7 +102,7 @@
   /* LUT identity — warm ivory background + ink foreground (paper tone). */
   --background: #faf6ef;
   --foreground: #0a0a0a;
-  --color-background: #faf6ef;
+  --color-background: #FAFAFA;  /* v51: off-white per logo */
   --color-foreground: #0a0a0a;
   /* Cards stay pure white for contrast against the warm paper background. */
   --card: #ffffff;
@@ -157,7 +157,11 @@
      complementary warm tone (not part of the slop trio). */
   --c-birthday-bg: #020204;
   --c-birthday-card: #09090f;
-  --c-birthday-gold: #f5b914; /* Your Birthday brand gold (replaces #8B5CF6) */
+  --c-birthday-gold: #FFCC00;
+  --c-birthday-deep: #4A235A;
+  --c-birthday-red: #E32636;
+  --c-birthday-pink: #FFB6C1;
+  --c-birthday-yellow: #FFD700; /* Your Birthday brand gold (replaces #8B5CF6) */
   --c-birthday-gold-light: #ffd147; /* Light gold variant (replaces #EC4899) */
   --c-birthday-gold-dark: #c9950e; /* Dark gold variant (replaces #00F3FF) */
   --c-birthday-orange: #f97316;

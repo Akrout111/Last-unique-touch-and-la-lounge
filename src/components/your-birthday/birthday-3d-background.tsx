@@ -62,7 +62,7 @@ export default function Birthday3DBackground() {
     if (!shouldEnable3D()) return
 
     const isMobile = window.innerWidth < 768
-    const pixelRatio = Math.min(window.devicePixelRatio, 2.0)
+    const pixelRatio = Math.min(window.devicePixelRatio, 3.0)
 
     // Aesthetic Color Palette
     // Task 2b: Replaced the AI-slop neon purple-pink-cyan trio
@@ -71,10 +71,13 @@ export default function Birthday3DBackground() {
     // brightness/saturation; the three shades (gold / light gold / amber-gold)
     // keep visual variety while staying in the yellow family.
     const bgColor = new THREE.Color('#060B1A')
-    const neonGold = new THREE.Color('#F5B914') // was #9D4EDD neon-purple
-    const neonGoldLight = new THREE.Color('#FFD147') // was #FF006E neon-pink
-    const neonGoldAmber = new THREE.Color('#FFC107') // was #00F3FF neon-cyan
-    const neonOrange = new THREE.Color('#FB5607')
+    // v51 Phase 3: 5 logo colors for Your Birthday
+    const neonGold = new THREE.Color('#FFCC00')      // logo golden yellow
+    const neonGoldLight = new THREE.Color('#FFD700') // logo bright yellow balloon
+    const neonGoldAmber = new THREE.Color('#FFC107') // amber accent
+    const neonOrange = new THREE.Color('#E32636')    // logo red (balloon + text)
+    const neonPink = new THREE.Color('#FFB6C1')      // logo light pink balloon
+    const neonDeep = new THREE.Color('#4A235A')      // logo deep purple
 
     // Scene Setup
     const scene = new THREE.Scene()
@@ -652,7 +655,7 @@ export default function Birthday3DBackground() {
 
     // --- VOLUMETRIC LASER BEAMS ---
     const lasers: THREE.Mesh[] = []
-    const laserColors = [neonGoldAmber, neonGoldLight, neonGold, neonOrange]
+    const laserColors = [neonGold, neonGoldLight, neonOrange, neonPink]
     const laserCount = 4
     for (let i = 0; i < laserCount; i++) {
       const beamGeo = new THREE.CylinderGeometry(0.01, 0.4, 60, 16, 1, true)
@@ -716,7 +719,7 @@ export default function Birthday3DBackground() {
     const particleGeo = new THREE.BufferGeometry()
     const positions = new Float32Array(particleCount * 3)
     const particleColors = new Float32Array(particleCount * 3)
-    const pColors = [neonGold, neonGoldLight, neonGoldAmber, neonOrange]
+    const pColors = [neonGold, neonGoldLight, neonOrange, neonPink, neonDeep]
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 80
       positions[i * 3 + 1] = Math.random() * 40 - 10
