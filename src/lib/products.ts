@@ -386,11 +386,11 @@ export function calculateRentalTotal(
   endDate: Date,
   quantity: number = 1
 ): { days: number; subtotal: number; deposit: number; total: number } {
-  // v56: bail with zeros for invalid date ranges (end <= start)
+  // v56: bail with zeros for invalid date ranges (end < start, not <=, to allow same-day as 1 day)
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     return { days: 0, subtotal: 0, deposit: 0, total: 0 }
   }
-  if (endDate.getTime() <= startDate.getTime()) {
+  if (endDate.getTime() < startDate.getTime()) {
     return { days: 0, subtotal: 0, deposit: 0, total: 0 }
   }
 
