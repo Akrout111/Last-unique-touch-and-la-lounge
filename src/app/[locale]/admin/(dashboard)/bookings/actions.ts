@@ -82,16 +82,16 @@ export async function updateBookingStatusAction(
     if (parsed.data.newStatus === 'CONFIRMED') {
       try {
         await triggerOrderConfirmedWebhook(parsed.data.bookingId)
-      } catch {
-        console.error('[n8n] Failed to trigger order-confirmed webhook:')
+      } catch (error) {
+        console.error('[n8n] Failed to trigger order-confirmed webhook:', error)
       }
     }
 
     revalidatePath('/admin/bookings')
     revalidatePath(`/admin/bookings/${parsed.data.bookingId}`)
     return { success: true }
-  } catch {
-    console.error('Update booking status error:')
+  } catch (error) {
+    console.error('Update booking status error:', error)
     return { success: false, error: 'internal_error' }
   }
 }

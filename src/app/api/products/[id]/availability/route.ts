@@ -42,7 +42,7 @@ export async function GET(
     if (!parsed.success) {
       // R1-A M9: do NOT disclose Zod issue details to the client (schema
       // disclosure). Log them server-side for debugging instead.
-      console.warn('[api/availability] Validation failed:', parsed.error.issues)
+      console.warn('[api/availability] Validation failed:', parsed.error.issues.map(i => i.path))
       return NextResponse.json(
         { error: 'invalid_dates' },
         { status: 400 }

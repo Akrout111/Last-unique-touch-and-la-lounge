@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 
@@ -43,8 +43,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // v56: memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo(() => ({ showToast }), [showToast])
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div
         className="fixed bottom-4 end-4 z-[100] space-y-2"

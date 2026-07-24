@@ -37,7 +37,7 @@ export default function BirthdayFeaturesView() {
   const locale = useLocale() as 'ar' | 'en'
   const router = useRouter()
   const t = useTranslations('yourBirthday.features')
-  const ArrowIcon = locale === 'ar' ? ArrowRight : ArrowLeft
+  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
 
   // Pull the raw services array (each entry: { title, desc }) and merge in
   // the decorative icon/color from the constant above.

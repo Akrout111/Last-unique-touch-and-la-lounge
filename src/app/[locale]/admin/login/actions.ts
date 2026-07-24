@@ -30,8 +30,8 @@ export async function loginAction(
 
     revalidatePath('/admin')
     return { success: true }
-  } catch {
-    console.error('[auth] loginAction error:')
+  } catch (error) {
+    console.error('[auth] loginAction error:', error)
     return { success: false, error: 'server_error' }
   }
 }

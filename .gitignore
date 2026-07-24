@@ -4,63 +4,49 @@ node_modules
 # next.js
 /.next/
 /out/
-
 # env files — keep .env.example, ignore real secrets
 .env
 .env.local
 .env.*.local
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
 # local database
 prisma/dev.db
 prisma/dev.db-journal
 db/*.db
 db/*.db-journal
-
 # logs
 *.log
 dev.log
 server.log
-
 # agent artifacts (internal)
 .claude
 .z-ai-config
 worklog.md
 /skills/
-
 # OS
 .DS_Store
-
 # IDE
 .vscode
 .idea
-
 # Test coverage
 coverage/
-
 # PNGs (keep public assets tracked, ignore others)
 *.png
 !public/**/*.png
-
 # Agent scratch / tool results
 tool-results/
 upload/
 .zscripts/dev.pid
-
 # Production env
 .env.production
 prisma/db/*.db
 prisma/db/*.db-journal
-.env
 agent-ctx/
-
 # Playwright
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-src/middleware.ts
-prisma/prisma/
+dev.pid

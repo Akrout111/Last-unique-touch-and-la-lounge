@@ -386,11 +386,11 @@ export function calculateRentalTotal(
   endDate: Date,
   quantity: number = 1
 ): { days: number; subtotal: number; deposit: number; total: number } {
-  // Perf / safety fix: if either date is Invalid Date, `endDate.getTime() -
-  // startDate.getTime()` would yield NaN, which propagates through `Math.max`
-  // and `Math.ceil` into a NaN total that breaks the cart summary UI. Bail
-  // out with zeros instead.
+  // v56: bail with zeros for invalid date ranges (end <= start)
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return { days: 0, subtotal: 0, deposit: 0, total: 0 }
+  }
+  if (endDate.getTime() <= startDate.getTime()) {
     return { days: 0, subtotal: 0, deposit: 0, total: 0 }
   }
 
