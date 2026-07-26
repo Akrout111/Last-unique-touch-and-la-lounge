@@ -1578,6 +1578,17 @@ function Birthday3DBackground() {
     let animationId = 0
     let frameCount = 0
 
+    // ---- Intro cinematic (v58: improved entry animation) ----
+    // The camera starts further back + higher, then dollies forward + descends
+    // to the hero position over ~2.8s. Bloom + exposure start elevated for a
+    // "reveal" flare, then settle. Creates a cinematic "arriving at the party"
+    // feeling instead of the scene just being there.
+    const INTRO_DURATION = 2.8 // seconds
+    let introTime = 0
+    function easeInOutCubic(x: number): number {
+      return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+    }
+
     // ---- Scroll-progress (drives the cinematic scroll-reactive animation) ----
     // targetScroll: raw 0..1 from window scroll. scrollProgress: damped lerp
     // toward target so the camera glides instead of snapping on each wheel
@@ -1598,6 +1609,14 @@ function Birthday3DBackground() {
       if (cfg.frameSkip > 1 && frameCount % cfg.frameSkip !== 0) return
       const delta = Math.min(0.05, clock.getDelta())
       const time = clock.getElapsedTime()
+
+      // ---- v58: Intro cinematic progress ----
+      // 0 at start → 1 after INTRO_DURATION. Eased for smooth acceleration/deceleration.
+      introTime += delta
+      const introRaw = Math.min(1, introTime / INTRO_DURATION)
+      const intro = easeInOutCubic(introRaw)
+      // Intro "flare" — strong at start, settles to 0. Used for bloom + exposure boost.
+      const introFlare = Math.pow(1 - introRaw, 2)
 
       const beatPhase = (time % beatInterval) / beatInterval
       const beat = Math.pow(1 - beatPhase, 4)
@@ -1647,24 +1666,40 @@ function Birthday3DBackground() {
       // general "intensity" swell — peaks at sp=0.5 (mid celebration)
       const swell = Math.sin(sp * Math.PI)
 
-      // ---- camera: cinematic scroll journey + ambient drift ----
+      // ---- camera: cinematic scroll journey + ambient drift + v58 intro ----
       // Scroll 0 (hero): far front-on, eye-level. Scroll 1 (footer): closer,
       // higher, looking down at the cake top — a "diving into the celebration".
       // A gentle orbit on X adds parallax depth. The ambient drift + shake
       // dampens as we approach (sp↑) so the close-up is steadier for detail.
+      //
+      // v58: During intro (first ~2.8s), camera starts from a dramatic angle
+      // (further back, higher, slightly offset) and dollies forward + descends
+      // to the hero position. Ambient drift is suppressed during intro so the
+      // dolly reads cleanly.
       mouse.x += (targetMouse.x - mouse.x) * 0.025
       mouse.y += (targetMouse.y - mouse.y) * 0.025
       const shakeX = Math.sin(time * 1.3) * 0.03
       const shakeY = Math.cos(time * 1.7) * 0.03
-      const driftDamp = 1 - sp * 0.55   // drift weakens to 45% at full scroll
+      const driftDamp = (1 - sp * 0.55) * intro   // drift suppressed during intro
       const baseX = Math.sin(sp * Math.PI * 0.45) * 2.2  // subtle orbit
       const baseY = 6 + sp * 3          // 6 → 9 (rise)
       const camStartZ = isMobile ? 13 : 20
       const baseZ = camStartZ - sp * (isMobile ? 4 : 8)   // dolly in (mobile: 13→9, desktop: 20→12)
-      camera.position.x = baseX + (Math.sin(time * 0.05) * 2.5 + mouse.x * 3 + shakeX) * driftDamp
-      camera.position.y = baseY + (mouse.y * 1.5 + Math.cos(time * 0.07) * 0.6 + shakeY) * driftDamp
-      camera.position.z = baseZ + Math.sin(time * 0.03) * 1.2
+
+      // v58: Intro camera — starts further back (z+8), higher (y+4), offset x-3
+      // then lerps to the hero position. Post-intro, intro=1 so these are 0.
+      const introOffsetX = (1 - intro) * -3     // sweep from left
+      const introOffsetY = (1 - intro) * 4      // descend from above
+      const introOffsetZ = (1 - intro) * (isMobile ? 5 : 8)  // dolly forward from far
+
+      camera.position.x = baseX + introOffsetX + (Math.sin(time * 0.05) * 2.5 + mouse.x * 3 + shakeX) * driftDamp
+      camera.position.y = baseY + introOffsetY + (mouse.y * 1.5 + Math.cos(time * 0.07) * 0.6 + shakeY) * driftDamp
+      camera.position.z = baseZ + introOffsetZ + Math.sin(time * 0.03) * 1.2 * intro
       camera.lookAt(0, 2.5 + sp * 1.4, -2)   // gaze rises slightly as we climb
+
+      // v58: Intro bloom + exposure flare — starts elevated, settles to normal
+      bloomPass.strength = cfg.bloomStrength + introFlare * 0.15
+      renderer.toneMappingExposure = cfg.exposure + introFlare * 0.12
 
       // cake rotate + star spin + scroll-driven reveal
       // As you scroll, the cake rotates an extra ~72° to reveal its back
