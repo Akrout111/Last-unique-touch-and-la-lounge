@@ -763,7 +763,9 @@
         "invalid_event_date": "Invalid event date.",
         "rate_limited": "Too many attempts. Please try again shortly.",
         "internal_error": "Something went wrong. Please try again.",
-        "network": "Could not submit the request. Please check your connection."
+        "network": "Could not submit the request. Please check your connection.",
+        "event_date_out_of_range": "Event date is too far in the future. Please choose a date within 18 months.",
+        "duplicate_request": "You have already submitted this request. Please wait a moment."
       },
       "bookEvent": "Book Your Event"
     },

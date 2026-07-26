@@ -177,7 +177,9 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
           'invalid_input',
           'invalid_json',
           'invalid_event_date',
+          'event_date_out_of_range',
           'rate_limited',
+          'duplicate_request',
           'internal_error',
         ]
         const key = knownCodes.includes(code) ? code : 'internal_error'

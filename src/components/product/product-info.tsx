@@ -84,7 +84,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
     if (!range?.from || !range?.to) return null
     const start = range.from
     const end = range.to
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return null
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return null
     return calculateRentalTotal(
       product.rentalPricePerDay,
       product.securityDeposit,
@@ -103,7 +103,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
     const start = new Date(startDate)
     const end = new Date(endDate)
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
       setAvailability('idle')
       return
     }

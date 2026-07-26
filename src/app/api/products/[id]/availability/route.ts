@@ -74,7 +74,7 @@ export async function GET(
     const startDate = new Date(parsed.data.startDate)
     const endDate = new Date(parsed.data.endDate)
 
-    if (endDate <= startDate) {
+    if (endDate < startDate) {
       return NextResponse.json(
         { error: 'invalid_range', message: 'End date must be after start date' },
         { status: 400 }

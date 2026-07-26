@@ -242,7 +242,8 @@ export async function POST(req: NextRequest) {
               throw new OrderError('invalid_dates', 400)
             }
             const msPerDay = 1000 * 60 * 60 * 24
-            const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
+            // v62: allow same-day rentals (minimum 1 day) — was <= 0 which rejected same-day
+            const calculatedDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay))
             if (calculatedDays <= 0) {
               throw new OrderError('invalid_dates', 400)
             }
