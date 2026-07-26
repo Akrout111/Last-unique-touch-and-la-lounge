@@ -263,11 +263,15 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
                     fontFamily: isRTL
                       ? 'var(--font-birthday-arabic), Cairo, sans-serif'
                       : 'var(--font-birthday-headline), Orbitron, sans-serif',
+                    background: 'linear-gradient(135deg, #FFCC00 0%, #FFD700 30%, #FFB6C1 60%, #E32636 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    filter: 'drop-shadow(0 0 24px rgba(255, 204, 0, 0.4)) drop-shadow(0 0 8px rgba(227, 38, 54, 0.3))',
                   }}
                 >
                   <span
                     ref={titleRef}
-                    className="text-primary-foreground"
                   >
                     {t('hero.title1')}
                   </span>
@@ -276,9 +280,11 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
 
               {/* Subtitle */}
               <p
-                className="text-base sm:text-lg md:text-xl text-primary-foreground/70 mb-10 max-w-2xl mx-auto leading-relaxed"
+                className="text-base sm:text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed"
                 style={{
                   fontFamily: isRTL ? 'var(--font-birthday-arabic)' : 'var(--font-birthday-sub)',
+                  color: '#FFB6C1',
+                  textShadow: '0 0 12px rgba(255, 182, 193, 0.5), 0 1px 3px rgba(0, 0, 0, 0.8)',
                 }}
               >
                 {t('hero.subtitle')}
