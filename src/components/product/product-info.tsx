@@ -270,7 +270,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
               max={30}
               disabled={[{ before: new Date() }]}
               dir={locale === 'ar' ? 'rtl' : 'ltr'}
-              locale={locale === 'ar' ? 'ar' : 'en'}
               numberOfMonths={1}
               className="rounded-md border border-border/50 p-4 bg-card shadow-luxury"
               style={{
