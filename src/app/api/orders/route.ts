@@ -286,7 +286,7 @@ export async function POST(req: NextRequest) {
             const startDate = new Date(item.startDate)
             const endDate = new Date(item.endDate)
             const msPerDay = 1000 * 60 * 60 * 24
-            const calculatedDays = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay)
+            const calculatedDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay))
             // Use the server-recomputed total (P0.2) — never trust client-supplied item.total.
             // V13 Group D2: replace non-null assertions with a guarded local variable.
             const p = txProducts.find((pr) => pr.id === item.productId)
