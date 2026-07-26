@@ -1740,7 +1740,7 @@ function Birthday3DBackground() {
         // subtle radius contract with scroll (gentle gather, not a fly-in)
         const rad = g.radius * (1 - sp * 0.05)
         // VERY slow orbit; scroll adds only a tiny energy boost
-        const a = time * (g.speed + sp * 0.02) + g.phase
+        const a = time * (g.speed + sp * 0.008) + g.phase   // v62: slowed sp boost
         g.group.position.x = Math.cos(a) * rad
         g.group.position.z = Math.sin(a) * rad - 2
         g.group.position.y = g.height + Math.sin(time * 0.5 + i) * 0.4
@@ -1839,7 +1839,7 @@ function Birthday3DBackground() {
         if (!v.userData.isBuilt) continue
         const dir = i === 1 ? -1 : 1
         // slow base spin + gentle scroll boost
-        v.rotation.y = time * (0.25 + i * 0.08 + sp * 0.15) * dir
+        v.rotation.y = time * (0.25 + i * 0.08 + sp * 0.05) * dir
         const baseZ = i === 1 ? -0.3 : 0.3
         v.rotation.z = baseZ + Math.sin(time * 0.4 + i) * 0.05
         v.rotation.x = -Math.PI / 8
@@ -1851,10 +1851,10 @@ function Birthday3DBackground() {
         const n = notes[i]
         if (!n.mesh.userData.isBuilt) continue
         // very slow base spin + tiny scroll boost
-        n.mesh.rotation.y = time * (n.spin + sp * 0.03) + n.offset
+        n.mesh.rotation.y = time * (n.spin + sp * 0.01) + n.offset
         n.mesh.rotation.z = Math.sin(time * 0.5 + n.offset) * 0.2
         n.mesh.position.x = n.basePos.x + Math.sin(time * 0.2 + n.offset) * 0.8
-        n.mesh.position.y = n.basePos.y + Math.sin(time * 0.35 + n.offset) * 0.7 + sp * 1.0
+        n.mesh.position.y = n.basePos.y + Math.sin(time * 0.35 + n.offset) * 0.7 + sp * 0.3
         n.mesh.position.z = n.basePos.z + Math.cos(time * 0.25 + n.offset) * 0.6
         // restore the per-note base scale (visible throughout)
         n.mesh.scale.setScalar(n.mesh.userData.noteScale as number)
@@ -1862,7 +1862,7 @@ function Birthday3DBackground() {
 
       // balloons breathe + bob + scroll-release (rise as you scroll)
       const breathe = 1 + beat * 0.04
-      const releaseY = sp * 4   // garland lifts up to 4 units by scroll end
+      const releaseY = sp * 1.5   // v62: slowed from 4 → 1.5 (was too fast)
       for (let i = 0; i < balloons.length; i++) {
         const b = balloons[i]
         if (!b.mesh.userData.isBuilt) continue
@@ -1873,7 +1873,7 @@ function Birthday3DBackground() {
       }
 
       // lanterns drift up (faster as you scroll — celebration lifts)
-      const lanternBoost = 1 + sp * 0.8
+      const lanternBoost = 1 + sp * 0.3   // v62: slowed from 0.8 → 0.3
       for (let i = 0; i < lanterns.length; i++) {
         const l = lanterns[i]
         if (!(l.mesh.material as THREE.Material).userData.isFaded) continue
@@ -1883,14 +1883,14 @@ function Birthday3DBackground() {
           l.mesh.position.y = -2
           l.mesh.position.x = (Math.random() - 0.5) * 30
         }
-        l.light.intensity = 1.2 + beat * 0.6 + sp * 0.5
+        l.light.intensity = 1.2 + beat * 0.6 + sp * 0.2
       }
 
       // confetti fall (denser/faster mid-scroll) + horizontal swirl
       if (confetti && confettiMat && confettiMat.userData.isFaded) {
         const arr = (confetti.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array
         const vel = confetti.userData.vel as number[]
-        const fallBoost = 1 + sp * 0.6
+        const fallBoost = 1 + sp * 0.2   // v62: slowed from 0.6 → 0.2
         // swirl strength grows with scroll (gentle vortex)
         const swirl = swell * 0.012
         for (let i = 0; i < cfg.confettiCount; i++) {
