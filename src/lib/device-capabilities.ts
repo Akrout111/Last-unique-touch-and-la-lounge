@@ -60,3 +60,60 @@ export function shouldEnable3D(): boolean {
 
   return true
 }
+
+/**
+ * Device tier for 3D scene quality scaling.
+ * - 'low': skip 3D entirely (CSS fallback)
+ * - 'mid': mobile / mid-range — reduced element counts, frame skipping
+ * - 'high': desktop / high-end — full quality, every frame
+ */
+export type DeviceTier = 'low' | 'mid' | 'high'
+
+/**
+ * Detects the device's capability tier for 3D rendering.
+ * Used by the birthday 3D background to scale quality.
+ */
+export function getDeviceTier(): DeviceTier {
+  if (typeof window === 'undefined') return 'low'
+
+  // Respect reduced-motion preference
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    return 'low'
+  }
+
+  // Require WebGL
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
+    if (!gl) return 'low'
+    const loseExt = gl.getExtension('WEBGL_lose_context')
+    loseExt?.loseContext()
+  } catch {
+    return 'low'
+  }
+
+  const nav = navigator as Navigator & { deviceMemory?: number }
+  const mem = nav.deviceMemory ?? 4
+  const cores = nav.hardwareConcurrency ?? 4
+
+  // Low-end: < 2 cores or < 2 GB
+  if (mem < MIN_MEMORY_GB_FOR_3D || cores < MIN_CORES_FOR_3D) return 'low'
+
+  // Mobile detection: narrow viewport or touch
+  const isMobileViewport = window.innerWidth < 768
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  // Mid-tier: mobile devices or low-core/mem desktops
+  if (isMobileViewport || isTouch || cores < 4 || mem < 4) return 'mid'
+
+  // High-tier: desktop with 4+ cores and 4+ GB
+  return 'high'
+}
+
+/**
+ * Checks if the user prefers reduced motion.
+ */
+export function isReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+}
