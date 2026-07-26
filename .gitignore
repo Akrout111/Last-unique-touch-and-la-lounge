@@ -50,3 +50,5 @@ agent-ctx/
 /blob-report/
 /playwright/.cache/
 dev.pid
+tail
+prisma/**/db/*.db

@@ -30,6 +30,13 @@ export async function GET(
 
   try {
     const { id } = await params
+    // v59: validate path param id (prevent oversized payloads)
+    if (!id || id.length > 100) {
+      return Response.json(
+        { error: 'invalid_input' },
+        { status: 400 }
+      )
+    }
     const url = new URL(req.url)
     const startDateStr = url.searchParams.get('startDate')
     const endDateStr = url.searchParams.get('endDate')

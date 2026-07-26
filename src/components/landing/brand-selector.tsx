@@ -175,7 +175,7 @@ export function BrandSelector() {
                           <ArrowIcon className="w-4 h-4" style={{ color: brand.accent }} />
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-paper/40">
+                        <div className="flex items-center gap-2 text-paper/60">
                           <Plus className="w-4 h-4" />
                           <span className="eyebrow">
                             {t('brandSelector.comingSoon')}

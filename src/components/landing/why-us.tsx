@@ -86,7 +86,7 @@ export function WhyUs() {
                 <h3 className="font-display text-2xl text-paper mb-3">
                   {t(`whyUs.items.${feature.key}.title`)}
                 </h3>
-                <p className="text-paper/40 text-sm leading-relaxed">
+                <p className="text-paper/60 text-sm leading-relaxed">
                   {t(`whyUs.items.${feature.key}.desc`)}
                 </p>
 

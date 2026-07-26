@@ -152,7 +152,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Phase 5 contrast: bumped from text-paper/40 → text-paper/60 for
+          {/* Phase 5 contrast: bumped from text-paper/60 → text-paper/60 for
               WCAG AA (4.5:1) on the bg-ink/90 backdrop-blur-sm charcoal footer. The eyebrow
               line below stays decorative (text-paper/30, "Crafted in Kuwait"). */}
           <p className="text-xs text-paper/60">

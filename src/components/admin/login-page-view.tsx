@@ -36,8 +36,8 @@ export function LoginPageView() {
         )
         setSubmitting(false)
       }
-    } catch (error) {
-      console.error('[auth] onSubmit error:', error)
+    } catch (err) {
+      console.error('[auth] onSubmit error:', err)
       setError(t('admin.login.serverError'))
       setSubmitting(false)
     }

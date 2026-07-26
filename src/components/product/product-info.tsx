@@ -24,67 +24,7 @@ import 'react-day-picker/src/style.css'
 
 // v59: react-day-picker v9 uses CSS custom properties for theming.
 // Override the default styles to match the site's design system.
-const dayPickerOverrides = `
-.rdp {
-  --rdp-accent-color: var(--primary, #8B6B3D);
-  --rdp-accent-background-color: color-mix(in srgb, var(--primary, #8B6B3D) 15%, transparent);
-  --rdp-day_button-border-radius: 0.375rem;
-  --rdp-day_button-width: 2.25rem;
-  --rdp-day_button-height: 2.25rem;
-  --rdp-day_button-font-size: 0.875rem;
-  --rdp-selected-border: 1px solid var(--primary, #8B6B3D);
-  --rdp-selected-background: var(--primary, #8B6B3D);
-  --rdp-selected-color: var(--primary-foreground, #fff);
-  --rdp-range_start-color: var(--primary-foreground, #fff);
-  --rdp-range_end-color: var(--primary-foreground, #fff);
-  --rdp-range_start-background: var(--primary, #8B6B3D);
-  --rdp-range_end-background: var(--primary, #8B6B3D);
-  --rdp-range_middle-color: var(--foreground, #0a0a0a);
-  --rdp-range_middle-background-opacity: 0.15;
-  --rdp-today-color: var(--primary, #8B6B3D);
-  --rdp-outside-opacity: 0.5;
-  --rdp-disabled-opacity: 0.3;
-  --rdp-month_caption-font-size: 0.95rem;
-  --rdp-month_caption-font-weight: 600;
-  --rdp-weekday-opacity: 0.6;
-  --rdp-weekday-font-size: 0.75rem;
-  --rdp-weekday-font-weight: 500;
-  margin: 0;
-}
-.rdp-month_caption {
-  color: var(--foreground, #0a0a0a);
-}
-.rdp-weekday {
-  color: var(--foreground, #0a0a0a);
-}
-.rdp-day_button {
-  color: var(--foreground, #0a0a0a);
-  font-weight: 400;
-  transition: background-color 0.15s, color 0.15s;
-}
-.rdp-day_button:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--primary, #8B6B3D) 10%, transparent);
-}
-.rdp-selected .rdp-day_button {
-  font-weight: 600;
-}
-.rdp-range_middle .rdp-day_button {
-  background-color: color-mix(in srgb, var(--primary, #8B6B3D) 12%, transparent);
-  border-radius: 0;
-}
-.rdp-today .rdp-day_button {
-  border: 1px solid var(--primary, #8B6B3D);
-}
-.rdp-button_previous,
-.rdp-button_next {
-  color: var(--foreground, #0a0a0a);
-  border-radius: 0.375rem;
-}
-.rdp-button_previous:hover,
-.rdp-button_next:hover {
-  background-color: color-mix(in srgb, var(--primary, #8B6B3D) 10%, transparent);
-}
-`
+
 
 const DayPicker = dynamic<DayPickerProps>(
   () => import('react-day-picker').then((m) => m.DayPicker),
@@ -273,8 +213,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
   return (
     <div className="space-y-5">
-      {/* v59: inject day-picker CSS overrides for proper styling on PC */}
-      <style dangerouslySetInnerHTML={{ __html: dayPickerOverrides }} />
       {/* Category + Name */}
       <div>
         <div className="flex items-center gap-2 mb-3">

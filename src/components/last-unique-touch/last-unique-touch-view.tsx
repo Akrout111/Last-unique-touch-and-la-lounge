@@ -95,7 +95,7 @@ export default function LastUniqueTouchView() {
 
         {/* Scroll hint */}
         <div
-          className="animate-hero-in absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-paper/40"
+          className="animate-hero-in absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-paper/60"
           style={{ animationDelay: '1.5s' }}
         >
           <ArrowDown className="w-5 h-5 animate-bounce" />
@@ -122,7 +122,7 @@ export default function LastUniqueTouchView() {
                   <Check className="w-7 h-7 text-gold" />
                 </div>
                 <h3 className="font-display text-xl text-paper mb-3">{service.title}</h3>
-                {/* Phase 5 contrast: bumped from text-paper/50 → text-paper/70 for WCAG AA on bg-transparent charcoal. */}
+                {/* Phase 5 contrast: bumped from text-paper/60 → text-paper/70 for WCAG AA on bg-transparent charcoal. */}
                 <p className="text-sm text-paper/70 leading-relaxed">{service.desc}</p>
               </div>
             ))}
@@ -137,7 +137,7 @@ export default function LastUniqueTouchView() {
             ].map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="font-display text-2xl sm:text-4xl text-gold tabular-nums">{stat.value}</div>
-                <div className="eyebrow text-paper/50 mt-1 text-[9px] sm:text-[11px]">{stat.label}</div>
+                <div className="eyebrow text-paper/60 mt-1 text-[9px] sm:text-[11px]">{stat.label}</div>
               </div>
             ))}
           </div>

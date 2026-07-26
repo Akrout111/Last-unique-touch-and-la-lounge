@@ -53,7 +53,7 @@ export function CTASection() {
             {t('cta.title')}
           </h2>
 
-          <p className="text-lg text-paper/50 max-w-xl mx-auto mb-12">
+          <p className="text-lg text-paper/60 max-w-xl mx-auto mb-12">
             {t('cta.subtitle')}
           </p>
 

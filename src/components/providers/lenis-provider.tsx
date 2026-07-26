@@ -2,14 +2,15 @@
 
 import { useEffect, useRef } from 'react'
 import Lenis from 'lenis'
-import { shouldEnable3D } from '@/lib/device-capabilities'
+import { shouldEnable3D, isReducedMotion } from '@/lib/device-capabilities'
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null)
 
   useEffect(() => {
     // Enable Lenis on ALL devices (PC + Mobile) if 3D is enabled
-    if (!shouldEnable3D()) return
+    // v59: also respect prefers-reduced-motion
+    if (!shouldEnable3D() || isReducedMotion()) return
 
     const lenis = new Lenis({
       duration: 1.2,
