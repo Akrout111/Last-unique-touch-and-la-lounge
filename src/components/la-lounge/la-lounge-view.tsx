@@ -100,8 +100,11 @@ export default function LaLoungeView() {
           </h1>
 
           <p
-            className="text-sm sm:text-base text-foreground/90 tracking-wide max-w-lg mb-8 font-medium"
-            style={{ textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}
+            className="text-sm sm:text-base tracking-wide max-w-lg mb-8 font-semibold"
+            style={{
+              color: '#1a1a2e',
+              textShadow: '0 1px 3px rgba(255,255,255,0.9), 0 0 8px rgba(255,255,255,0.6)',
+            }}
           >
             {t('laLounge.subtitle')}
           </p>
