@@ -1366,3 +1366,182 @@ h3 { font-size: clamp(1.125rem, 1rem + 0.75vw, 1.75rem); }
   background-color: color-mix(in srgb, var(--primary, #8B6B3D) 10%, transparent);
 }
 
+/* ========================================
+   LOADING PAGE ANIMATIONS — v60 premium polish
+   (Task: loading-screens)
+   New keyframes for redesigned loading screens.
+   All GPU-accelerated (transform / opacity only).
+   ======================================== */
+
+/* Main page — vertical beam descent + breathing ring + mandala + star burst + dot twinkle */
+@keyframes beam-descend {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateX(-50%) scaleY(0.9);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateX(-50%) scaleY(1.05);
+  }
+}
+@keyframes breath-ring {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+}
+@keyframes mandala-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@keyframes star-burst-rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+@keyframes dot-twinkle {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* LUT — light beam flicker + arch shimmer + ornament glow + pendant glow */
+@keyframes light-beam-flicker {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 0.65;
+  }
+  55% {
+    opacity: 0.4;
+  }
+  80% {
+    opacity: 0.7;
+  }
+}
+@keyframes arch-shimmer {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes ornament-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+@keyframes pendant-glow {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+}
+
+/* La Lounge — spotlight pulse + crystal facet flash + stage floor shimmer */
+@keyframes spotlight-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes crystal-facet-flash {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  40% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.85;
+  }
+}
+@keyframes stage-floor-shimmer {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1.08);
+  }
+}
+
+/* Your Birthday — streamer wave + gift bow bounce + sparkler burst + wish shimmer */
+@keyframes streamer-wave {
+  0%,
+  100% {
+    transform: translateX(-50%) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(-50%) rotate(2deg);
+  }
+}
+@keyframes gift-bow-bounce {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-4px) scale(1.04);
+  }
+}
+@keyframes sparkler-burst {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+@keyframes wish-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+

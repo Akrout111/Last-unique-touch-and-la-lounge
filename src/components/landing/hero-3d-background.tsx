@@ -113,7 +113,8 @@ export default function Hero3DBackground() {
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
       renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
+      // v63: lower pixelRatio on mobile to fix lag (2.0 → 1.5)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
       renderer.shadowMap.enabled = false
       renderer.toneMapping = THREE.ACESFilmicToneMapping
       // v50: reduced exposure 1.2 → 0.85 to dim the busy 3D scene per VLM analysis
@@ -1774,9 +1775,14 @@ export default function Hero3DBackground() {
       const depth = camDist * Math.cos(pitch)
 
       let sceneStartTime = 0
+      // v63: frame skipping on mobile to fix lag (render every 2nd frame)
+      let heroFrameCount = 0
 
       const animate = () => {
         frameId = requestAnimationFrame(animate)
+        heroFrameCount++
+        // On mobile, skip every other frame to halve GPU load
+        if (isMobile && heroFrameCount % 2 !== 0) return
         // Guard for TS: scene and renderer are assigned in the outer try-block;
         // they are non-null at runtime by the time animate() runs, but TS can't
         // see that across the closure boundary. Bail out (and let the next rAF

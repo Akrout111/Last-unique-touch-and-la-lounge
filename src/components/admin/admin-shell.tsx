@@ -72,6 +72,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     setActiveBrand(readBrandCookie())
   }, [])
 
+  // v63: set data-brand on <html> to match active admin brand so CSS
+  // variables (--primary, --background, etc.) apply per-brand in admin.
+  useEffect(() => {
+    const brandMap: Record<AdminBrandKey, string> = {
+      LUT: 'lut',
+      LA_LOUNGE: 'lalounge',
+      YOUR_BIRTHDAY: 'birthday',
+    }
+    document.documentElement.setAttribute('data-brand', brandMap[activeBrand] || 'lut')
+  }, [activeBrand])
+
   const navLinks = [
     { href: '/admin' as const, label: t('admin.nav.dashboard'), icon: LayoutDashboard },
     { href: '/admin/products' as const, label: t('admin.nav.products'), icon: Package },

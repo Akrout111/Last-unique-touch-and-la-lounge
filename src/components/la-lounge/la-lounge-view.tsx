@@ -168,7 +168,7 @@ export default function LaLoungeView() {
           {/* CTA */}
           <div className="text-center mt-12">
             <button
-              onClick={() => router.push('/contact')}
+              onClick={() => router.push('/la-lounge/contact')}
               className="px-10 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full tracking-wide text-sm font-medium shadow-[0_4px_20px_rgba(230, 0, 126,0.3)] transition-colors cursor-pointer"
             >
               {t('laLounge.contactButton')}
