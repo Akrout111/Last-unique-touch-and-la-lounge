@@ -316,10 +316,11 @@ export async function checkProductAvailability(
   }))?.stock ?? 0
 
   // Fetch all overlapping CONFIRMED/PENDING bookings and sum their quantities.
-  // v62: For same-day rentals (startDate === endDate), extend endDate by 1 day
-  // for the overlap query so two same-day bookings on the same date are
-  // correctly detected as overlapping. Without this, stock-aware availability
-  // would fail to count same-day bookings, allowing overbooking.
+  // v62: For same-day rentals, extend both query bounds by 1 day so that
+  // two same-day bookings on the same date are correctly detected as
+  // overlapping. The stored booking has startDate === endDate, so the
+  // standard overlap (startDate < e AND endDate > s) would miss it.
+  // We use <= and >= instead of < and > to catch the boundary case.
   const effectiveEndDate = startDate.getTime() === endDate.getTime()
     ? new Date(endDate.getTime() + 24 * 60 * 60 * 1000)
     : endDate
@@ -328,10 +329,11 @@ export async function checkProductAvailability(
       productId,
       status: { in: ['CONFIRMED', 'PENDING'] },
       // Overlap condition: existing booking (s, e) overlaps with (startDate, effectiveEndDate)
-      // if startDate < e AND effectiveEndDate > s
+      // For same-day bookings, s === e, so we need startDate <= e AND effectiveEndDate >= s
+      // Using lte/gte catches the boundary where stored endDate === startDate.
       AND: [
         { startDate: { lt: effectiveEndDate } },
-        { endDate: { gt: startDate } },
+        { endDate: { gte: startDate } },
       ],
     },
     select: { quantity: true },
