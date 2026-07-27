@@ -316,14 +316,21 @@ export async function checkProductAvailability(
   }))?.stock ?? 0
 
   // Fetch all overlapping CONFIRMED/PENDING bookings and sum their quantities.
+  // v62: For same-day rentals (startDate === endDate), extend endDate by 1 day
+  // for the overlap query so two same-day bookings on the same date are
+  // correctly detected as overlapping. Without this, stock-aware availability
+  // would fail to count same-day bookings, allowing overbooking.
+  const effectiveEndDate = startDate.getTime() === endDate.getTime()
+    ? new Date(endDate.getTime() + 24 * 60 * 60 * 1000)
+    : endDate
   const overlappingBookings = await db.booking.findMany({
     where: {
       productId,
       status: { in: ['CONFIRMED', 'PENDING'] },
-      // Overlap condition: existing booking (s, e) overlaps with (startDate, endDate)
-      // if startDate < e AND endDate > s
+      // Overlap condition: existing booking (s, e) overlaps with (startDate, effectiveEndDate)
+      // if startDate < e AND effectiveEndDate > s
       AND: [
-        { startDate: { lt: endDate } },
+        { startDate: { lt: effectiveEndDate } },
         { endDate: { gt: startDate } },
       ],
     },

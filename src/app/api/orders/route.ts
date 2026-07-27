@@ -96,14 +96,18 @@ async function checkStockAvailabilityInTx(
   // Fetch all overlapping CONFIRMED/PENDING bookings and sum their quantities.
   // We use findMany (not aggregate) because Prisma's SQLite aggregate sum
   // returns null on an empty set, which is awkward to handle.
+  // v62: For same-day rentals (startDate === endDate), extend endDate by 1 day
+  // for the overlap query so two same-day bookings are correctly detected.
+  const effectiveEndDate = startDate.getTime() === endDate.getTime()
+    ? new Date(endDate.getTime() + 24 * 60 * 60 * 1000)
+    : endDate
   const overlappingBookings = await tx.booking.findMany({
     where: {
       productId,
       status: { in: ['CONFIRMED', 'PENDING'] },
-      // Overlap condition: existing booking (s, e) overlaps with (startDate, endDate)
-      // if startDate < e AND endDate > s
+      // Overlap condition: existing booking (s, e) overlaps with (startDate, effectiveEndDate)
       AND: [
-        { startDate: { lt: endDate } },
+        { startDate: { lt: effectiveEndDate } },
         { endDate: { gt: startDate } },
       ],
     },
