@@ -114,7 +114,7 @@ export function ExperienceCard({
         }
       }}
       className={cn(
-        'mobile-card-slide card-scroll-anim relative w-full h-[140px] sm:h-[170px] md:h-[280px] lg:h-[320px] group flex items-center overflow-hidden',
+        'mobile-card-slide card-scroll-anim relative w-full h-[180px] sm:h-[200px] md:h-[280px] lg:h-[320px] group flex items-center overflow-hidden',
         isComingSoon ? 'cursor-default' : 'cursor-pointer',
         `card-scroll-${animState}`,
       )}

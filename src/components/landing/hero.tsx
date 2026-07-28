@@ -42,7 +42,7 @@ export function Hero() {
       {/* Top: Brand logo + tagline */}
       <motion.div
         style={{ opacity }}
-        className="relative z-40 pt-12 sm:pt-20 pb-1 sm:pb-4 text-center px-4 shrink-0"
+        className="relative z-40 pt-4 sm:pt-20 pb-1 sm:pb-4 text-center px-4 shrink-0"
       >
         <div
           className="animate-hero-down flex items-center justify-center gap-2 sm:gap-3 mb-2"
@@ -71,7 +71,7 @@ export function Hero() {
       </motion.div>
 
       {/* === Holo-Chamber Cards (3 brand entries — not branded as any single brand) === */}
-      <div className="relative z-20 flex-1 flex items-center px-3 sm:px-6 lg:px-8 py-2">
+      <div className="relative z-20 flex-1 flex items-center px-3 sm:px-6 lg:px-8 py-0 sm:py-2">
         <div className="w-full max-w-5xl mx-auto flex flex-col gap-2 md:gap-6 lg:gap-8">
           <ExperienceCard
             category={t('hero.categories.heritage')}
@@ -115,10 +115,10 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Bottom: Stats bar */}
+      {/* Bottom: Stats bar — hidden on mobile to ensure 3 cards fit without scroll */}
       <motion.div
         style={{ opacity }}
-        className="relative z-40 pb-2 sm:pb-6 px-4 shrink-0"
+        className="relative z-40 pb-2 sm:pb-6 px-4 shrink-0 hidden sm:block"
       >
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-4 sm:gap-12">
