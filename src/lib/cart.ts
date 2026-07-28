@@ -86,7 +86,8 @@ export function getCart(): CartItem[] {
       return validated.slice(0, MAX_CART_ITEMS)
     }
     return validated
-  } catch {
+  } catch (e) {
+    console.warn('[cart] failed to read cart:', e instanceof Error ? e.message : 'unknown')
     return []
   }
 }
