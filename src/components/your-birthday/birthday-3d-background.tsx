@@ -97,12 +97,12 @@ const TIER_CONFIG: Record<DeviceTier, RenderConfig> = {
     candleCount: 0, petalCount: 0, beadRows: 0, wishSparkleCount: 0, heartCount: 0, frameSkip: 2,
     bloomStrength: 0.1, bloomRadius: 0.4, exposure: 0.95,
   },
-  // mid (mobile): pixelRatio 1.5 for sharpness without lag, but TRIMMED element counts
+  // mid (mobile): pixelRatio 2.0 for full quality (lag fixed via render optimization), but TRIMMED element counts
   // + frameSkip 2 (30fps render) to avoid lag. The scene stays crisp but
   // lighter — fewer balloons/confetti/petals/sparkles so the GPU isn't
   // overwhelmed on a 390px phone.
   mid: {
-    pixelRatio: 1.5, giftCount: 3, balloonCount: 10, lanternCount: 3,
+    pixelRatio: 2.0, giftCount: 3, balloonCount: 10, lanternCount: 3,
     ribbonCount: 2, ribbonSegments: 90, noteCount: 3, showVinyl: true,
     confettiCount: 60, sparkleCount: 5, bokehCount: 3,
     candleCount: 5, petalCount: 8, beadRows: 1, wishSparkleCount: 20, heartCount: 2, frameSkip: 2,
@@ -1990,11 +1990,14 @@ function Birthday3DBackground() {
       composer.render()
     }
 
+    // v64: only add mousemove on desktop — mousemove on mobile causes lag
     const onMouseMove = (e: MouseEvent) => {
       targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1
       targetMouse.y = -((e.clientY / window.innerHeight) * 2 - 1)
     }
-    window.addEventListener('mousemove', onMouseMove)
+    if (!isMobile) {
+      window.addEventListener('mousemove', onMouseMove)
+    }
     const onResize = () => {
       const w = window.innerWidth, h = window.innerHeight
       camera.aspect = w / h

@@ -1545,3 +1545,65 @@ h3 { font-size: clamp(1.125rem, 1rem + 0.75vw, 1.75rem); }
   }
 }
 
+
+/* === v64: Admin panel per-brand color overrides === */
+/* The storefront uses dark themes for La Lounge + Birthday, but the admin */
+/* panel should use light backgrounds with brand accent colors. */
+
+/* Admin La Lounge: white bg + magenta accents */
+:root[data-brand='lalounge'] .bg-stone-950 {
+  background-color: #ffffff !important;
+}
+:root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground {
+  color: #1a1a2e !important;
+}
+:root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground\/70 {
+  color: rgba(26, 26, 46, 0.7) !important;
+}
+:root[data-brand='lalounge'] .bg-stone-950 .hover\:bg-white\/10:hover {
+  background-color: rgba(230, 0, 126, 0.1) !important;
+}
+:root[data-brand='lalounge'] .bg-stone-950 .hover\:text-primary-foreground:hover {
+  color: #E6007E !important;
+}
+
+/* Admin Birthday: white bg + gold/yellow accents */
+:root[data-brand='birthday'] .bg-stone-950 {
+  background-color: #ffffff !important;
+}
+:root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground {
+  color: #1a1a2e !important;
+}
+:root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground\/70 {
+  color: rgba(26, 26, 46, 0.7) !important;
+}
+:root[data-brand='birthday'] .bg-stone-950 .hover\:bg-white\/10:hover {
+  background-color: rgba(255, 204, 0, 0.15) !important;
+}
+:root[data-brand='birthday'] .bg-stone-950 .hover\:text-primary-foreground:hover {
+  color: #C9950E !important;
+}
+
+/* Admin La Lounge + Birthday: sidebar text dark, accent colored */
+:root[data-brand='lalounge'] .bg-stone-950 span[style*="color"],
+:root[data-brand='birthday'] .bg-stone-950 span[style*="color"] {
+  color: inherit !important;
+}
+
+/* Admin header bar for La Lounge + Birthday */
+:root[data-brand='lalounge'] .bg-card {
+  background-color: #FAFAFA !important;
+  border-color: #E6007E !important;
+}
+:root[data-brand='birthday'] .bg-card {
+  background-color: #FAFAFA !important;
+  border-color: #FFCC00 !important;
+}
+
+/* Admin content background for La Lounge + Birthday */
+:root[data-brand='lalounge'] .bg-background {
+  background-color: #FAFAFA !important;
+}
+:root[data-brand='birthday'] .bg-background {
+  background-color: #FAFAFA !important;
+}

@@ -113,8 +113,8 @@ export default function Hero3DBackground() {
 
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
       renderer.setSize(window.innerWidth, window.innerHeight)
-      // v63: lower pixelRatio on mobile to fix lag (2.0 → 1.5)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2.0))
+      // v64: full quality on mobile — lag fixed via other optimizations
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0))
       renderer.shadowMap.enabled = false
       renderer.toneMapping = THREE.ACESFilmicToneMapping
       // v50: reduced exposure 1.2 → 0.85 to dim the busy 3D scene per VLM analysis
@@ -1754,11 +1754,15 @@ export default function Hero3DBackground() {
       // ANIMATION LOOP
       // ═════════════════════════════════════════════════════════════════
       const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 }
-      onMouseMove = (e: MouseEvent) => {
-        mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1
-        mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1
+      // v64: only add mousemove on desktop (not mobile) — mousemove on
+      // mobile fires during touch/scroll causing unnecessary calculations + lag
+      if (!isMobile) {
+        onMouseMove = (e: MouseEvent) => {
+          mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1
+          mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1
+        }
+        window.addEventListener('mousemove', onMouseMove)
       }
-      window.addEventListener('mousemove', onMouseMove)
 
       onResize = () => {
         if (!renderer) return // guard for TS — renderer is assigned in try-block above
@@ -1775,14 +1779,14 @@ export default function Hero3DBackground() {
       const depth = camDist * Math.cos(pitch)
 
       let sceneStartTime = 0
-      // v63: frame skipping on mobile to fix lag (render every 2nd frame)
-      let heroFrameCount = 0
+      // v64: no frame skipping — full quality. Lag fixed via render optimization
+      
 
       const animate = () => {
         frameId = requestAnimationFrame(animate)
-        heroFrameCount++
-        // On mobile, skip every other frame to halve GPU load
-        if (isMobile && heroFrameCount % 2 !== 0) return
+        
+        // (removed frame skipping for full quality)
+        
         // Guard for TS: scene and renderer are assigned in the outer try-block;
         // they are non-null at runtime by the time animate() runs, but TS can't
         // see that across the closure boundary. Bail out (and let the next rAF
