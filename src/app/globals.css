@@ -1545,65 +1545,43 @@ h3 { font-size: clamp(1.125rem, 1rem + 0.75vw, 1.75rem); }
   }
 }
 
+/* === v65: Admin panel — same dark theme as LUT, accent color per brand === */
+/* LUT stays as-is (dark + gold). La Lounge = dark + pink. Birthday = dark + gold/yellow. */
+/* The admin-shell already sets data-brand on <html>. The --primary CSS variable */
+/* already changes per brand. We just need the sidebar bg to stay dark for all brands. */
+/* (Previously v64 tried to make La Lounge + Birthday admin panels white, but user */
+/* wants them same as LUT but with pink/yellow accents instead of gold.) */
 
-/* === v64: Admin panel per-brand color overrides === */
-/* The storefront uses dark themes for La Lounge + Birthday, but the admin */
-/* panel should use light backgrounds with brand accent colors. */
-
-/* Admin La Lounge: white bg + magenta accents */
-:root[data-brand='lalounge'] .bg-stone-950 {
-  background-color: #ffffff !important;
+/* Ensure admin sidebar stays dark for all brands (remove any white overrides) */
+:root[data-brand='lalounge'] .bg-stone-950,
+:root[data-brand='birthday'] .bg-stone-950 {
+  background-color: #0c0a09 !important; /* stone-950 — same as LUT */
 }
+
+/* La Lounge admin: pink accent on active nav items + brand label */
 :root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground {
-  color: #1a1a2e !important;
-}
-:root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground\/70 {
-  color: rgba(26, 26, 46, 0.7) !important;
+  color: #faf6ef !important;
 }
 :root[data-brand='lalounge'] .bg-stone-950 .hover\:bg-white\/10:hover {
-  background-color: rgba(230, 0, 126, 0.1) !important;
-}
-:root[data-brand='lalounge'] .bg-stone-950 .hover\:text-primary-foreground:hover {
-  color: #E6007E !important;
+  background-color: rgba(230, 0, 126, 0.15) !important;
 }
 
-/* Admin Birthday: white bg + gold/yellow accents */
-:root[data-brand='birthday'] .bg-stone-950 {
-  background-color: #ffffff !important;
-}
+/* Birthday admin: gold accent on active nav items + brand label */
 :root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground {
-  color: #1a1a2e !important;
-}
-:root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground\/70 {
-  color: rgba(26, 26, 46, 0.7) !important;
+  color: #faf6ef !important;
 }
 :root[data-brand='birthday'] .bg-stone-950 .hover\:bg-white\/10:hover {
   background-color: rgba(255, 204, 0, 0.15) !important;
 }
-:root[data-brand='birthday'] .bg-stone-950 .hover\:text-primary-foreground:hover {
-  color: #C9950E !important;
-}
 
-/* Admin La Lounge + Birthday: sidebar text dark, accent colored */
-:root[data-brand='lalounge'] .bg-stone-950 span[style*="color"],
-:root[data-brand='birthday'] .bg-stone-950 span[style*="color"] {
-  color: inherit !important;
-}
-
-/* Admin header bar for La Lounge + Birthday */
-:root[data-brand='lalounge'] .bg-card {
-  background-color: #FAFAFA !important;
-  border-color: #E6007E !important;
-}
+/* Admin header + content: keep dark for all brands */
+:root[data-brand='lalounge'] .bg-card,
 :root[data-brand='birthday'] .bg-card {
-  background-color: #FAFAFA !important;
-  border-color: #FFCC00 !important;
+  background-color: #1c1917 !important; /* stone-900 — same as LUT */
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Admin content background for La Lounge + Birthday */
-:root[data-brand='lalounge'] .bg-background {
-  background-color: #FAFAFA !important;
-}
+:root[data-brand='lalounge'] .bg-background,
 :root[data-brand='birthday'] .bg-background {
-  background-color: #FAFAFA !important;
+  background-color: #0c0a09 !important; /* stone-950 — same as LUT */
 }
