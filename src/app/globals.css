@@ -1545,27 +1545,43 @@ h3 { font-size: clamp(1.125rem, 1rem + 0.75vw, 1.75rem); }
   }
 }
 
-/* === v66: Admin panel — white content like LUT, dark sidebar, brand accent === */
-/* The admin sidebar (bg-stone-950) stays dark for all brands. The main content */
-/* area (bg-background) and header (bg-card) should be white/light like LUT. */
-/* Only the accent color (active nav, brand label, hover) changes per brand. */
+/* === v67: Admin panel — white content + dark text like LUT for all brands === */
+/* The admin sidebar (bg-stone-950) stays dark with light text. */
+/* The admin content area (bg-background, bg-card) is white with DARK text. */
+/* Problem: La Lounge + Birthday have --foreground: #faf6ef (light) which is */
+/* invisible on white. Fix: override foreground vars to dark for admin content. */
 
-/* La Lounge admin: white content + dark sidebar + pink accent */
+/* La Lounge admin content: white bg + dark text + pink accent */
 :root[data-brand='lalounge'] .bg-background {
-  background-color: #faf6ef !important; /* same ivory as LUT */
+  background-color: #faf6ef !important;
+  --foreground: #0a0a0a;
+  --color-foreground: #0a0a0a;
+  --card-foreground: #0a0a0a;
+  --color-card-foreground: #0a0a0a;
+  --popover-foreground: #0a0a0a;
 }
 :root[data-brand='lalounge'] .bg-card {
   background-color: #ffffff !important;
   border-color: #e5e5e5 !important;
+  --foreground: #0a0a0a;
+  --color-foreground: #0a0a0a;
+  --card-foreground: #0a0a0a;
+  --color-card-foreground: #0a0a0a;
 }
 :root[data-brand='lalounge'] .bg-stone-950 {
-  background-color: #0c0a09 !important; /* dark sidebar */
+  background-color: #0c0a09 !important;
 }
 :root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground {
   color: #faf6ef !important;
 }
 :root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground\/70 {
   color: rgba(250, 246, 239, 0.7) !important;
+}
+:root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground\/50 {
+  color: rgba(250, 246, 239, 0.5) !important;
+}
+:root[data-brand='lalounge'] .bg-stone-950 .text-primary-foreground\/40 {
+  color: rgba(250, 246, 239, 0.4) !important;
 }
 :root[data-brand='lalounge'] .bg-stone-950 .hover\:bg-white\/10:hover {
   background-color: rgba(230, 0, 126, 0.15) !important;
@@ -1574,22 +1590,37 @@ h3 { font-size: clamp(1.125rem, 1rem + 0.75vw, 1.75rem); }
   color: #E6007E !important;
 }
 
-/* Birthday admin: white content + dark sidebar + gold accent */
+/* Birthday admin content: white bg + dark text + gold accent */
 :root[data-brand='birthday'] .bg-background {
-  background-color: #faf6ef !important; /* same ivory as LUT */
+  background-color: #faf6ef !important;
+  --foreground: #0a0a0a;
+  --color-foreground: #0a0a0a;
+  --card-foreground: #0a0a0a;
+  --color-card-foreground: #0a0a0a;
+  --popover-foreground: #0a0a0a;
 }
 :root[data-brand='birthday'] .bg-card {
   background-color: #ffffff !important;
   border-color: #e5e5e5 !important;
+  --foreground: #0a0a0a;
+  --color-foreground: #0a0a0a;
+  --card-foreground: #0a0a0a;
+  --color-card-foreground: #0a0a0a;
 }
 :root[data-brand='birthday'] .bg-stone-950 {
-  background-color: #0c0a09 !important; /* dark sidebar */
+  background-color: #0c0a09 !important;
 }
 :root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground {
   color: #faf6ef !important;
 }
 :root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground\/70 {
   color: rgba(250, 246, 239, 0.7) !important;
+}
+:root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground\/50 {
+  color: rgba(250, 246, 239, 0.5) !important;
+}
+:root[data-brand='birthday'] .bg-stone-950 .text-primary-foreground\/40 {
+  color: rgba(250, 246, 239, 0.4) !important;
 }
 :root[data-brand='birthday'] .bg-stone-950 .hover\:bg-white\/10:hover {
   background-color: rgba(255, 204, 0, 0.15) !important;
