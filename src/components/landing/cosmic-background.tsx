@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, react-hooks/exhaustive-deps, @typescript-eslint/prefer-as-const, @typescript-eslint/no-unused-vars, no-empty */
-import React, { useEffect, useRef, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/prefer-as-const, @typescript-eslint/no-unused-vars, no-empty */
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 // ============ SHADERS ============
@@ -158,8 +158,6 @@ const styles = {
 // ============ المكون الرئيسي ============
 const CosmicBackground: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<'pc' | 'mobile'>('pc');
-  const [showControls, setShowControls] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -183,7 +181,7 @@ const CosmicBackground: React.FC = () => {
     const initScene = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
-      const isMobile = viewMode === 'mobile';
+      const isMobile = window.innerWidth < 768;
       const dpr = Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2);
 
       scene = new THREE.Scene();
@@ -368,7 +366,7 @@ const CosmicBackground: React.FC = () => {
             ring.pMat.opacity = 0.85 * eased;
           });
         } else {
-          if (!showControls) setShowControls(true);
+
           
           renderer.toneMappingExposure = 1.12;
           camera.fov = 55;
@@ -420,7 +418,7 @@ const CosmicBackground: React.FC = () => {
 
     const cleanup = initScene();
     return cleanup;
-  }, [viewMode]);
+  }, []);
 
   return (
     <>
