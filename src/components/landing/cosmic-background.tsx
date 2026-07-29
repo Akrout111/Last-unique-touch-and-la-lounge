@@ -426,27 +426,8 @@ const CosmicBackground: React.FC = () => {
     <>
       <div 
         ref={containerRef} 
-        style={viewMode === 'mobile' ? { ...styles.container, ...styles.mobileView } : styles.container} 
+        style={styles.container} 
       />
-      
-      <div style={styles.overlay(1000, `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`, 0.035, 'overlay')} />
-      <div style={styles.overlay(900, 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(3,1,8,0.6) 75%, rgba(3,1,8,0.95) 100%)')} />
-      <div style={styles.overlay(850, 'radial-gradient(ellipse at 15% 15%, rgba(245,185,20,0.08) 0%, transparent 50%), radial-gradient(ellipse at 85% 85%, rgba(126,34,206,0.1) 0%, transparent 50%)', 1, 'overlay')} />
-
-      <div style={styles.controls(showControls)}>
-        <button 
-          style={styles.btn(viewMode === 'pc')} 
-          onClick={() => setViewMode('pc')}
-        >
-          منظور الكمبيوتر
-        </button>
-        <button 
-          style={styles.btn(viewMode === 'mobile')} 
-          onClick={() => setViewMode('mobile')}
-        >
-          منظور الهاتف
-        </button>
-      </div>
     </>
   );
 };
