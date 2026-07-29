@@ -1,9 +1,9 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { ArrowDown, ClipboardList, Armchair, Sparkles, type LucideIcon } from 'lucide-react'
-import { useRouter } from '@/i18n/routing'
-import { useTranslations } from 'next-intl'
+import { ArrowDown, ClipboardList, Armchair, Sparkles, ArrowRight, ArrowLeft, type LucideIcon } from 'lucide-react'
+import { useRouter, Link } from '@/i18n/routing'
+import { useTranslations, useLocale } from 'next-intl'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 // v31-build-B6: lazy-load the new vanilla-Three.js event-blueprint scene.
@@ -18,41 +18,55 @@ const LaLounge3DBackground = dynamic(() => import('./la-lounge-3d-background'), 
 export default function LaLoungeView() {
   const router = useRouter()
   const t = useTranslations()
+  const locale = useLocale()
 
-  // V10 user request: added examples for each service to show concrete
-  // items/events the customer can expect.
-  const services: Array<{ title: string; desc: string; icon: LucideIcon; examples: string[] }> = [
+  // Task 3: three La Lounge services, each linking to its own feature page.
+  //   1. Custom Furniture Manufacturing   → /la-lounge/custom-furniture
+  //   2. Complete Event Planning & Execution → /la-lounge/event-planning
+  //   3. Ready-Made Plans Execution       → /la-lounge/ready-plans
+  const ArrowIcon = locale === 'ar' ? ArrowLeft : ArrowRight
+
+  const services: Array<{
+    title: string
+    desc: string
+    icon: LucideIcon
+    examples: string[]
+    href: string
+  }> = [
     {
-      title: t('laLounge.services.planning.title'),
-      desc: t('laLounge.services.planning.desc'),
-      icon: ClipboardList,
-      examples: [
-        t('laLounge.services.planning.ex1'),
-        t('laLounge.services.planning.ex2'),
-        t('laLounge.services.planning.ex3'),
-        t('laLounge.services.planning.ex4'),
-      ],
-    },
-    {
-      title: t('laLounge.services.furniture.title'),
-      desc: t('laLounge.services.furniture.desc'),
+      title: t('laLounge.services.customFurniture.title'),
+      desc: t('laLounge.services.customFurniture.desc'),
       icon: Armchair,
+      href: '/la-lounge/custom-furniture',
       examples: [
-        t('laLounge.services.furniture.ex1'),
-        t('laLounge.services.furniture.ex2'),
-        t('laLounge.services.furniture.ex3'),
-        t('laLounge.services.furniture.ex4'),
+        t('laLounge.services.customFurniture.ex1'),
+        t('laLounge.services.customFurniture.ex2'),
+        t('laLounge.services.customFurniture.ex3'),
+        t('laLounge.services.customFurniture.ex4'),
       ],
     },
     {
-      title: t('laLounge.services.custom.title'),
-      desc: t('laLounge.services.custom.desc'),
-      icon: Sparkles,
+      title: t('laLounge.services.eventPlanning.title'),
+      desc: t('laLounge.services.eventPlanning.desc'),
+      icon: ClipboardList,
+      href: '/la-lounge/event-planning',
       examples: [
-        t('laLounge.services.custom.ex1'),
-        t('laLounge.services.custom.ex2'),
-        t('laLounge.services.custom.ex3'),
-        t('laLounge.services.custom.ex4'),
+        t('laLounge.services.eventPlanning.ex1'),
+        t('laLounge.services.eventPlanning.ex2'),
+        t('laLounge.services.eventPlanning.ex3'),
+        t('laLounge.services.eventPlanning.ex4'),
+      ],
+    },
+    {
+      title: t('laLounge.services.readyPlans.title'),
+      desc: t('laLounge.services.readyPlans.desc'),
+      icon: Sparkles,
+      href: '/la-lounge/ready-plans',
+      examples: [
+        t('laLounge.services.readyPlans.ex1'),
+        t('laLounge.services.readyPlans.ex2'),
+        t('laLounge.services.readyPlans.ex3'),
+        t('laLounge.services.readyPlans.ex4'),
       ],
     },
   ]
@@ -144,7 +158,7 @@ export default function LaLoungeView() {
               return (
                 <div
                   key={i}
-                  className="bg-card/80 backdrop-blur-md border border-primary/10 rounded-lg p-8 text-center hover:shadow-lg transition-shadow"
+                  className="bg-card/80 backdrop-blur-md border border-primary/10 rounded-lg p-8 text-center hover:shadow-lg transition-shadow flex flex-col"
                 >
                   <div className="flex items-center justify-center mb-5 text-primary">
                     <Icon className="size-6" />
@@ -160,6 +174,14 @@ export default function LaLoungeView() {
                       </li>
                     ))}
                   </ul>
+                  {/* Task 3a: "Learn More" button → service feature page */}
+                  <Link
+                    href={service.href}
+                    className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    {t('laLounge.learnMore')}
+                    <ArrowIcon className="size-3.5" />
+                  </Link>
                 </div>
               )
             })}

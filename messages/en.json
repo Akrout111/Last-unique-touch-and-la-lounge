@@ -616,30 +616,228 @@
     "servicesTitle": "What We Offer",
     "servicesSubtitle": "Three integrated services to prepare your event from A to Z",
     "contactButton": "Contact Us",
+    "learnMore": "Learn More",
     "services": {
-      "planning": {
-        "title": "Planning & Setup",
-        "desc": "Complete event planning from concept to execution — innovative designs, site management, and full coordination",
+      "customFurniture": {
+        "title": "Custom Furniture Manufacturing",
+        "desc": "Custom furniture manufactured to order — unique pieces designed and built specifically for your event, reflecting your vision and brand",
+        "ex1": "Custom Platforms",
+        "ex2": "Themed Stage Decor",
+        "ex3": "Bespoke Seating",
+        "ex4": "Exclusive Signature Pieces"
+      },
+      "eventPlanning": {
+        "title": "Complete Event Planning & Execution",
+        "desc": "End-to-end event planning from first concept to last guest — with the ability to build and execute the plan in full",
         "ex1": "Weddings",
-        "ex2": "Corporate Events",
+        "ex2": "Corporate Galas",
         "ex3": "Fashion Shows",
         "ex4": "Conferences"
       },
-      "furniture": {
-        "title": "Furniture Supply",
-        "desc": "Wide range of luxury event furniture — chairs, tables, sofas, tents, and lighting systems",
-        "ex1": "Gold Chiavari Chairs",
-        "ex2": "Cocktail Tables",
-        "ex3": "Luxury Sofas",
-        "ex4": "Display Platforms"
+      "readyPlans": {
+        "title": "Ready-Made Plans Execution",
+        "desc": "Already have a finished plan in hand? Bring it to us and we will execute it flawlessly — turning your blueprint into reality",
+        "ex1": "Designer Floor Plans",
+        "ex2": "Mood Board Concepts",
+        "ex3": "Vendor Layouts",
+        "ex4": "Pre-Built Schematics"
+      }
+    }
+  },
+  "laLoungeCustomFurniture": {
+    "eyebrow": "La Lounge · Bespoke Manufacturing",
+    "title": "Custom Furniture Manufacturing",
+    "subtitle": "Bespoke furniture crafted to your exact specifications — from the first concept sketch to the final installation on your event floor.",
+    "ctaButton": "Start Your Custom Project",
+    "process": {
+      "title": "Our Manufacturing Process",
+      "subtitle": "Five meticulous steps that turn a sketch into a finished piece"
+    },
+    "steps": {
+      "s1": {
+        "title": "Planning & Design",
+        "desc": "We sit with you to understand the vision, the venue, and the mood. Our designers translate that brief into detailed concept sketches, 3D renders, and material mood boards for your approval."
       },
-      "custom": {
-        "title": "Custom Furniture Making",
-        "desc": "Design and manufacture custom furniture tailored to your event — unique pieces that reflect your occasion",
-        "ex1": "Custom Platforms",
-        "ex2": "Stage Decor",
-        "ex3": "Themed Furniture",
-        "ex4": "Exclusive Designs"
+      "s2": {
+        "title": "Material Selection",
+        "desc": "From solid walnut to brushed brass, from velvet to acrylic — we present a curated palette of premium materials and finishes, each chosen to match your design intent and budget."
+      },
+      "s3": {
+        "title": "Manufacturing",
+        "desc": "Our master craftsmen build every piece by hand in our Kuwait workshop. Welding, joinery, upholstery, and finishing are carried out under one roof for full quality control."
+      },
+      "s4": {
+        "title": "Quality Control",
+        "desc": "Every piece passes a multi-point inspection — structural integrity, finish uniformity, dimensions, and weight capacity — before it is signed off for delivery."
+      },
+      "s5": {
+        "title": "Delivery & Installation",
+        "desc": "White-glove delivery to your venue, on-site assembly by our installation crew, and final positioning per your floor plan. We stay until every piece is exactly where it should be."
+      }
+    },
+    "examples": {
+      "title": "Examples of Our Custom Work",
+      "subtitle": "A glimpse of the kinds of bespoke pieces we manufacture for clients",
+      "items": {
+        "i1": {
+          "name": "Velvet Bombon Chair",
+          "desc": "Upholstered in jewel-tone velvet with a gold-leaf frame."
+        },
+        "i2": {
+          "name": "Marble Coffee Table",
+          "desc": "Honed Carrara marble top on a hand-forged brass base."
+        },
+        "i3": {
+          "name": "Louis Ghost Acrylic Chair",
+          "desc": "Crystal-clear cast acrylic with a hand-polished edge."
+        },
+        "i4": {
+          "name": "Gold Side Table",
+          "desc": "Spun-brass top with a tapered marble plinth."
+        },
+        "i5": {
+          "name": "12-Seater Dining Table",
+          "desc": "Live-edge walnut slab on a blackened-steel trestle."
+        },
+        "i6": {
+          "name": "Crystal Chandelier",
+          "desc": "Custom-tiered chandelier with hand-strung crystal drops."
+        }
+      }
+    }
+  },
+  "laLoungeEventPlanning": {
+    "eyebrow": "La Lounge · End-to-End Planning",
+    "title": "Complete Event Planning & Execution",
+    "subtitle": "From the first concept conversation to the last guest leaving — we plan, build, and execute your event in full, so every detail lands exactly as it should.",
+    "ctaButton": "Plan Your Event With Us",
+    "process": {
+      "title": "Our Planning Process",
+      "subtitle": "Five phases that take your event from idea to aftermath"
+    },
+    "steps": {
+      "s1": {
+        "title": "Initial Consultation",
+        "desc": "A deep-dive session to understand your goals, audience, budget, and aesthetic. We listen first, then advise on what is achievable and where to invest for impact."
+      },
+      "s2": {
+        "title": "Concept Development",
+        "desc": "We translate the brief into a creative direction — theme, colour story, mood boards, and a high-level event flow. You sign off on the creative before we move on."
+      },
+      "s3": {
+        "title": "Detailed Planning",
+        "desc": "Floor plans, vendor sourcing, run-of-show, logistics, permits, and a production schedule. Every decision is documented, costed, and aligned with the signed-off concept."
+      },
+      "s4": {
+        "title": "Execution",
+        "desc": "On event day, our production crew runs the show — setup, talent coordination, guest flow, and teardown. You host; we manage the backstage."
+      },
+      "s5": {
+        "title": "Post-Event",
+        "desc": "Settlement with vendors, photography delivery, feedback review, and an archived playbook so your next event starts from a stronger baseline."
+      }
+    },
+    "scenarios": {
+      "title": "Example Event Scenarios",
+      "subtitle": "Three representative events we plan and execute end-to-end",
+      "items": {
+        "i1": {
+          "name": "Corporate Gala",
+          "desc": "Annual partner dinner for 300 guests — keynote stage, awards moment, plated dinner, and a branded after-party lounge."
+        },
+        "i2": {
+          "name": "Wedding Reception",
+          "desc": "Two-day celebration — ceremonial mandap on day one, banquet reception for 500 on day two, with full floral, lighting, and furniture design."
+        },
+        "i3": {
+          "name": "Product Launch",
+          "desc": "Press and VIP reveal for a luxury brand — immersive entry tunnel, plinth reveal, and a cocktail reception with curated music."
+        }
+      }
+    },
+    "beforeAfter": {
+      "title": "Before & After",
+      "subtitle": "How an empty venue transforms under our planning",
+      "before": "Before",
+      "after": "After",
+      "items": {
+        "i1": {
+          "name": "Empty Ballroom",
+          "desc": "A 600 m² ballroom, bare walls and concrete floor."
+        },
+        "i2": {
+          "name": "Designed Reception",
+          "desc": "Same ballroom, dressed in magenta uplighting, gold chiavari seating, and a crystal-curtain backdrop."
+        },
+        "i3": {
+          "name": "Empty Terrace",
+          "desc": "An open-air terrace at sunset, no furniture or styling."
+        },
+        "i4": {
+          "name": "Lounge Setup",
+          "desc": "Same terrace, transformed into a candle-lit lounge with low sofas, brass lanterns, and a live oud corner."
+        }
+      }
+    }
+  },
+  "laLoungeReadyPlans": {
+    "eyebrow": "La Lounge · Ready-Made Plans",
+    "title": "Ready-Made Plans Execution",
+    "subtitle": "Already have a finished plan in hand — a designer's floor plan, a mood board, a vendor layout, or a full schematic? Bring it to us and we will execute it flawlessly, end to end.",
+    "ctaButton": "Bring Us Your Plan",
+    "plansTitle": "Pre-Made Event Plans",
+    "plansSubtitle": "Or start from one of our curated ready-made plans — each one a complete blueprint you can request as-is or adapt.",
+    "includedLabel": "What's Included",
+    "priceLabel": "Price Range",
+    "requestButton": "Request This Plan",
+    "plans": {
+      "classic": {
+        "name": "Classic Elegance",
+        "desc": "Timeless formal styling — ivory linens, gold chiavari chairs, crystal chandeliers, and a soft white-floral palette. The safe-luxury choice for weddings and state dinners.",
+        "includes": [
+          "Gold chiavari seating for up to 200",
+          "Crystal chandeliers and gold uplighting",
+          "Ivory linen and porcelain tableware",
+          "White floral centerpieces",
+          "Standard dance floor and stage"
+        ],
+        "price": "KWD 4,500 – 7,500"
+      },
+      "modern": {
+        "name": "Modern Glamour",
+        "desc": "Bold and contemporary — magenta uplighting, ghost-acrylic seating, mirror-top tables, and a moody dark floral palette. Built for fashion launches and brand activations.",
+        "includes": [
+          "Louis ghost acrylic seating for up to 150",
+          "Magenta LED uplighting and haze",
+          "Mirror-top cocktail and dining tables",
+          "Dark floral installations",
+          "LED dance floor and DJ booth"
+        ],
+        "price": "KWD 6,000 – 10,000"
+      },
+      "cultural": {
+        "name": "Cultural Heritage",
+        "desc": "Kuwaiti-Gulf inspired — brass lanterns, woven sadu textiles, low majlis seating, and a warm amber-and-saffron palette. Ideal for Ramadan iftars, henna nights, and heritage celebrations.",
+        "includes": [
+          "Low majlis seating for up to 120",
+          "Brass lanterns and amber uplighting",
+          "Sadu and silk textile styling",
+          "Traditional Arabian coffee service",
+          "Live oud corner with staging"
+        ],
+        "price": "KWD 3,500 – 6,000"
+      },
+      "minimalist": {
+        "name": "Minimalist Chic",
+        "desc": "Quiet and architectural — single-tone palette, clean-line furniture, and a single statement floral moment. Suited to intimate dinners, brand salons, and editorial shoots.",
+        "includes": [
+          "Monet armchair seating for up to 80",
+          "Single-tone palette with one accent",
+          "Sculptural floral moment",
+          "Marble-top dining tables",
+          "Soft warm-white spot lighting"
+        ],
+        "price": "KWD 2,500 – 4,500"
       }
     }
   },
@@ -647,6 +845,10 @@
     "eyebrow": "Curated For This Season",
     "subtitle": "Carefully selected pieces to add a luxurious touch to your events",
     "viewDetails": "View Details"
+  },
+  "yourBirthdayProducts": {
+    "title": "Birthday Products",
+    "subtitle": "Premium party rentals for unforgettable celebrations"
   },
   "yourBirthday": {
     "loading": {
@@ -657,6 +859,12 @@
       "top": "Back to top",
       "brand": "Your Birthday",
       "langToggle": "عربي"
+    },
+    "featuredProducts": {
+      "title": "Featured Products",
+      "subtitle": "Hand-picked party rentals to make your celebration unforgettable",
+      "viewAll": "View All Products",
+      "perDay": "KWD / day"
     },
     "hero": {
       "tagline": "Party Equipment & Setup",

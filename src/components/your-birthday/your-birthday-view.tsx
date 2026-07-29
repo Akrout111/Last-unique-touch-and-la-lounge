@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
+import { useRouter, Link } from '@/i18n/routing'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Phone,
@@ -16,9 +17,13 @@ import {
   PartyPopper,
   Loader2,
   AlertCircle,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react'
 import { TextScramble } from './text-scramble'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { localizedName } from '@/lib/products'
+import { formatPrice } from '@/lib/format'
 
 // v30-build-B5: Lazy-load Birthday3DBackground so Three.js (~150KB) stays out
 // of the initial JS bundle. ssr:false because WebGL only exists in browsers.
@@ -29,18 +34,55 @@ const Birthday3DBackground = dynamic(() => import('./birthday-3d-background'), {
   loading: () => null,
 })
 
+/**
+ * JSON-safe product payload passed from the server (page.tsx) to this client
+ * view. Mirrors a subset of `ProductWithImages` (no Date fields, so it crosses
+ * the server→client boundary cleanly) — only the fields the featured-products
+ * preview card needs.
+ */
+export interface FeaturedProduct {
+  id: string
+  slug: string
+  nameAr: string
+  nameEn: string
+  descriptionAr: string
+  descriptionEn: string
+  rentalPricePerDay: number
+  securityDeposit: number
+  images: string[]
+  model3dUrl: string | null
+  stock: number
+  category: {
+    nameAr: string
+    nameEn: string
+    slug: string
+  }
+}
+
 interface YourBirthdayViewProps {
   // by the [locale]/layout.tsx) provides Home / Products / About / Contact
   // links and the wordmark links home. Kept in the interface (optional) so
   // existing callers (`page-client.tsx`) don't break — passing it is a no-op.
   onBack?: () => void
+  /**
+   * Up to 4 YOUR_BIRTHDAY products fetched server-side in page.tsx and
+   * rendered in the "Featured Products" preview section. Empty/undefined
+   * collapses the section so the layout still works when the DB has no
+   * birthday products yet.
+   */
+  products?: FeaturedProduct[]
 }
 
-export default function YourBirthdayView(_props: YourBirthdayViewProps) {
+export default function YourBirthdayView(props: YourBirthdayViewProps) {
   const locale = useLocale() as 'ar' | 'en'
   const isRTL = locale === 'ar'
   const t = useTranslations('yourBirthday')
+  // Unscoped translator so the featured-products section can reuse shared
+  // strings (`common.noImage`, `products.outOfStock`) without duplicating
+  // them under the yourBirthday namespace.
+  const tRoot = useTranslations()
   const router = useRouter()
+  const { products } = props
 
   // Custom booking modal state
   const [bookingOpen, setBookingOpen] = useState(false)
@@ -411,6 +453,175 @@ export default function YourBirthdayView(_props: YourBirthdayViewProps) {
             </div>
           </div>
         </section>
+
+        {/* === FEATURED PRODUCTS SECTION === */}
+        {/* Section 3 of the redesign: 4 YOUR_BIRTHDAY products passed in from
+            page.tsx (server-fetched) rendered as a 2-col (mobile) / 4-col
+            (desktop) grid. The section collapses entirely when there are no
+            products so the layout still works for empty DBs. */}
+        {products && products.length > 0 && (
+          <section
+            className="relative z-10 py-24"
+            style={{
+              // Slightly lighter band than the surrounding dark sections —
+              // gives the product grid visual rhythm without breaking the
+              // dark-mode celebration aesthetic. Subtle gold tint to match
+              // the birthday brand palette.
+              background:
+                'linear-gradient(to bottom, rgba(2,2,4,0) 0%, rgba(255,204,0,0.05) 50%, rgba(2,2,4,0) 100%)',
+            }}
+          >
+            <div className="max-w-6xl mx-auto px-4 sm:px-6">
+              {/* Header */}
+              <div className="text-center mb-16 space-y-4">
+                <h2
+                  className="text-3xl md:text-5xl font-black uppercase tracking-wider"
+                  style={{
+                    fontFamily: isRTL
+                      ? 'var(--font-birthday-arabic)'
+                      : 'var(--font-birthday-headline)',
+                    background:
+                      'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light), var(--c-birthday-gold-dark))',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {t('featuredProducts.title')}
+                </h2>
+                <p className="text-primary-foreground/60 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+                  {t('featuredProducts.subtitle')}
+                </p>
+                <div className="w-24 h-1 bg-gradient-to-r from-[var(--c-birthday-gold)] via-[var(--c-birthday-gold-light)] to-[var(--c-birthday-gold-dark)] mx-auto rounded-full" />
+              </div>
+
+              {/* Product grid — 2 cols on mobile, 4 on desktop */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {products.map((product) => {
+                  const name = localizedName(
+                    product.nameAr,
+                    product.nameEn,
+                    locale
+                  )
+                  const firstImage = product.images[0]
+                  const isOutOfStock = product.stock === 0
+                  // Arrow direction follows the locale's reading direction.
+                  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight
+
+                  return (
+                    <Link
+                      key={product.id}
+                      href={`/your-birthday/products/${product.slug}`}
+                      className="group block rounded-lg overflow-hidden border border-white/10 hover:border-[var(--c-birthday-gold)]/40 transition-colors duration-300 backdrop-blur-md"
+                      style={{
+                        // Dark semi-transparent card background — keeps the
+                        // 3D background visible behind while ensuring light
+                        // text on the card meets WCAG contrast.
+                        background: 'rgba(10, 8, 16, 0.75)',
+                        boxShadow:
+                          '0 10px 30px -10px rgba(0, 0, 0, 0.7)',
+                      }}
+                    >
+                      {/* Image */}
+                      <div className="relative aspect-square overflow-hidden bg-black/60">
+                        {firstImage ? (
+                          <Image
+                            src={firstImage}
+                            alt={name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            sizes="(max-width: 640px) 50vw, 25vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-primary-foreground/30 text-xs">
+                            {tRoot('common.noImage')}
+                          </div>
+                        )}
+
+                        {/* Out of stock overlay — high contrast for a11y */}
+                        {isOutOfStock && (
+                          <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                            <span className="px-3 py-1.5 rounded-full bg-white/95 text-black text-xs font-semibold">
+                              {tRoot('products.outOfStock')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info — light text on dark card */}
+                      <div className="p-3 sm:p-4 space-y-2">
+                        <h3
+                          className="text-sm sm:text-base font-bold text-white line-clamp-1"
+                          style={{
+                            fontFamily: isRTL
+                              ? 'var(--font-birthday-arabic)'
+                              : 'var(--font-birthday-sub)',
+                          }}
+                        >
+                          {name}
+                        </h3>
+
+                        {/* Price — birthday gold for emphasis */}
+                        <div className="flex items-end justify-between gap-2 pt-1">
+                          <div>
+                            <p className="text-[0.625rem] uppercase tracking-wider text-primary-foreground/50">
+                              {t('featuredProducts.perDay')}
+                            </p>
+                            <p
+                              className="text-sm sm:text-lg font-bold"
+                              style={{ color: '#FFCC00' }}
+                            >
+                              {formatPrice(product.rentalPricePerDay, locale)}
+                            </p>
+                          </div>
+                          <span
+                            aria-hidden="true"
+                            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 transition-transform group-hover:translate-x-0.5"
+                            style={{
+                              background:
+                                'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',
+                              color: '#020204',
+                            }}
+                          >
+                            <ArrowIcon className="w-3.5 h-3.5 rtl:rotate-180" />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {/* View All button — birthday gold gradient, links to
+                  /your-birthday/products */}
+              <div className="mt-12 flex justify-center">
+                <Link
+                  href="/your-birthday/products"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_0_25px_rgba(245,185,20,0.4)]"
+                  style={{
+                    background:
+                      'linear-gradient(135deg, var(--c-birthday-gold), var(--c-birthday-gold-light))',
+                    fontFamily: isRTL
+                      ? 'var(--font-birthday-arabic)'
+                      : 'var(--font-birthday-sub)',
+                  }}
+                >
+                  {t('featuredProducts.viewAll')}
+                  {isRTL ? (
+                    <ArrowLeft
+                      className="w-4 h-4 rtl:rotate-180"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <ArrowRight
+                      className="w-4 h-4 rtl:rotate-180"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* === GALLERY SECTION === */}
         <section className="relative z-10 py-24 bg-transparent">
