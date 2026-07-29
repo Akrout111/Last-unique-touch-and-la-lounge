@@ -46,3 +46,12 @@ agent-ctx/
 dev.pid
 tail
 prisma/**/db/*.db
+
+# v71: Database files — all SQLite locations
+db/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3

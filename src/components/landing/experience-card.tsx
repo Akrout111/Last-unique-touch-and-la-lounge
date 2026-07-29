@@ -156,7 +156,6 @@ export function ExperienceCard({
               fill
               sizes="(max-width: 768px) 150px, 280px"
               className="object-contain pointer-events-none"
-              priority
             />
           </div>
         </div>
