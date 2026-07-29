@@ -5,7 +5,7 @@ import { useScroll, useTransform, motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { ExperienceCard } from './experience-card'
-import Hero3DBackground from './hero-3d-background'
+import CosmicBackground from './cosmic-background'
 
 export function Hero() {
   const t = useTranslations()
@@ -37,7 +37,7 @@ export function Hero() {
 
       {/* 3D tri-section background — renders null when WebGL is unavailable,
           in which case the CSS fallback above remains visible. */}
-      <Hero3DBackground />
+      <CosmicBackground />
 
       {/* Top: Brand logo + tagline */}
       <motion.div
