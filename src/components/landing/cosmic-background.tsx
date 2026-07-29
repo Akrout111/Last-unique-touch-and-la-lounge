@@ -743,7 +743,7 @@ export default function CosmicBackground() {
       const rayFade = smoothstep(0.55, 1.0, easedIntro)
       rayGroup.children.forEach((ray, i) => {
         const mesh = ray as THREE.Mesh
-        mesh.material.opacity = rayFade
+        ;(mesh.material as THREE.Material).opacity = rayFade
         if (!mesh.userData.baseRot) mesh.userData.baseRot = mesh.rotation.z
         mesh.rotation.z = mesh.userData.baseRot + Math.sin(t * 0.12 + i * 0.7) * 0.05
       })
