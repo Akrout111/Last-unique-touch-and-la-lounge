@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useTheme } from 'next-themes'
 import { Link, usePathname, useRouter } from '@/i18n/routing'
-import { Menu, X, Globe, Moon, Sun } from 'lucide-react'
+import { Menu, X, Globe, Moon, Sun, ShoppingCart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MagneticButton } from '@/components/ui-premium/magnetic-button'
 import { resolveBrandFromPath, isHomePage } from '@/lib/brand'
+import { useCart } from '@/components/providers/cart-provider'
 
 export function Navbar() {
   const t = useTranslations()
@@ -34,10 +35,8 @@ export function Navbar() {
   const isAdmin = pathname?.startsWith('/admin') ?? false
 
   const brand = resolveBrandFromPath(pathname)
-  // SSR hydration flash. Next.js 16's `usePathname()` returns the correct
-  // path during SSR for client components, so the wordmark is hidden on
-  // the home page from the very first paint — no flash.
   const homePage = isHomePage(pathname)
+  const { count: cartCount } = useCart()
 
   useEffect(() => {
     setMounted(true)
@@ -265,6 +264,24 @@ export function Navbar() {
                 </button>
               </MagneticButton>
 
+              {/* Cart icon — links to /cart with item count badge */}
+              <Link
+                href="/cart"
+                className={`relative flex items-center justify-center w-9 h-9 min-h-[44px] min-w-[44px] rounded-full transition-colors ${
+                  (homePage || scrolled)
+                    ? 'text-paper/70 hover:text-gold hover:bg-paper/10'
+                    : 'text-foreground/70 hover:text-gold hover:bg-foreground/10'
+                }`}
+                aria-label={t('cart.title')}
+              >
+                <ShoppingCart className="w-5 h-5" strokeWidth={1.5} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -end-0.5 w-4 h-4 rounded-full bg-gold text-ink text-[10px] font-bold flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
               {/* Mobile menu button — visible only on mobile */}
               <button
                 ref={hamburgerRef}
@@ -341,6 +358,27 @@ export function Navbar() {
                     </Link>
                   </motion.div>
                 ))}
+                {/* Cart link in mobile drawer */}
+                <motion.div
+                  initial={{ opacity: 0, x: locale === 'ar' ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: navLinks.length * 0.08 }}
+                >
+                  <Link
+                    href="/cart"
+                    onClick={() => setMobileOpen(false)}
+                    aria-current={pathname === '/cart' ? 'page' : undefined}
+                    className="flex items-center gap-3 py-3 text-lg font-display text-paper/70"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    {t('cart.title')}
+                    {cartCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-gold text-ink text-xs font-bold flex items-center justify-center">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                </motion.div>
               </div>
             </motion.div>
           </>
