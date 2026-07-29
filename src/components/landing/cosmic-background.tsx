@@ -12,7 +12,7 @@ const CONFIG = {
   MAX_PIXEL_RATIO: { mobile: 1.5, desktop: 2 },
   MOUSE_SMOOTHING: 0.045,
   STAR_COUNT: {
-    mobile: { deep: 300, mid: 200 },
+    mobile: { deep: 600, mid: 400 },
     desktop: { deep: 900, mid: 600 },
   },
   DUST_COUNT: { mobile: 400, desktop: 1200 },
@@ -382,7 +382,7 @@ export default function CosmicBackground() {
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x03020a)
-    scene.fog = new THREE.FogExp2(0x03020a, 0.012)
+    // Removed FogExp2 — was darkening edges and dimming cards
 
     const camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 1000)
     // Cinematic entry: camera begins slightly offset + pulled back, then eases to its
@@ -577,36 +577,42 @@ export default function CosmicBackground() {
     const ring3 = createOrbit(23, 0x7e22ce, 0.08, Math.PI / 4.5, -Math.PI / 2.8, 0)
     orbitGroup.add(ring1.grp); orbitGroup.add(ring2.grp); orbitGroup.add(ring3.grp)
 
-    // AURORA
-    const auroraBrightness = CONFIG.AURORA_BRIGHTNESS_BOOST
-    const auroraBottomGeo = new THREE.PlaneGeometry(90, 18, 1, 1)
+    // AURORA — 3 auroras positioned behind each brand card
+    // Card 1 (top): LUT → gold aurora
+    // Card 2 (middle): La Lounge → pink aurora
+    // Card 3 (bottom): Your Birthday → yellow aurora
+    const auroraBrightness = CONFIG.AURORA_BRIGHTNESS_BOOST * 0.6 // subtle glow
+    const auroraBottomGeo = new THREE.PlaneGeometry(60, 16, 1, 1)
     const auroraBottomMat = new THREE.ShaderMaterial({
       vertexShader: AURORA_VERT, fragmentShader: AURORA_FRAG,
-      uniforms: { uTime: { value: 0 }, uC1: { value: new THREE.Color(0x34d399) }, uC2: { value: new THREE.Color(0xa855f7) }, uIntro: { value: 0 }, uBrightness: { value: auroraBrightness } },
+      // Bottom aurora: yellow/gold for Your Birthday card
+      uniforms: { uTime: { value: 0 }, uC1: { value: new THREE.Color(0xFFCC00) }, uC2: { value: new THREE.Color(0xFFD700) }, uIntro: { value: 0 }, uBrightness: { value: auroraBrightness } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     })
     const auroraBottom = new THREE.Mesh(auroraBottomGeo, auroraBottomMat)
-    auroraBottom.position.set(0, -22, -30); auroraBottom.rotation.x = 0.15
+    auroraBottom.position.set(0, isMobile ? -8 : -14, -30); auroraBottom.rotation.x = 0.15
     scene.add(auroraBottom)
 
-    const auroraMidGeo = new THREE.PlaneGeometry(85, 15, 1, 1)
+    const auroraMidGeo = new THREE.PlaneGeometry(60, 16, 1, 1)
     const auroraMidMat = new THREE.ShaderMaterial({
       vertexShader: AURORA_VERT, fragmentShader: AURORA_FRAG,
-      uniforms: { uTime: { value: 0 }, uC1: { value: new THREE.Color(0xf472b6) }, uC2: { value: new THREE.Color(0xec4899) }, uIntro: { value: 0 }, uBrightness: { value: auroraBrightness } },
+      // Middle aurora: pink/magenta for La Lounge card
+      uniforms: { uTime: { value: 0 }, uC1: { value: new THREE.Color(0xE6007E) }, uC2: { value: new THREE.Color(0xFF6B9D) }, uIntro: { value: 0 }, uBrightness: { value: auroraBrightness } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     })
     const auroraMid = new THREE.Mesh(auroraMidGeo, auroraMidMat)
-    auroraMid.position.set(5, 2, -32); auroraMid.rotation.x = -0.08; auroraMid.rotation.y = 0.1
+    auroraMid.position.set(0, isMobile ? 2 : 4, -32); auroraMid.rotation.x = -0.08; auroraMid.rotation.y = 0.1
     scene.add(auroraMid)
 
-    const auroraTopGeo = new THREE.PlaneGeometry(80, 14, 1, 1)
+    const auroraTopGeo = new THREE.PlaneGeometry(60, 16, 1, 1)
     const auroraTopMat = new THREE.ShaderMaterial({
       vertexShader: AURORA_VERT, fragmentShader: AURORA_FRAG,
-      uniforms: { uTime: { value: 0 }, uC1: { value: new THREE.Color(0xfde047) }, uC2: { value: new THREE.Color(0xf97316) }, uIntro: { value: 0 }, uBrightness: { value: auroraBrightness } },
+      // Top aurora: gold for LUT card
+      uniforms: { uTime: { value: 0 }, uC1: { value: new THREE.Color(0x8B6B3D) }, uC2: { value: new THREE.Color(0xB8915A) }, uIntro: { value: 0 }, uBrightness: { value: auroraBrightness } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     })
     const auroraTop = new THREE.Mesh(auroraTopGeo, auroraTopMat)
-    auroraTop.position.set(-3, 24, -28); auroraTop.rotation.x = -0.2; auroraTop.rotation.y = -0.05
+    auroraTop.position.set(0, isMobile ? 12 : 18, -28); auroraTop.rotation.x = -0.2; auroraTop.rotation.y = -0.05
     scene.add(auroraTop)
 
     // Lens flares
