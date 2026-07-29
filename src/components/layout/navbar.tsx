@@ -133,9 +133,19 @@ export function Navbar() {
     : brand === 'birthday' ? '/your-birthday/contact' as const
     : '/last-unique-touch/contact' as const
 
+  // v72: brand-aware cart link — Your Birthday has its own products + cart
+  const brandCartHref =
+    brand === 'birthday' ? '/your-birthday/products' as const
+    : '/cart' as const
+
+  // v72: brand-aware products link
+  const brandProductsHref =
+    brand === 'birthday' ? '/your-birthday/products' as const
+    : '/products' as const
+
   const navLinks: Array<{ href: string; label: string }> = [
     { href: brandHomeHref, label: t('nav.home') },
-    { href: '/products', label: t('nav.products') },
+    { href: brandProductsHref, label: t('nav.products') },
     { href: '/about', label: t('nav.about') },
     { href: brandContactHref, label: t('nav.contact') },
   ]
@@ -264,9 +274,9 @@ export function Navbar() {
                 </button>
               </MagneticButton>
 
-              {/* Cart icon — links to /cart with item count badge */}
+              {/* Cart icon — links to brand-specific cart with item count badge */}
               <Link
-                href="/cart"
+                href={brandCartHref}
                 className={`relative flex items-center justify-center w-9 h-9 min-h-[44px] min-w-[44px] rounded-full transition-colors ${
                   (homePage || scrolled)
                     ? 'text-paper/70 hover:text-gold hover:bg-paper/10'
@@ -365,7 +375,7 @@ export function Navbar() {
                   transition={{ delay: navLinks.length * 0.08 }}
                 >
                   <Link
-                    href="/cart"
+                    href={brandCartHref}
                     onClick={() => setMobileOpen(false)}
                     aria-current={pathname === '/cart' ? 'page' : undefined}
                     className="flex items-center gap-3 py-3 text-lg font-display text-paper/70"

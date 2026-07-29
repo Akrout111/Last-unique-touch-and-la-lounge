@@ -404,9 +404,11 @@ export default function YourBirthdayView(props: YourBirthdayViewProps) {
               ].map((service, i) => (
                 <div
                   key={i}
-                  className="group relative p-8 rounded-lg bg-[var(--c-birthday-card)]/80 border border-white/5 hover:border-white/15 transition-colors duration-500 backdrop-blur-md overflow-hidden"
+                  className="group relative p-8 rounded-lg border transition-colors duration-500 backdrop-blur-md overflow-hidden"
                   style={{
-                    boxShadow: `0 10px 30px -10px rgba(0, 0, 0, 0.7)`,
+                    background: 'rgba(15, 12, 25, 0.85)',
+                    borderColor: 'rgba(255, 204, 0, 0.15)',
+                    boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.7)',
                   }}
                 >
                   {/* Hover ambient spotlight glow */}
@@ -435,11 +437,11 @@ export default function YourBirthdayView(props: YourBirthdayViewProps) {
                   >
                     {service.title}
                   </h3>
-                  <p className="text-primary-foreground/60 text-sm leading-relaxed mb-4">{service.desc}</p>
+                  <p className="text-white/80 text-sm leading-relaxed mb-4">{service.desc}</p>
                   {/* V10 user request: examples list inside each service card */}
                   <ul className="space-y-2 mt-4 pt-4 border-t border-white/10">
                     {service.examples.map((example, j) => (
-                      <li key={j} className="text-xs text-primary-foreground/70 flex items-center gap-2">
+                      <li key={j} className="text-xs text-white/90 flex items-center gap-2">
                         <span
                           className="w-1 h-1 rounded-full shrink-0"
                           style={{ background: service.color }}
@@ -650,54 +652,67 @@ export default function YourBirthdayView(props: YourBirthdayViewProps) {
                   n: 1,
                   label: galleryItems[0] ?? '',
                   grad: 'from-[var(--c-birthday-gold)] to-[var(--c-birthday-gold-light)]',
+                  img: '/products/birthday_atelier.webp',
                 },
                 {
                   n: 2,
                   label: galleryItems[1] ?? '',
                   grad: 'from-[var(--c-birthday-gold-light)] to-[var(--c-birthday-orange)]',
+                  img: '/products/lalounge_modern.webp',
                 },
                 {
                   n: 3,
                   label: galleryItems[2] ?? '',
                   grad: 'from-[var(--c-birthday-orange)] to-[var(--c-birthday-gold-dark)]',
+                  img: '/products/birthday_atelier.webp',
                 },
                 {
                   n: 4,
                   label: galleryItems[3] ?? '',
                   grad: 'from-[var(--c-birthday-gold-dark)] to-[var(--c-birthday-gold)]',
+                  img: '/products/lut_heritage.webp',
                 },
                 {
                   n: 5,
                   label: galleryItems[4] ?? '',
                   grad: 'from-[var(--c-birthday-gold)] to-[var(--c-birthday-gold-dark)]',
+                  img: '/products/birthday_atelier.webp',
                 },
                 {
                   n: 6,
                   label: galleryItems[5] ?? '',
                   grad: 'from-[var(--c-birthday-gold-dark)] to-[var(--c-birthday-gold-light)]',
+                  img: '/products/lalounge_modern.webp',
                 },
               ].map((item) => (
                 <div
                   key={item.n}
                   className="aspect-square rounded-lg overflow-hidden group relative border border-white/5 cursor-pointer shadow-lg"
                 >
+                  {/* Product image */}
+                  <img
+                    src={item.img}
+                    alt={item.label}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+
                   {/* Decorative gradient overlay */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${item.grad} opacity-30 group-hover:opacity-60 transition-opacity duration-500`}
+                    className={`absolute inset-0 bg-gradient-to-br ${item.grad} opacity-20 group-hover:opacity-40 transition-opacity duration-500 mix-blend-overlay`}
                   />
 
                   {/* Geometric outline decoration */}
-                  <div className="absolute inset-4 border border-white/10 group-hover:border-white/30 rounded-md transition-colors duration-500 flex flex-col justify-end p-4">
-                    <span className="text-xs font-mono text-primary-foreground/40 tracking-widest uppercase">
+                  <div className="absolute inset-4 border border-white/20 group-hover:border-white/40 rounded-md transition-colors duration-500 flex flex-col justify-end p-4">
+                    <span className="text-xs font-mono text-white/60 tracking-widest uppercase">
                       {t('gallery.expPrefix')}
                       {item.n}
                     </span>
-                    <h4 className="text-base font-bold text-primary-foreground tracking-wide mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <h4 className="text-base font-bold text-white tracking-wide mt-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                       {item.label}
                     </h4>
                   </div>
 
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center" />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
                 </div>
               ))}
             </div>

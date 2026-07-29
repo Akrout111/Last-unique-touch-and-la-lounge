@@ -783,61 +783,57 @@
   "laLoungeReadyPlans": {
     "eyebrow": "La Lounge · Ready-Made Plans",
     "title": "Ready-Made Plans Execution",
-    "subtitle": "Already have a finished plan in hand — a designer's floor plan, a mood board, a vendor layout, or a full schematic? Bring it to us and we will execute it flawlessly, end to end.",
+    "subtitle": "Already have a finished plan from your designer or planner? Bring it to us and we will execute it flawlessly — transforming your vision into reality with our premium furniture, decor, and expert setup team.",
     "ctaButton": "Bring Us Your Plan",
-    "plansTitle": "Pre-Made Event Plans",
-    "plansSubtitle": "Or start from one of our curated ready-made plans — each one a complete blueprint you can request as-is or adapt.",
+    "plansTitle": "What You Can Bring Us",
+    "plansSubtitle": "We accept and execute all types of event plans created by external designers, planners, or clients themselves.",
     "includedLabel": "What's Included",
     "priceLabel": "Price Range",
-    "requestButton": "Request This Plan",
+    "requestButton": "Submit Your Plan",
     "plans": {
       "classic": {
-        "name": "Classic Elegance",
-        "desc": "Timeless formal styling — ivory linens, gold chiavari chairs, crystal chandeliers, and a soft white-floral palette. The safe-luxury choice for weddings and state dinners.",
+        "name": "Designer Floor Plans",
+        "desc": "Professional floor plans from your event designer — we follow every measurement precisely.",
         "includes": [
-          "Gold chiavari seating for up to 200",
-          "Crystal chandeliers and gold uplighting",
-          "Ivory linen and porcelain tableware",
-          "White floral centerpieces",
-          "Standard dance floor and stage"
+          "Scaled measurements",
+          "Furniture placement",
+          "Traffic flow",
+          "Lighting positions"
         ],
-        "price": "KWD 4,500 – 7,500"
+        "price": "Execution only"
       },
       "modern": {
-        "name": "Modern Glamour",
-        "desc": "Bold and contemporary — magenta uplighting, ghost-acrylic seating, mirror-top tables, and a moody dark floral palette. Built for fashion launches and brand activations.",
+        "name": "Mood Board Concepts",
+        "desc": "Visual mood boards — we translate your aesthetic vision into a fully decorated space.",
         "includes": [
-          "Louis ghost acrylic seating for up to 150",
-          "Magenta LED uplighting and haze",
-          "Mirror-top cocktail and dining tables",
-          "Dark floral installations",
-          "LED dance floor and DJ booth"
+          "Color palette",
+          "Furniture style",
+          "Decor themes",
+          "Materials"
         ],
-        "price": "KWD 6,000 – 10,000"
+        "price": "Execution only"
       },
       "cultural": {
-        "name": "Cultural Heritage",
-        "desc": "Kuwaiti-Gulf inspired — brass lanterns, woven sadu textiles, low majlis seating, and a warm amber-and-saffron palette. Ideal for Ramadan iftars, henna nights, and heritage celebrations.",
+        "name": "Vendor Layouts",
+        "desc": "Vendor coordination layouts — we integrate catering, AV, floral into one setup.",
         "includes": [
-          "Low majlis seating for up to 120",
-          "Brass lanterns and amber uplighting",
-          "Sadu and silk textile styling",
-          "Traditional Arabian coffee service",
-          "Live oud corner with staging"
+          "Catering zones",
+          "AV placement",
+          "Floral",
+          "Stage"
         ],
-        "price": "KWD 3,500 – 6,000"
+        "price": "Execution only"
       },
       "minimalist": {
-        "name": "Minimalist Chic",
-        "desc": "Quiet and architectural — single-tone palette, clean-line furniture, and a single statement floral moment. Suited to intimate dinners, brand salons, and editorial shoots.",
+        "name": "Complete Schematics",
+        "desc": "Full event schematics from planners — we execute from setup to teardown.",
         "includes": [
-          "Monet armchair seating for up to 80",
-          "Single-tone palette with one accent",
-          "Sculptural floral moment",
-          "Marble-top dining tables",
-          "Soft warm-white spot lighting"
+          "Timeline",
+          "Setup instructions",
+          "Equipment list",
+          "Teardown plan"
         ],
-        "price": "KWD 2,500 – 4,500"
+        "price": "Execution only"
       }
     }
   },
