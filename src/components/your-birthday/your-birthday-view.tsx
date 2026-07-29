@@ -690,9 +690,11 @@ export default function YourBirthdayView(props: YourBirthdayViewProps) {
                   className="aspect-square rounded-lg overflow-hidden group relative border border-white/5 cursor-pointer shadow-lg"
                 >
                   {/* Product image */}
-                  <img
+                  <Image
                     src={item.img}
                     alt={item.label}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
 
