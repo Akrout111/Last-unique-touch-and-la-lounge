@@ -70,7 +70,7 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.185.0",
     "@vitejs/plugin-react": "^6.0.3",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^5.0.0",
     "bun-types": "^1.3.4",
     "eslint": "^9",
     "eslint-config-next": "^16.2.11",
@@ -81,7 +81,7 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5",
-    "vitest": "^4.1.9",
+    "vitest": "^5.0.0",
     "prisma": "^6.11.1"
   }
 }
